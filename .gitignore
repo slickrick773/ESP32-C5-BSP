@@ -1,0 +1,16 @@
+# PlatformIO / Arduino build output
+.pio/
+.pioenvs/
+.piolibdeps/
+build/
+*.o
+*.a
+*.elf
+*.bin
+*.map
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
