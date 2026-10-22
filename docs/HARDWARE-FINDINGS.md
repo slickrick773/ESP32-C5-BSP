@@ -47,8 +47,23 @@ peripheral), read at **115200**. There is no separate USB-UART bridge chip in th
 path on the boards tested. Consequence: the hardware UART0 pins are free for your
 own use (e.g. a GPS), because the console is not sitting on them.
 
-Download mode, when auto-enter fails: **hold BOOT, tap RST, release BOOT**, then
-flash.
+**Arduino `Serial` needs `ARDUINO_USB_CDC_ON_BOOT=1` to reach that USB port.**
+[HW-VERIFIED 2026-10-22.] This is a sharp edge: the board manifest defaults it to
+`0`, and with `0`, ESP-IDF `log_*` output and the panic backtrace still come out
+USB-Serial-JTAG, but **Arduino `Serial.print()` goes to UART0 / GPIO11 instead** —
+so a sketch's own logs are invisible on the port you flash and monitor on (they
+are on a header pin). Symptom: the board runs fine, flashing works over USB, but
+`pio device monitor` / a pyserial read on the usbmodem port shows nothing from
+your code (a crash, though, would still print there). Fix: build the sketch with
+`-DARDUINO_USB_CDC_ON_BOOT=1` so `Serial` is the USB CDC. The `hello_board`
+example does this.
+
+Reading logs when scripted: use **pyserial** on the usbmodem port at 115200.
+`pio device monitor` needs an interactive TTY and fails when scripted.
+
+Download mode: flashing is native-USB auto-download on the units tested (no
+button dance needed). If auto-enter ever fails: **hold BOOT, tap RST, release
+BOOT**, then flash.
 
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 
@@ -193,6 +208,7 @@ clock on the units tested.
 |---|---|---|
 | Single-core / unicore | HW-VERIFIED | Runs; pinning is chip-aware |
 | Console on USB-JTAG @115200 | HW-VERIFIED | Boot/panic logs observed |
+| Arduino `Serial` on USB (CDC_ON_BOOT=1) | HW-VERIFIED | 2026-10-22, hello_board |
 | Download = BOOT+RST | HW-VERIFIED | Flashing procedure in use |
 | 5 GHz scan / receive | HW-VERIFIED | Channels accepted, frames seen |
 | `set_band_mode` after `start` | HW-VERIFIED | Band empty if called earlier |
@@ -204,3 +220,10 @@ clock on the units tested.
 | Expander CH32V00x | HW-VERIFIED | Backlight/resets |
 | R-selector camera-side theory | UNVERIFIED | Not probed/schematic-confirmed |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
+
+**BSP re-verification (this repo).** The `hello_board` example confirmed, on
+hardware 2026-10-22: the CH32V00x expander bring-up, the ST7796 display
+painting, the FT6336 touch read (via live serial touch coordinates), and Arduino
+`Serial` on the native USB. Touch was observed usable but *stiff* at this phase
+(every read does up to three full bus re-opens and the poll is unpaced) —
+smoothing it is a Phase 2 target.
