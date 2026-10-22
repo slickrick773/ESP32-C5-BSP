@@ -51,8 +51,10 @@ an ESP-IDF component can wrap it later. Only one framework is built now.
 ## Toolchain
 
 Built with PlatformIO using the `pioarduino` platform fork (the C5 needs it).
-See each example's `platformio.ini`. Console is USB-Serial-JTAG at 115200;
-download mode is **hold BOOT, tap RST, release BOOT**.
+See each example's `platformio.ini` and [docs/BUILD.md](docs/BUILD.md) — note
+the **Python 3.10–3.13** requirement (the platform refuses 3.14+). Console is
+USB-Serial-JTAG at 115200; download mode is **hold BOOT, tap RST, release
+BOOT**.
 
 ## License
 
