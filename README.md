@@ -14,15 +14,25 @@ there.** It competes on reliability.
 
 ## Status
 
-| Layer | What | Proof |
-|---|---|---|
-| Chip core (any C5) | single-core pinning, band-switch ordering, USB-JTAG console, 5 GHz channel enumeration | findings hardware-verified across the fleet; code migration in progress |
-| Board (3.5) | ST7796, FT6336, AXP2101, CH32V00x, LC76G GPS-over-I²C, shared-bus coordination | findings hardware-verified; drivers landing phase by phase, each re-verified on hardware here |
+Built one phase at a time, and **a capability is only called "supported" once it
+has run on a real board.** See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md)
+for the three levels of proof (silicon ≠ IDF-exposed ≠ works-on-hardware) and
+every claim's tag.
 
-This repository is being built up one phase at a time, and **a capability is only
-written down as "supported" once it has been run on a real board.** See
-[docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the three levels of
-proof (silicon ≠ IDF-exposed ≠ works-on-hardware) and every claim's tag.
+| Phase | Scope | Status |
+|---|---|---|
+| 0 | Scaffold + hardware-findings doc | ✅ done |
+| 1 | Board definition, pin map, ST7796 display, FT6336 touch | ✅ hardware-verified |
+| 2 | Shared-I²C core (reopen / lock / timeout / recovery) + touch hardening | ✅ hardware-verified |
+| 3 | LC76G GPS over I²C | ✅ hardware-verified (29 sats, HDOP ~0.6) |
+| 4 | AXP2101 battery + expander readout | ⏳ deferred — needs a LiPo on the board |
+| 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
+| 6 | Examples, publish, SquachWatch migration, Wi-Fi+GPS+touch capstone | in progress |
+
+Chip-level findings that are **hardware-verified on the fleet and documented
+here, but not yet wrapped as BSP code**: the dual-band `set_band_mode()`-after-
+`start()` ordering, 5 GHz channel enumeration, and ES8311 audio bring-up. They
+live in the findings doc until a verified helper lands.
 
 ## Supported boards
 
@@ -37,16 +47,23 @@ but none is claimed supported until someone runs it on that hardware.
 ```
 src/
   chip/     C5 chip-level, reusable across any C5 board
-            (single-core helper, band-switch, USB-JTAG console, 5 GHz quirks)
+            esp32c5_i2c_bus   shared-bus discipline: reopen, non-blocking lock,
+                              timeout guard, 9-clock recovery
+            esp32c5_tasks     single-core-aware task pinning + chip info
   board/    board-specific drivers; one proven board today (the 3.5)
-            ws_c5_35/  ST7796 · FT6336 · AXP2101 · CH32V00x · LC76G-I²C · bus lock
-examples/   runnable sketches, one per phase
-docs/       hardware findings and per-board notes
+            ws_c5_35/  pins · expander (CH32V00x) · touch (FT6336) ·
+                       gps (LC76G over I²C) · board begin()/name()
+examples/   one standalone PlatformIO project per capability
+            hello_board   display + touch
+            gps_i2c       LC76G GPS over I²C (fix + sat count)
+            single_core   single-core task pinning
+docs/       hardware findings, per-board notes, build guide
 ```
 
 Built as an Arduino library first (the proven code is Arduino/C++). The hardware
-core — I²C discipline, GPS protocol, pin maps, findings — is kept structured so
-an ESP-IDF component can wrap it later. Only one framework is built now.
+core — I²C discipline, GPS protocol, pin maps, findings — is kept free of any
+graphics library (drivers use only `Wire`) so an ESP-IDF component can wrap it
+later. Only one framework is built now.
 
 ## Toolchain
 

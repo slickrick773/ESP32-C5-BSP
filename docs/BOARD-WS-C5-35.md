@@ -45,8 +45,29 @@ does not carry the C5). Each example's `platformio.ini` pins it.
 - **Battery**: read via XPowersLib. With no cell attached the AXP2101 still
   answers and reports USB/charge state; capacity reads as `NONE`.
 
-## Verified capabilities
+## Onboard I²C address map (verified by bus scan)
 
-Display · touch · Wi-Fi (2.4 + 5 GHz) · BLE · SD · audio (speaker) · battery
-(AXP2101) · GPS (LC76G over I²C). See the verification ledger in
-HARDWARE-FINDINGS.md.
+All on the shared bus (SDA 27 / SCL 26):
+
+| Addr | Device |
+|---|---|
+| `0x18` | ES8311 audio codec |
+| `0x24` | CH32V00x I/O expander |
+| `0x34` | AXP2101 PMU |
+| `0x38` | FT6336 touch |
+| `0x51` | RTC |
+| `0x6B` | IMU |
+| `0x70` | (onboard sensor) |
+| `0x50` / `0x54` / `0x58` | LC76G GPS — **only when an I²C GPS is wired** |
+
+A boot scan that shows the onboard set but no `0x50` means the GPS is the
+problem (SDA/SCL swapped, wrong pins, not in I²C mode, or unpowered), not the
+bus. Note `0x51` is the RTC, not the GPS.
+
+## Verified in this BSP (on hardware)
+
+Display (ST7796) · touch (FT6336) · I/O expander (CH32V00x) · GPS (LC76G over
+I²C) · single-core task pinning · USB-JTAG console. **Battery (AXP2101) is
+deferred** until a cell is on the board. Wi-Fi (2.4 + 5 GHz), BLE, SD and audio
+are proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
+wrapped as BSP code here. See the verification ledger in HARDWARE-FINDINGS.md.
