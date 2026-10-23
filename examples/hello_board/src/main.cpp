@@ -41,12 +41,20 @@ void setup() {
 }
 
 void loop() {
+    // Pace the loop. Spinning the draw flat out saturates the single core and
+    // the display SPI, which starves the touch reads so points land far apart
+    // and the stroke turns into jagged connect-the-dots. One tick every ~10 ms
+    // (~100 Hz) keeps the core free between reads -- the rate at which the
+    // FT6336 tracked cleanly on the bench.
+    static uint32_t last = 0;
+    const uint32_t now = millis();
+    if (now - last < 10) return;
+    last = now;
+
     // Connect consecutive contacts with a line segment so a drag draws a
-    // continuous stroke (isolated dots at the sample rate look like a broken
-    // trail). Coords are native-portrait; map to the landscape rotation:
-    // screen x = touch y, screen y = (W-1) - touch x.
+    // continuous stroke. Coords are native-portrait; map to the landscape
+    // rotation: screen x = touch y, screen y = (W-1) - touch x.
     static int plx = -1, ply = -1;
-    static uint16_t px = 0xFFFF, py = 0xFFFF;
 
     uint16_t x, y;
     if (Touch::poll(x, y)) {
@@ -55,7 +63,6 @@ void loop() {
         if (plx >= 0) tft.drawLine(plx, ply, lx, ly, TFT_CYAN);
         else          tft.fillCircle(lx, ly, 2, TFT_CYAN);
         plx = lx; ply = ly;
-        if (x != px || y != py) { Serial.printf("P %u,%u\n", x, y); px = x; py = y; }
     } else {
         plx = -1;   // finger up: break the stroke
     }

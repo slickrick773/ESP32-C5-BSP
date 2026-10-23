@@ -220,6 +220,16 @@ three separate lessons, all on this shared bus:
    dropped read for that frame rather than blocking, and the grace window above
    hides the gap. A blocking touch read behind a ~50 ms GPS cycle is exactly
    what made taps register as swipes on the first GPS bring-up.
+4. **Pace the loop; don't spin the draw flat out.** [HW-VERIFIED 2026-10-22.]
+   With the read paced but the main loop otherwise free-running, redrawing every
+   iteration (thousands of `drawLine`/`fillCircle` a second) saturated the
+   single C5 core and the display SPI, which starved the touch reads so points
+   landed far apart and a drag came out as jagged connect-the-dots. The read
+   data was fine the whole time (a paced diagnostic traced a clean, dense drag);
+   the draw was eating the core. Pacing the loop to ~10 ms (~100 Hz) and acting
+   once per tick made the stroke smooth. Lesson: on a single-core C5, a tight UI
+   loop has to pace itself — `poll()` pacing the *bus* is necessary but not
+   sufficient if the *draw* is unpaced. The `hello_board` loop shows the shape.
 
 ### Display, touch, expander, battery, audio — bring-up summary
 
