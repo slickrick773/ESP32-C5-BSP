@@ -40,6 +40,12 @@ core 1, or `xTaskCreatePinnedToCore(..., 1, ...)` silently lands on the only cor
 there is. Not a bug on its own, but it hides the assumption that bites when code
 moves back to a dual-core part.
 
+**[HW-VERIFIED 2026-10-23, this BSP]** `src/chip/esp32c5_tasks` wraps this:
+`workerCore()` returns 0 on the C5 (not 1), and `createPinnedTask()` pins to it.
+The `single_core` example confirmed on hardware: `coreCount = 1`, a task made
+with `createPinnedTask()` and the main loop both run on **core 0**
+(`createPinnedTask -> pdPASS (pinned to core 0)`, `[loop] core 0 of 1`).
+
 ### Console is on USB-Serial-JTAG, not a UART
 
 **[HW-VERIFIED]** Boot and panic logs come out the **native USB** (USB-Serial-JTAG
@@ -264,7 +270,7 @@ clock on the units tested.
 
 | Capability | Level | Evidence |
 |---|---|---|
-| Single-core / unicore | HW-VERIFIED | Runs; pinning is chip-aware |
+| Single-core / unicore | HW-VERIFIED | core 0 of 1; createPinnedTask pins to core 0, 2026-10-23 |
 | Console on USB-JTAG @115200 | HW-VERIFIED | Boot/panic logs observed |
 | Arduino `Serial` on USB (CDC_ON_BOOT=1) | HW-VERIFIED | 2026-10-22, hello_board |
 | Download = BOOT+RST | HW-VERIFIED | Flashing procedure in use |
