@@ -31,6 +31,16 @@ void begin();
 // being touched; 0 never defers.
 void tick(uint32_t now, uint32_t busyUntilMs = 0);
 
+// Same service step, but hand each NMEA byte to `sink(c, now)` instead of the
+// BSP's own parser — for a sketch that already has a GNSS parser and wants the
+// BSP only for the I2C transport (the shared-bus lock/reopen/timeout discipline
+// and the LC76G protocol + wake). `sink` is called in order, inside the bus
+// lock, for every byte of the cycle; the BSP's parsed getters below are NOT
+// updated in this mode (the sketch's own parser owns the state). Everything
+// else — throttle, lock, reopen, wake, busyUntil defer, link counters — is
+// identical to the parser tick() above.
+void tick(void (*sink)(char c, uint32_t now), uint32_t now, uint32_t busyUntilMs = 0);
+
 // --- Parsed state (updated as NMEA arrives) ---------------------------------
 bool     hasFix();            // a valid position fix right now
 uint8_t  satellites();        // satellites used in the current solution

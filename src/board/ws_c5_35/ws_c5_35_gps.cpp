@@ -95,7 +95,10 @@ static void parseLine(char* line) {
     }
 }
 
-static void sink(char c) {
+// The BSP's own parser sink. Its signature matches ByteSink (below) so a read
+// cycle can route bytes either here or to a sketch-supplied sink; `now` is
+// unused here because the parser timestamps nothing.
+static void parserSink(char c, uint32_t /*now*/) {
     static char line[120];
     static size_t len = 0;
     if (c == '\n' || c == '\r') {
@@ -107,9 +110,15 @@ static void sink(char c) {
     }
 }
 
+// Where a cycle's NMEA bytes go: parserSink (parser tick) or a sketch's own
+// parser (byte-sink tick). Set per cycle in service(), consumed by poll().
+typedef void (*ByteSink)(char, uint32_t);
+static ByteSink s_sink = parserSink;
+
 // ---- one atomic read cycle --------------------------------------------------
 // Returns bytes read, 0 if nothing, or -1 on a bus fail. Caller holds the lock.
-static int poll() {
+// `now` is forwarded to the active sink so a sketch parser can timestamp bytes.
+static int poll(uint32_t now) {
     static uint8_t buf[CHUNK];
     int out = -1;
     Bus::TimeoutGuard to(300);   // long timeout for the clock-stretch; auto-restored
@@ -134,7 +143,7 @@ static int poll() {
         delay(STEP_MS);
         size_t got = readBytes(buf, len);
         if (got != len) break;
-        for (size_t i = 0; i < got; i++) sink((char)buf[i]);
+        for (size_t i = 0; i < got; i++) s_sink((char)buf[i], now);
         out = (int)got;
     } while (0);
     return out;
@@ -164,7 +173,11 @@ void begin() {
     Wire.setBufferSize(CHUNK + 16);   // persists across Wire.end()/begin()
 }
 
-void tick(uint32_t now, uint32_t busyUntilMs) {
+// One service step, feeding the cycle's bytes to `sink`. Both tick() overloads
+// are this with a different sink; the throttle/lock/reopen/wake/counters are
+// identical, so the parser tick and the byte-sink tick behave the same but for
+// where the NMEA lands.
+static void service(ByteSink sink, uint32_t now, uint32_t busyUntilMs) {
     static uint32_t s_lastAt = 0, s_empty = 0;
     if (s_lastAt && now - s_lastAt < PERIOD_MS) return;
     if (busyUntilMs && (int32_t)(busyUntilMs - now) > 0) return;   // defer while touched
@@ -174,12 +187,19 @@ void tick(uint32_t now, uint32_t busyUntilMs) {
     Bus::Guard g(100);
     if (!g) return;
 
+    s_sink = sink;
     s_lastAt = now ? now : 1;
-    int r = poll();
+    int r = poll(now);
     s_cycles++;
     if (r < 0)       s_fails++;
     else if (r == 0) { if (++s_empty >= 8) { s_empty = 0; if (wake()) s_wakes++; } }
     else             { s_empty = 0; s_bytes += r; }
+}
+
+void tick(uint32_t now, uint32_t busyUntilMs) { service(parserSink, now, busyUntilMs); }
+
+void tick(void (*sink)(char, uint32_t), uint32_t now, uint32_t busyUntilMs) {
+    service(sink ? sink : parserSink, now, busyUntilMs);
 }
 
 bool     hasFix()           { return s_fix; }
