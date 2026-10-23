@@ -67,7 +67,7 @@ bus. Note `0x51` is the RTC, not the GPS.
 ## Verified in this BSP (on hardware)
 
 Display (ST7796) · touch (FT6336) · I/O expander (CH32V00x) · GPS (LC76G over
-I²C) · single-core task pinning · USB-JTAG console. **Battery (AXP2101) is
-deferred** until a cell is on the board. Wi-Fi (2.4 + 5 GHz), BLE, SD and audio
+I²C) · single-core task pinning · USB-JTAG console · battery (AXP2101, read via
+XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz), BLE, SD and audio
 are proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
 wrapped as BSP code here. See the verification ledger in HARDWARE-FINDINGS.md.

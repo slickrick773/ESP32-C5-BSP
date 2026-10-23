@@ -280,7 +280,7 @@ clock on the units tested.
 | GPS LC76G over I²C | HW-VERIFIED | 14 sats + touch alive 2026-10-21; BSP 29 sats HDOP 0.6 2026-10-22 |
 | Touch FT6336 (re-open + retry) | HW-VERIFIED | Bring-up |
 | Display ST7796 @80 MHz | HW-VERIFIED | 2026-10-18 |
-| Battery AXP2101 | HW-VERIFIED | Readout |
+| Battery AXP2101 | HW-VERIFIED | BSP: 89% / 4.15 V / charging / VBUS 5.1 V, 2026-10-23 |
 | Expander CH32V00x | HW-VERIFIED | Backlight/resets |
 | R-selector camera-side theory | UNVERIFIED | Not probed/schematic-confirmed |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |

@@ -25,7 +25,7 @@ every claim's tag.
 | 1 | Board definition, pin map, ST7796 display, FT6336 touch | ✅ hardware-verified |
 | 2 | Shared-I²C core (reopen / lock / timeout / recovery) + touch hardening | ✅ hardware-verified |
 | 3 | LC76G GPS over I²C | ✅ hardware-verified (29 sats, HDOP ~0.6) |
-| 4 | AXP2101 battery + expander readout | ⏳ deferred — needs a LiPo on the board |
+| 4 | AXP2101 battery readout | ✅ hardware-verified (89% / 4.15 V / charging) |
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
 | 6 | Examples, publish, SquachWatch migration, Wi-Fi+GPS+touch capstone | in progress |
 
