@@ -287,6 +287,22 @@ three separate lessons, all on this shared bus:
    a dotted line). With both, the stroke is smooth with all four subsystems
    live. Wi-Fi scans async so the radio never blocks the loop, and the dual-band
    `set_band_mode()` is called after the driver starts.
+6. **Gate reads on the FT6336 INT line to kill phantom touches.**
+   [HW-VERIFIED 2026-10-23, `touch_int`.] A blind poll of the FT6336 with no
+   finger down can return a stale/phantom point — on a UI that showed up as a
+   menu row self-selecting at boot and taps landing a row or two off. The fix
+   is to only read when the INT line says a finger is down. On this board
+   **FT6336 INT = GPIO3** (TP_INT, schematic-confirmed), with an external 10K
+   pull-up (so `pinMode INPUT`, no internal pull). Set FT6336 reg **`0xA4 = 0`**
+   (interrupt-polling mode) so INT is a stable **level** (low = finger), not a
+   per-touch pulse — required, or the level read is flaky. Then skip the I²C
+   read whenever `digitalRead(INT) != LOW`. The win is *skipping the read*, not
+   interrupt latency; a level read each poll is enough. Verified on hardware:
+   untouched reports zero reads (no phantom), a finger still tracks at the full
+   poll rate. This is opt-in in the BSP (`Touch::beginInt(gpio)`); the polling
+   `read()` stays the default, since not every C5 board wires TP_INT. Calibration
+   is the consumer's concern, not the BSP's. (First hit and fixed on the
+   SquachWatch port; mirrored here.)
 
 ### Display, touch, expander, battery, audio — bring-up summary
 

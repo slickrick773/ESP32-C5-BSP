@@ -15,8 +15,10 @@ namespace Bus = Esp32C5::I2cBus;
 static const uint8_t TD_STATUS = 0x02;   // then 6 bytes of point data from 0x03
 static const uint8_t CHIP_ID   = 0xA3;   // CHIPER register
 static const uint8_t THRESH    = 0x80;   // IDTHRESHOLD: lower = more sensitive
+static const uint8_t INT_MODE  = 0xA4;   // G_MODE: 0 = interrupt-polling (level)
 
 static bool s_present = false;
+static int  s_intGpio = -1;              // -1 = polling (default); >=0 = INT-gated
 
 static bool ftRead(uint8_t reg, uint8_t* buf, uint8_t len) {
     Wire.beginTransmission(FT6336_ADDR);
@@ -67,7 +69,28 @@ bool begin() {
     return s_present;
 }
 
+void beginInt(int gpio) {
+    s_intGpio = gpio;
+    pinMode(gpio, INPUT);   // the board has an external 10K pull-up on TP_INT
+
+    // G_MODE = 0 (interrupt-polling): makes INT a stable LEVEL (low = finger
+    // down) instead of a per-touch pulse, so a plain digitalRead can gate reads.
+    // Required -- without it the level is not reliable (found on the C5 repro).
+    Wire.beginTransmission(FT6336_ADDR);
+    Wire.write(INT_MODE);
+    Wire.write((uint8_t)0x00);
+    Wire.endTransmission();
+    Serial.printf("[ws-c5] FT6336 INT gate on GPIO%d\n", gpio);
+}
+
 bool read(uint16_t& x, uint16_t& y) {
+    // INT gate (opt-in via beginInt): if INT says "no finger" (high), skip the
+    // I2C read entirely. A blind read with no finger can return a stale/phantom
+    // point -- gating on the level kills that (e.g. a menu row self-selecting at
+    // boot). The win is skipping the read, not interrupt latency; a level read
+    // each poll is enough. Default (s_intGpio < 0) keeps the plain polling path.
+    if (s_intGpio >= 0 && digitalRead(s_intGpio) != LOW) return false;
+
     // Skip this frame rather than stall if another owner (e.g. a GPS cycle)
     // holds the bus -- poll()'s grace bridges the gap so it is not felt.
     if (!Bus::lock(0)) return false;

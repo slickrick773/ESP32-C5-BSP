@@ -24,6 +24,14 @@ bool begin();
 // Was the FT6336 found?
 bool present();
 
+// OPTIONAL: gate reads on the FT6336 INT line (TP_INT = GPIO3 on this board).
+// Call once after begin(). Sets the FT6336 to interrupt-polling mode so INT is
+// a stable level, and makes read()/poll() skip the I2C read when INT says no
+// finger is down -- which kills phantom/stale points (e.g. a menu row
+// self-selecting at boot). Without this call the driver polls as before.
+// Calibration is the consumer's job, not the BSP's. Verified on hardware.
+void beginInt(int gpio);
+
 // One raw read. Fills x,y (native-portrait panel coords) and returns true on a
 // valid 1-/2-finger touch; false on finger-up, a dropped read, or a busy bus.
 bool read(uint16_t& x, uint16_t& y);

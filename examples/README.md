@@ -28,6 +28,10 @@ on 3.14+.
   GND — see [docs/BOARD-WS-C5-35.md](../docs/BOARD-WS-C5-35.md).
 - **`single_core/`** — Phase 5. Shows the C5 is unicore and that the BSP's
   `createPinnedTask()` lands a task on the only core. Serial only.
+- **`touch_int/`** — optional INT-gated touch (`Touch::beginInt(GPIO3)`): reads
+  are skipped when the FT6336 INT line says no finger is down, killing stale /
+  phantom points. Serial only — prints that it reports no touch when untouched
+  (no phantom) and tracks a finger when down.
 - **`battery/`** — Phase 4. AXP2101 readout via XPowersLib: percentage, cell
   voltage, charge/USB state. Boot I²C scan. Serial only. Needs a LiPo on the
   MX1.25 `BAT` header for percentage/voltage.
