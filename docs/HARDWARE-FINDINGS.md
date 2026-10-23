@@ -253,6 +253,17 @@ three separate lessons, all on this shared bus:
    once per tick made the stroke smooth. Lesson: on a single-core C5, a tight UI
    loop has to pace itself — `poll()` pacing the *bus* is necessary but not
    sufficient if the *draw* is unpaced. The `hello_board` loop shows the shape.
+5. **Under load, give touch priority.** [HW-VERIFIED 2026-10-23, capstone.]
+   With Wi-Fi scanning, GPS cycling and the battery being sampled all at once,
+   touch went slightly janky — not from the bus (GPS defers while touched) but
+   from the display work: the periodic status redraw (`fillRect` + text) and the
+   battery read's bus re-open landed mid-stroke. Fix on the single core: while a
+   finger is down, do *only* touch — skip the status redraw, the battery sample
+   and the GPS cycle; they all resume the instant the finger lifts, and a
+   scribble is brief. Plus connect contacts into a stroke (isolated dots read as
+   a dotted line). With both, the stroke is smooth with all four subsystems
+   live. Wi-Fi scans async so the radio never blocks the loop, and the dual-band
+   `set_band_mode()` is called after the driver starts.
 
 ### Display, touch, expander, battery, audio — bring-up summary
 

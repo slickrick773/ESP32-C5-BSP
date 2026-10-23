@@ -27,7 +27,7 @@ every claim's tag.
 | 3 | LC76G GPS over I²C | ✅ hardware-verified (29 sats, HDOP ~0.6) |
 | 4 | AXP2101 battery readout | ✅ hardware-verified (89% / 4.15 V / charging) |
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
-| 6 | Examples, publish, SquachWatch migration, Wi-Fi+GPS+touch capstone | in progress |
+| 6 | Wi-Fi+GPS+touch capstone ✅ hardware-verified; publish + SquachWatch migration pending |
 
 Chip-level findings that are **hardware-verified on the fleet and documented
 here, but not yet wrapped as BSP code**: the dual-band `set_band_mode()`-after-

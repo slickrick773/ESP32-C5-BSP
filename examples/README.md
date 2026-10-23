@@ -28,8 +28,10 @@ on 3.14+.
   GND — see [docs/BOARD-WS-C5-35.md](../docs/BOARD-WS-C5-35.md).
 - **`single_core/`** — Phase 5. Shows the C5 is unicore and that the BSP's
   `createPinnedTask()` lands a task on the only core. Serial only.
-
-## Planned
-
-- `battery/` — AXP2101 readout (Phase 4, deferred until a LiPo is on the board)
-- `reliability_reference/` — Wi-Fi + GPS + touch at once (capstone)
+- **`battery/`** — Phase 4. AXP2101 readout via XPowersLib: percentage, cell
+  voltage, charge/USB state. Boot I²C scan. Serial only. Needs a LiPo on the
+  MX1.25 `BAT` header for percentage/voltage.
+- **`reliability_reference/`** — the capstone. Wi-Fi + GPS + touch + battery all
+  live on the shared bus at once, with a status screen and a touch scribble area
+  that stays smooth under load. Needs the display, the LC76G on I²C, and
+  (optionally) a battery.
