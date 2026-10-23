@@ -330,6 +330,7 @@ smoothing it is a Phase 2 target.
 
 ## Sources
 
-- Official Waveshare schematic (confirms the R-selector mechanism, the pin map,
-  and the EXIO assignments): `waveshareteam/ESP32-C5-Touch-LCD-3.5`,
-  `hardware/schematic/ESP32-C5-Touch-LCD-3.5.pdf` on GitHub.
+- Official Waveshare schematic — confirms the R-selector mechanism, the pin map,
+  and the EXIO assignments. Linked, not vendored (© Waveshare; link stays current
+  with any revision):
+  <https://github.com/waveshareteam/ESP32-C5-Touch-LCD-3.5/blob/main/hardware/schematic/ESP32-C5-Touch-LCD-3.5.pdf>
