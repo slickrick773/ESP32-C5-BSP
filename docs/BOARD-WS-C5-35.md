@@ -35,6 +35,12 @@ does not carry the C5). Each example's `platformio.ini` pins it.
   AXP2101 **and** the GPS. Coexistence depends on the bus discipline documented in
   HARDWARE-FINDINGS: per-read bus re-open + retry for touch, STOP-based reads for
   the codec, and a short-settle, touch-gated, timeout-restoring GPS cycle.
+- **GPS, bring-your-own parser.** `Gps::tick(now)` parses NMEA into the built-in
+  getters. A sketch that already has a GNSS parser can instead call
+  `Gps::tick(sink, now, busy)` to get the identical LC76G transport + shared-bus
+  discipline while each NMEA byte is handed to `sink(c, now)`; the built-in
+  getters are not updated in that mode. Everything else (throttle, lock, reopen,
+  wake, `busyUntil` defer, link counters) is the same.
 - **No backlight GPIO / no LEDC.** Backlight PWM, LCD reset and touch reset all
   live on the `0x24` expander, brought up with the rail and both resets released
   together (resetting the touch chip while its rail is off leaves the FT6336
