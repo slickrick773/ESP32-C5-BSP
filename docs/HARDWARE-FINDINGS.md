@@ -127,14 +127,37 @@ Which pins *do* reach the chip on the header: **SDA (27) and SCL (26)** are
 connected (the shared I²C bus), and **3V3 / GND** are real. That is the opening
 the GPS solution uses.
 
-> **R-selector theory — [UNVERIFIED].** The leading explanation (not visually
-> confirmed) is that the factory leaves the 0-ohm selectors (R56/R59 for
-> GPIO11/12, R55/R58 for GPIO0/1) set to the *camera* side even on no-camera
-> units, so GPIO12 never reaches J3. If true, a resistor rework (move the GPIO12
-> selector to the header side) would restore header UART. **This has not been
-> probed under magnification or confirmed against the schematic — treat it as a
-> hypothesis, not a fix to recommend.** The shipping, no-rework solution is I²C
-> (below), which needs no soldering.
+> **R-selector mechanism — [SCHEMATIC-CONFIRMED] 2026-10-23.** The official
+> Waveshare schematic (see Sources) confirms what the fleet had only inferred
+> from behaviour: GPIO0/1/11/12 each sit on a 0-ohm selector that routes the pin
+> to **either the camera connector or the header**, and these are marked
+> `0R NC`:
+>
+> | Selector | Module GPIO | Camera side | Header side |
+> |---|---|---|---|
+> | R55 | GPIO0 | CAM_D0 | GPIO0_OUT |
+> | R56 | GPIO11 | CAM_PCLK | U0TXD |
+> | R58 | GPIO1 | CAM_D1 | GPIO1_OUT |
+> | R59 | GPIO12 | CAM_VSYNC | U0RXD |
+>
+> The resistor designators match the fleet's guess exactly (R56/R59 for
+> GPIO11/12, R55/R58 for GPIO0/1). With the header side left open (`NC`) as
+> shipped, GPIO11/12 route to the camera even on no-camera units — which is
+> precisely why the firmware pin-probe saw **0 edges** on the header's GPIO12 on
+> two boards. Schematic confirms the *mechanism*; the *as-shipped* open state is
+> confirmed by that hardware probe. A resistor rework (move the GPIO12 selector
+> to the header side) would in principle restore header UART, but the shipping,
+> no-rework solution is I²C (below), which needs no soldering.
+>
+> The same schematic also confirms the pin map: GPIO26 = SCL, GPIO27 = SDA
+> (shared I²C), the LCD SPI pins (MISO 2, DC 5, SCLK 6, MOSI 7, CS 8), and the
+> J3 header breakout. One nuance to reconcile before relying on the labels: the
+> schematic's EXIO assignments read **EXIO0 = LCD_RST, EXIO1 = TP_RST** (this
+> driver's comments have them swapped) and **EXIO5 = PA_CTRL** (audio amp, not
+> panel power), with the backlight on a dedicated EXIO PWM. The expander driver
+> is hardware-verified working as written, so the bit assignments are left
+> unchanged; treat those two comment labels as functional, not authoritative,
+> pending a hardware re-test.
 
 ### GPS: LC76G over I²C on the shared bus (the crown jewel)
 
@@ -293,7 +316,7 @@ clock on the units tested.
 | Display ST7796 @80 MHz | HW-VERIFIED | 2026-10-18 |
 | Battery AXP2101 | HW-VERIFIED | BSP: 89% / 4.15 V / charging / VBUS 5.1 V, 2026-10-23 |
 | Expander CH32V006 | HW-VERIFIED | Backlight/resets |
-| R-selector camera-side theory | UNVERIFIED | Not probed/schematic-confirmed |
+| R-selector camera-side mechanism | SCHEMATIC-CONFIRMED | R55/R56/R58/R59, official schematic, 2026-10-23 |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on
@@ -302,3 +325,11 @@ painting, the FT6336 touch read (via live serial touch coordinates), and Arduino
 `Serial` on the native USB. Touch was observed usable but *stiff* at this phase
 (every read does up to three full bus re-opens and the poll is unpaced) —
 smoothing it is a Phase 2 target.
+
+---
+
+## Sources
+
+- Official Waveshare schematic (confirms the R-selector mechanism, the pin map,
+  and the EXIO assignments): `waveshareteam/ESP32-C5-Touch-LCD-3.5`,
+  `hardware/schematic/ESP32-C5-Touch-LCD-3.5.pdf` on GitHub.
