@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Waveshare ESP32-C5-Touch-LCD-3.5 — CH32V00x I/O expander (0x24).
+// Waveshare ESP32-C5-Touch-LCD-3.5 — CH32V006 I/O expander (0x24).
 //
 // The expander owns panel power, the ST7796 reset, the FT6336 reset, and the
 // backlight PWM. None of these is a GPIO, so the display cannot come up until

@@ -2,7 +2,7 @@
 // Waveshare ESP32-C5-Touch-LCD-3.5 — board surface.
 //
 // The one entry point a sketch needs before it touches the display: begin()
-// brings the CH32V00x expander up (panel power + resets + backlight), which the
+// brings the CH32V006 expander up (panel power + resets + backlight), which the
 // ST7796 needs before tft.init(). It does NOT own the display driver itself --
 // the display is TFT_eSPI in the sketch, configured by the example's user-setup
 // header, so the hardware core stays free of any one graphics library and an

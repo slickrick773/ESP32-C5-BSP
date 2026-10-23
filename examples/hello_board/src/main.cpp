@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // hello_board — the minimal proof the BSP brings this board up:
-//   1. the CH32V00x expander powers the panel and releases the ST7796 reset,
+//   1. the CH32V006 expander powers the panel and releases the ST7796 reset,
 //   2. TFT_eSPI (patched for the C5) paints the screen and the board name,
 //   3. the FT6336 touch is read and each touch point is drawn and printed.
 //

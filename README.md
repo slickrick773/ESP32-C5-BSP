@@ -51,7 +51,7 @@ src/
                               timeout guard, 9-clock recovery
             esp32c5_tasks     single-core-aware task pinning + chip info
   board/    board-specific drivers; one proven board today (the 3.5)
-            ws_c5_35/  pins · expander (CH32V00x) · touch (FT6336) ·
+            ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · board begin()/name()
 examples/   one standalone PlatformIO project per capability
             hello_board   display + touch

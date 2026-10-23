@@ -40,7 +40,7 @@ constexpr bool     PANEL_NEEDS_INVERSION = true;
 constexpr uint8_t  FT6336_ADDR  = 0x38;
 constexpr uint8_t  FT6336_ID    = 0x64;     // FT6336U reports this at reg 0xA3
 
-// ---- I/O expander: CH32V00x at 0x24 on the shared I2C bus --------------------
+// ---- I/O expander: CH32V006 at 0x24 on the shared I2C bus --------------------
 // Owns panel power/backlight and both resets; there is no backlight GPIO.
 constexpr uint8_t  EXIO_ADDR     = 0x24;
 constexpr uint8_t  EXIO_MODE_REG = 0x02;    // direction/mode

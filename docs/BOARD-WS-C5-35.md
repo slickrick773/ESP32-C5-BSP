@@ -2,7 +2,7 @@
 
 A 3.5" capacitive C5 board: ESP32-C5 (RISC-V, dual-band 2.4/5 GHz Wi-Fi + BLE),
 ST7796 320×480 display, FT6336 touch, ES8311 audio, AXP2101 battery, all behind
-a CH32V00x I/O expander on a shared I²C bus.
+a CH32V006 I/O expander on a shared I²C bus.
 
 **This is the one fully-proven board in the BSP.** Every capability below is
 hardware-verified; the cross-cutting findings (why the GPS is on I²C, the
@@ -23,7 +23,7 @@ does not carry the C5). Each example's `platformio.ini` pins it.
 |---|---|
 | Display (ST7796) | SPI MOSI 7, SCLK 6, MISO 2, CS 8, DC 5; RST on the expander (`TFT_RST -1`) |
 | Touch (FT6336) | I²C SDA 27 / SCL 26, addr `0x38`, 100 kHz |
-| I/O expander (CH32V00x) | `0x24` on the touch bus — LCD reset, touch reset, backlight PWM |
+| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset, touch reset, backlight PWM |
 | Audio (ES8311) | codec `0x18` on the touch bus → I²S BCK 23, WS 10, DOUT 25 (no MCLK) → NS4150B amp |
 | Battery (AXP2101) | PMU on the touch bus; MX1.25 2-pin 3.7 V LiPo header (cell optional) |
 | SD | CS 9 |
@@ -31,7 +31,7 @@ does not carry the C5). Each example's `platformio.ini` pins it.
 
 ## Board-specific notes
 
-- **One shared I²C bus** (SDA 27 / SCL 26) carries the FT6336, ES8311, CH32V00x,
+- **One shared I²C bus** (SDA 27 / SCL 26) carries the FT6336, ES8311, CH32V006,
   AXP2101 **and** the GPS. Coexistence depends on the bus discipline documented in
   HARDWARE-FINDINGS: per-read bus re-open + retry for touch, STOP-based reads for
   the codec, and a short-settle, touch-gated, timeout-restoring GPS cycle.
@@ -52,7 +52,7 @@ All on the shared bus (SDA 27 / SCL 26):
 | Addr | Device |
 |---|---|
 | `0x18` | ES8311 audio codec |
-| `0x24` | CH32V00x I/O expander |
+| `0x24` | CH32V006 I/O expander |
 | `0x34` | AXP2101 PMU |
 | `0x38` | FT6336 touch |
 | `0x51` | RTC |
@@ -66,7 +66,7 @@ bus. Note `0x51` is the RTC, not the GPS.
 
 ## Verified in this BSP (on hardware)
 
-Display (ST7796) · touch (FT6336) · I/O expander (CH32V00x) · GPS (LC76G over
+Display (ST7796) · touch (FT6336) · I/O expander (CH32V006) · GPS (LC76G over
 I²C) · single-core task pinning · USB-JTAG console · battery (AXP2101, read via
 XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz), BLE, SD and audio
 are proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet

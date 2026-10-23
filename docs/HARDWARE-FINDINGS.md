@@ -197,7 +197,7 @@ as shipped** (header UART finding above). On C5 ports where the UART *is* wired:
 
 ### Shared I²C bus discipline
 
-**[HW-VERIFIED].** The FT6336 touch, the ES8311 codec, the CH32V00x expander, and
+**[HW-VERIFIED].** The FT6336 touch, the ES8311 codec, the CH32V006 expander, and
 the AXP2101 PMU **all share SDA 27 / SCL 26** (plus GPS, above). Three patterns
 keep the bus from wedging:
 
@@ -269,7 +269,7 @@ three separate lessons, all on this shared bus:
 
 **[HW-VERIFIED].** Full detail and pin map in [BOARD-WS-C5-35.md](BOARD-WS-C5-35.md).
 Headline: ST7796 320×480 over SPI; FT6336 touch and ES8311 audio on the shared
-I²C bus; CH32V00x expander at `0x24` owns LCD reset, touch reset, and backlight
+I²C bus; CH32V006 expander at `0x24` owns LCD reset, touch reset, and backlight
 PWM (so there is no backlight GPIO and no LEDC on this board); AXP2101 PMU on the
 same bus, read via XPowersLib (reports `NONE` with no cell attached but still
 answers USB/charge state). The panel is rated 60 MHz but holds at an 80 MHz push
@@ -292,12 +292,12 @@ clock on the units tested.
 | Touch FT6336 (re-open + retry) | HW-VERIFIED | Bring-up |
 | Display ST7796 @80 MHz | HW-VERIFIED | 2026-10-18 |
 | Battery AXP2101 | HW-VERIFIED | BSP: 89% / 4.15 V / charging / VBUS 5.1 V, 2026-10-23 |
-| Expander CH32V00x | HW-VERIFIED | Backlight/resets |
+| Expander CH32V006 | HW-VERIFIED | Backlight/resets |
 | R-selector camera-side theory | UNVERIFIED | Not probed/schematic-confirmed |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on
-hardware 2026-10-22: the CH32V00x expander bring-up, the ST7796 display
+hardware 2026-10-22: the CH32V006 expander bring-up, the ST7796 display
 painting, the FT6336 touch read (via live serial touch coordinates), and Arduino
 `Serial` on the native USB. Touch was observed usable but *stiff* at this phase
 (every read does up to three full bus re-opens and the poll is unpaced) —
