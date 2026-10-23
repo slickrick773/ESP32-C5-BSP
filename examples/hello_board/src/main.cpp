@@ -41,30 +41,22 @@ void setup() {
 }
 
 void loop() {
-    // Use poll() (dropout-bridged) so a drag stays smooth. Time it so the feel
-    // can be judged against numbers, not just by thumb.
-    static uint32_t winStart = 0, iters = 0, hits = 0, usSum = 0, usMax = 0;
+    // Connect consecutive contacts with a line segment so a drag draws a
+    // continuous stroke (isolated dots at the sample rate look like a broken
+    // trail). Coords are native-portrait; map to the landscape rotation:
+    // screen x = touch y, screen y = (W-1) - touch x.
+    static int plx = -1, ply = -1;
+    static uint16_t px = 0xFFFF, py = 0xFFFF;
 
-    const uint32_t t0 = micros();
     uint16_t x, y;
-    const bool down = Touch::poll(x, y);
-    const uint32_t dt = micros() - t0;
-
-    iters++; usSum += dt; if (dt > usMax) usMax = dt;
-    if (down) {
-        hits++;
-        // Native-portrait coords (0..319 x, 0..479 y) mapped to the landscape
-        // rotation: landscape x = touch y, landscape y = (PANEL_W-1) - touch x.
+    if (Touch::poll(x, y)) {
         const int lx = y;
         const int ly = (PANEL_W - 1) - x;
-        tft.fillCircle(lx, ly, 3, TFT_CYAN);
-    }
-
-    const uint32_t now = millis();
-    if (now - winStart >= 1000) {
-        Serial.printf("[touch] %lu polls/s, %lu hits, avg %lu us, max %lu us\n",
-                      (unsigned long)iters, (unsigned long)hits,
-                      (unsigned long)(iters ? usSum / iters : 0), (unsigned long)usMax);
-        winStart = now; iters = hits = usSum = usMax = 0;
+        if (plx >= 0) tft.drawLine(plx, ply, lx, ly, TFT_CYAN);
+        else          tft.fillCircle(lx, ly, 2, TFT_CYAN);
+        plx = lx; ply = ly;
+        if (x != px || y != py) { Serial.printf("P %u,%u\n", x, y); px = x; py = y; }
+    } else {
+        plx = -1;   // finger up: break the stroke
     }
 }

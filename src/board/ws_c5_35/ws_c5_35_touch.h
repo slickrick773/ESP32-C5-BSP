@@ -28,10 +28,14 @@ bool present();
 // valid 1-/2-finger touch; false on finger-up, a dropped read, or a busy bus.
 bool read(uint16_t& x, uint16_t& y);
 
-// UI-facing read with dropout bridging: returns true (holding the last contact)
-// for up to graceMs after the last good read, so a single missed sample is not
-// seen as a finger lift. A real release (no good read for longer) returns false.
-bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs = 90);
+// UI-facing read. Safe to call as fast as your loop runs: it self-paces the
+// actual bus read to minReadIntervalMs (the FT6336 + the per-read bus re-open
+// cannot be hammered -- polling the raw read() flat out starves the chip and a
+// drag collapses to a single point), and bridges a dropped or skipped read by
+// holding the last contact for up to graceMs, so a drag draws a smooth line and
+// a tap does not feel stiff. A real release (no good read for graceMs) returns
+// false. Returns native-portrait panel coords. Verified on hardware.
+bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs = 90, uint16_t minReadIntervalMs = 12);
 
 }  // namespace Touch
 }  // namespace WsC5_35

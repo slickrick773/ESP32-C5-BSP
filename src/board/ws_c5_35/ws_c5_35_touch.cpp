@@ -89,17 +89,25 @@ bool read(uint16_t& x, uint16_t& y) {
     return ok;
 }
 
-bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs) {
+bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs, uint16_t minReadIntervalMs) {
     static uint16_t s_lastX = 0, s_lastY = 0;
-    static uint32_t s_lastOk = 0;
+    static uint32_t s_lastOk = 0, s_lastRead = 0;
 
-    if (read(x, y)) {
-        s_lastX = x; s_lastY = y; s_lastOk = millis();
-        return true;
+    const uint32_t now = millis();
+    // Pace the bus: hit the FT6336 at most every minReadIntervalMs. Hammering
+    // the re-open starves the chip (~80 Hz is smooth; flat out collapses a drag
+    // to one point). Between real reads we bridge with the last contact below.
+    if ((uint32_t)(now - s_lastRead) >= minReadIntervalMs) {
+        s_lastRead = now;
+        if (read(x, y)) {
+            s_lastX = x; s_lastY = y; s_lastOk = now;
+            return true;
+        }
     }
-    // Bridge a dropped read: hold the last contact for graceMs so a drag does
-    // not let go and a tap does not feel stiff. A real release outlasts it.
-    if (s_lastOk && (uint32_t)(millis() - s_lastOk) < graceMs) {
+    // Bridge a dropped or skipped read: hold the last contact for graceMs so a
+    // drag does not let go and a tap does not feel stiff. A real release (no
+    // good read for graceMs) outlasts it and reads as finger-up.
+    if (s_lastOk && (uint32_t)(now - s_lastOk) < graceMs) {
         x = s_lastX; y = s_lastY;
         return true;
     }
