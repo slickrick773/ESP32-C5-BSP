@@ -157,6 +157,23 @@ details that make it coexist with touch:
   LC76G defaults to **115200, not 9600** as Waveshare's demos state —
   [HW-VERIFIED] on the wire (clean NMEA, a real fix, 10 sats, HDOP 1.06).
 
+**[HW-VERIFIED 2026-10-22, this BSP]** The `gps_i2c` example got a strong fix on
+hardware (29 satellites, HDOP ~0.6) over the shared bus, with the whole proven
+discipline in play (reopen-once, 300 ms timeout guard, bus lock held for the
+multi-frame cycle). Two bring-up notes worth having:
+
+- **Confirm the module with a bus scan before suspecting firmware.** A one-shot
+  I²C scan at boot settles it in seconds. On this board the onboard chips answer
+  at `0x18` (codec), `0x24` (expander), `0x34` (AXP2101), `0x38` (touch), `0x51`
+  (RTC), `0x6B` (IMU) and `0x70`. **The LC76G shows up at `0x50`** when wired
+  right. If `0x50` is absent but the onboard set is present, the bus is healthy
+  and the module is the problem — SDA/SCL swapped, wrong module pins, not in I²C
+  mode, or unpowered. (Note `0x51` is the RTC, not the GPS — don't be fooled.)
+- **SDA/SCL swapped is the classic miss.** First bring-up here had the external
+  LC76G's SDA/SCL reversed: every onboard device answered, `0x50` did not, and
+  the GPS cycle failed every time. Un-swapping them put `0x50` on the bus and
+  NMEA flowed immediately.
+
 ### LC76G over UART, if you ever rework the selector — [UNVERIFIED on this board]
 
 Documented only so the fleet facts are in one place; **not reachable on the 3.5
@@ -254,7 +271,7 @@ clock on the units tested.
 | 5 GHz scan / receive | HW-VERIFIED | Channels accepted, frames seen |
 | `set_band_mode` after `start` | HW-VERIFIED | Band empty if called earlier |
 | Header UART bonded to chip | **FALSE** (HW-VERIFIED) | 0 edges, 2 units, 2026-10-21 |
-| GPS LC76G over I²C | HW-VERIFIED | 14 sats + touch alive, 2026-10-21 |
+| GPS LC76G over I²C | HW-VERIFIED | 14 sats + touch alive 2026-10-21; BSP 29 sats HDOP 0.6 2026-10-22 |
 | Touch FT6336 (re-open + retry) | HW-VERIFIED | Bring-up |
 | Display ST7796 @80 MHz | HW-VERIFIED | 2026-10-18 |
 | Battery AXP2101 | HW-VERIFIED | Readout |

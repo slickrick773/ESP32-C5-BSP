@@ -8,6 +8,7 @@
 // Console: USB-Serial-JTAG at 115200. Wire: LC76G SDA->27, SCL->26, VCC->3V3,
 // GND->GND.
 #include <Arduino.h>
+#include <Wire.h>
 #include <chip/esp32c5_i2c_bus.h>
 #include <board/ws_c5_35/ws_c5_35_pins.h>
 #include <board/ws_c5_35/ws_c5_35_gps.h>
@@ -22,6 +23,18 @@ void setup() {
 
     // GPS needs only the bus, not the display/expander, so open it directly.
     Esp32C5::I2cBus::begin(I2C_SDA, I2C_SCL, I2C_HZ);
+
+    // One-shot bus scan: confirm the LC76G is on the bus before blaming
+    // firmware. Expect 0x50 for the LC76G alongside the board's own chips
+    // (0x18 codec, 0x24 expander, 0x34 PMU, 0x38 touch, 0x51 RTC, 0x6B IMU).
+    // If 0x50 is absent, the module is not in I2C mode or SDA/SCL are swapped.
+    Serial.print("[scan] I2C:");
+    for (uint8_t a = 0x08; a <= 0x77; a++) {
+        Wire.beginTransmission(a);
+        if (Wire.endTransmission() == 0) Serial.printf(" 0x%02X", a);
+    }
+    Serial.println("  (expect 0x50 = LC76G)");
+
     Gps::begin();
 }
 
