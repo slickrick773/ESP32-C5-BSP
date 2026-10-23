@@ -2,6 +2,7 @@
 // See ws_c5_35_expander.h. Bring-up sequence verified on hardware.
 #include "ws_c5_35_expander.h"
 #include "ws_c5_35_pins.h"
+#include "../../chip/esp32c5_i2c_bus.h"
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -31,7 +32,10 @@ bool begin() {
     // would blank it, so this guard makes a repeat call a safe no-op.
     if (s_ready) return true;
 
-    Wire.begin(I2C_SDA, I2C_SCL, I2C_HZ);
+    // Open the shared bus through the C5 I2C core (creates the lock too), so
+    // every owner -- expander, touch, codec, PMU, GPS -- shares one bus and one
+    // reopen/lock discipline.
+    Esp32C5::I2cBus::begin(I2C_SDA, I2C_SCL, I2C_HZ);
 
     // Mark the three signals as outputs, then bring the rail up TOGETHER with
     // both resets released -- resetting the touch chip while its rail is off

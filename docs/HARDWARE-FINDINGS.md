@@ -190,6 +190,37 @@ keep the bus from wedging:
 - **Re-open once per transaction, never between steps (GPS).** Same re-open
   quirk; do it once before the transaction and never mid-cycle.
 
+The BSP puts all three behind one chip-level core (`src/chip/esp32c5_i2c_bus`):
+`reopen()` (the one re-open), a `TimeoutGuard` (save/restore Wire's timeout), a
+non-blocking `lock()` so an owner can skip a frame instead of stalling behind a
+long transaction, and a 9-clock `recover()` for a wedged bus.
+
+### The touch-break story (why FT6336 feels the way it does)
+
+**[HW-VERIFIED 2026-10-22.]** Getting touch from "works but stiff" to smooth was
+three separate lessons, all on this shared bus:
+
+1. **Re-open ONCE per read, not per retry.** The first cut re-opened the bus
+   (`Wire.end()`/`Wire.begin()`) before *each* of three read attempts. A re-open
+   measures ~2.2 ms on this board, so three per read put idle polling at
+   ~150 Hz and added latency you could feel. Re-opening once at the top of the
+   read and then retrying the register read *without* re-opening again put idle
+   polling at ~**444 Hz (~2.2 ms/poll)** — the re-open is the whole cost, so
+   paying it once is the fix. The first read still happens right after a
+   re-open, which is what makes it complete.
+2. **Bridge dropped reads (dropout grace).** The FT6336 intermittently returns
+   "no points" for a single read *even with a finger held down*. Reported raw,
+   that reads as a finger-lift, so a drag keeps letting go and a still-hold grab
+   loses its timer. Holding the last contact for a short grace window (~90 ms)
+   across a missed read bridges the glitch; a real release outlasts the window
+   and still registers as up. This is what `Touch::poll()` adds over
+   `Touch::read()`.
+3. **Skip, don't stall, when the bus is busy.** Touch takes the bus lock
+   non-blocking: if another owner (a GPS cycle) holds it, touch returns a
+   dropped read for that frame rather than blocking, and the grace window above
+   hides the gap. A blocking touch read behind a ~50 ms GPS cycle is exactly
+   what made taps register as swipes on the first GPS bring-up.
+
 ### Display, touch, expander, battery, audio — bring-up summary
 
 **[HW-VERIFIED].** Full detail and pin map in [BOARD-WS-C5-35.md](BOARD-WS-C5-35.md).

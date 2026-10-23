@@ -41,15 +41,30 @@ void setup() {
 }
 
 void loop() {
+    // Use poll() (dropout-bridged) so a drag stays smooth. Time it so the feel
+    // can be judged against numbers, not just by thumb.
+    static uint32_t winStart = 0, iters = 0, hits = 0, usSum = 0, usMax = 0;
+
+    const uint32_t t0 = micros();
     uint16_t x, y;
-    if (Touch::read(x, y)) {
-        // Touch is reported in native-portrait coords (0..319 x, 0..479 y);
-        // map to the landscape rotation used above so the dot lands under the
-        // finger: landscape x = touch y, landscape y = (PANEL_W-1) - touch x.
+    const bool down = Touch::poll(x, y);
+    const uint32_t dt = micros() - t0;
+
+    iters++; usSum += dt; if (dt > usMax) usMax = dt;
+    if (down) {
+        hits++;
+        // Native-portrait coords (0..319 x, 0..479 y) mapped to the landscape
+        // rotation: landscape x = touch y, landscape y = (PANEL_W-1) - touch x.
         const int lx = y;
         const int ly = (PANEL_W - 1) - x;
         tft.fillCircle(lx, ly, 3, TFT_CYAN);
-        Serial.printf("[touch] raw x=%u y=%u -> screen %d,%d\n", x, y, lx, ly);
-        delay(20);
+    }
+
+    const uint32_t now = millis();
+    if (now - winStart >= 1000) {
+        Serial.printf("[touch] %lu polls/s, %lu hits, avg %lu us, max %lu us\n",
+                      (unsigned long)iters, (unsigned long)hits,
+                      (unsigned long)(iters ? usSum / iters : 0), (unsigned long)usMax);
+        winStart = now; iters = hits = usSum = usMax = 0;
     }
 }
