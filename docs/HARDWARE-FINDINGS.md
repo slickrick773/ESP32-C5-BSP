@@ -129,25 +129,33 @@ the GPS solution uses.
 
 > **R-selector mechanism — [SCHEMATIC-CONFIRMED] 2026-10-23.** The official
 > Waveshare schematic (see Sources) confirms what the fleet had only inferred
-> from behaviour: GPIO0/1/11/12 each sit on a 0-ohm selector that routes the pin
-> to **either the camera connector or the header**, and these are marked
-> `0R NC`:
+> from behaviour: several module GPIOs sit on a 3-pad 0-ohm selector — pad 1 is
+> the chip pin, pad 2 is the on-board function, pad 3 is the J3 header — marked
+> `0R NC` (the `0R` is fitted to pad 2, pad 3 is left `NC`):
 >
-> | Selector | Module GPIO | Camera side | Header side |
+> | Selector | Module GPIO | Pad 2 (0R, fitted) | Pad 3 (NC → header) |
 > |---|---|---|---|
-> | R55 | GPIO0 | CAM_D0 | GPIO0_OUT |
-> | R56 | GPIO11 | CAM_PCLK | U0TXD |
-> | R58 | GPIO1 | CAM_D1 | GPIO1_OUT |
-> | R59 | GPIO12 | CAM_VSYNC | U0RXD |
+> | R55 | GPIO0 | CAM_D0 | GPIO0_OUT → J3-15 |
+> | R58 | GPIO1 | CAM_D1 | GPIO1_OUT → J3-17 |
+> | R56 | GPIO11 | CAM_PCLK | U0TXD → J3-26 |
+> | R59 | GPIO12 | CAM_VSYNC | U0RXD → J3-28 |
+> | R57 | GPIO9 | SD card CS | GPIO9_OUT → J3-19 |
 >
-> The resistor designators match the fleet's guess exactly (R56/R59 for
-> GPIO11/12, R55/R58 for GPIO0/1). With the header side left open (`NC`) as
-> shipped, GPIO11/12 route to the camera even on no-camera units — which is
-> precisely why the firmware pin-probe saw **0 edges** on the header's GPIO12 on
-> two boards. Schematic confirms the *mechanism*; the *as-shipped* open state is
-> confirmed by that hardware probe. A resistor rework (move the GPIO12 selector
-> to the header side) would in principle restore header UART, but the shipping,
-> no-rework solution is I²C (below), which needs no soldering.
+> The designators match the fleet's guess exactly (R56/R59 for GPIO11/12, R55/R58
+> for GPIO0/1), and R57 adds GPIO9: **header pin J3-19 is also NC as shipped**,
+> not a live SD-card pin. With the header side (pad 3) left open on all of them,
+> GPIO0/1/9/11/12 route to their on-board function even on no-camera units —
+> which is precisely why the firmware pin-probe saw **0 edges** on the header's
+> GPIO12 on two boards.
+>
+> **Which pad is connected is proved on-board, not just assumed:** R57's pad 2 is
+> the SD-card CS, and the SD card *works* — so pad 2 (the fitted `0R`) is the
+> connected side and pad 3 (`NC`) is the open header side, on every selector.
+> That pins the read direction empirically. Schematic confirms the *mechanism*,
+> the working SD card confirms the *pad direction*, and the two-board pin-probe
+> confirms the *as-shipped* open state. A rework (move a selector's `0R` from pad
+> 2 to pad 3) would restore that header pin but cut its on-board function (for
+> R57, the SD card); the shipping, no-rework solution is I²C (below), no solder.
 >
 > The same schematic also confirms the pin map: GPIO26 = SCL, GPIO27 = SDA
 > (shared I²C), the LCD SPI pins (MISO 2, DC 5, SCLK 6, MOSI 7, CS 8), and the
