@@ -71,6 +71,16 @@ Download mode: flashing is native-USB auto-download on the units tested (no
 button dance needed). If auto-enter ever fails: **hold BOOT, tap RST, release
 BOOT**, then flash.
 
+**Never assign a UART to GPIO13/14 — they are the native USB D-/D+ lines.**
+[HW-VERIFIED] Because the console rides native USB (above), GPIO13 and GPIO14
+are the USB-Serial-JTAG D-/D+ pins. Opening a hardware UART on them — e.g. a
+GPS wired to `GPS_RX 13` / `GPS_TX 14` — makes the board **drop off USB at
+boot**: no console, and auto-download breaks so every reflash needs the
+BOOT+RST dance. Observed in a downstream port that inherited a UART GPS on
+14/13; undefining that GPS restored USB and auto-download. There is no reason
+to put a UART there anyway — this board's GPS is on the shared I²C bus (see the
+GPS section below), and the header UART is dead as shipped (below).
+
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 
 **[HW-VERIFIED]** The C5 is 2.4 + 5 GHz. The order of operations is the trap:
