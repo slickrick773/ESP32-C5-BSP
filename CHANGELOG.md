@@ -18,7 +18,9 @@ evidence and claim tags.
   `0x18` bit 3, present `0x00` bit 3, percent `0xA4`) — no XPowersLib required,
   for toolchains that can't pull it in.
 - **The USB link stalls on some data patterns during large transfers** — chunk
-  the transfer (~512 KB read / ~4 KB write) to work around it.
+  the transfer (512 KB write segments; 64 KB → 4 KB reads with a shifted retry)
+  to work around it. Now has a tool: **`tools/c5flash`**, an esptool-5.x wrapper
+  that does the chunking + retry + verify on the ROM loader (`--no-stub`).
 - **Panel can go black on a USB→battery switch or after a USB reset** (symptom
   verified; cause flagged UNVERIFIED — a power-rail dip is suspected). A `RST`
   clears it.

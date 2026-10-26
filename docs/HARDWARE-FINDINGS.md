@@ -83,12 +83,17 @@ GPS section below), and the header UART is dead as shipped (below).
 
 ### The USB link stalls on some data patterns during large transfers
 
-**[HW-VERIFIED 2026-10-26].** During a large read or write over the native USB
-link, the C5's ROM/USB stack can stall on certain data patterns — a flash or a
-full-image dump hangs mid-transfer with no error. Chunking the transfer around
-it works (e.g. ~512 KB read / ~4 KB write windows). This is the USB stack
-itself, not the GPIO13/14 trap above, and not a cabling issue — the same image
-transfers fine once chunked.
+**[HW-VERIFIED 2026-10-26].** Over the native USB link the C5's ROM loader stalls
+**deterministically at fixed addresses** on large transfers — the same block
+fails every time (`Packet content transfer stopped` / `chip stopped
+responding`), so it is data/address-dependent, not random noise or a bad cable
+(the same image transfers fine once chunked). A single large erase (≈2 MB) also
+drops USB, while 512 KB erases are fine. Work around it with small operations
+plus a retry on the failing piece: **write** in 512 KB segments, **read** in
+64 KB windows falling back to 4 KB with a shifted start offset. This board also
+runs everything on the ROM loader — the esptool **stub crashes** on this rev (at
+the baud change and on reads), so always `--no-stub`. The
+[`tools/c5flash`](../tools/c5flash) helper in this repo implements all of this.
 
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 

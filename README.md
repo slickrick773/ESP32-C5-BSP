@@ -70,6 +70,8 @@ examples/   one standalone PlatformIO project per capability
             single_core            single-core task pinning
             reliability_reference  capstone: Wi-Fi + GPS + touch + battery
 docs/       hardware findings, per-board notes, build guide
+tools/      c5flash   ROM-loader flash read/write that chunks around the
+                      C5 USB large-transfer stall
 ```
 
 Built as an Arduino library first (the proven code is Arduino/C++). The hardware
