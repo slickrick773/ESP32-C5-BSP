@@ -81,6 +81,15 @@ BOOT+RST dance. Observed in a downstream port that inherited a UART GPS on
 to put a UART there anyway — this board's GPS is on the shared I²C bus (see the
 GPS section below), and the header UART is dead as shipped (below).
 
+### The USB link stalls on some data patterns during large transfers
+
+**[HW-VERIFIED 2026-10-26].** During a large read or write over the native USB
+link, the C5's ROM/USB stack can stall on certain data patterns — a flash or a
+full-image dump hangs mid-transfer with no error. Chunking the transfer around
+it works (e.g. ~512 KB read / ~4 KB write windows). This is the USB stack
+itself, not the GPIO13/14 trap above, and not a cabling issue — the same image
+transfers fine once chunked.
+
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 
 **[HW-VERIFIED]** The C5 is 2.4 + 5 GHz. The order of operations is the trap:
@@ -322,6 +331,53 @@ three separate lessons, all on this shared bus:
    is the consumer's concern, not the BSP's. (First hit and fixed on the
    SquachWatch port; mirrored here.)
 
+### NeoPixel is on GPIO27 — which is the I²C SDA line
+
+**[HW-VERIFIED 2026-10-26].** Firmware that inherits a Pancake-style config drives
+a NeoPixel status LED on **GPIO27**. On this board GPIO27 is the shared **I²C SDA**
+line (touch, expander, PMU and GPS all sit on it), so every LED update writes the
+pin and corrupts whatever I²C transaction is in flight. There is no usable
+NeoPixel here — leave the feature off on this board.
+
+> **Related [UNVERIFIED]:** the touch driver's per-read bus re-open (the "stiff"
+> triple `Wire.end()/begin()`, below) may have been compensating for this
+> NeoPixel bus corruption. With the LED disabled it may be removable — to be
+> confirmed on hardware before dropping it, since it also lives in the touch
+> bring-up path.
+
+### Backlight dimming is through the expander, not a `TFT_BL` pin
+
+**[HW-VERIFIED 2026-10-26].** There is no backlight GPIO — `TFT_BL` is `-1`. The
+CH32V006 expander (`0x24`) drives the backlight PWM, so a brightness level is a
+write to the expander's PWM channel, not `ledcWrite()` on a pin. A config that
+leaves `TFT_BL = -1` **without** routing through the expander gets no dimming at
+all — only the on-screen level bar moves while the panel stays full brightness.
+Live dimming confirmed via the expander PWM path.
+
+### Battery: the AXP2101 fuel gauge reads over plain I²C (no XPowersLib needed)
+
+**[HW-VERIFIED 2026-10-26].** The AXP2101 PMU (`0x34`) exposes a fuel gauge you can
+read with raw I²C register reads — handy where XPowersLib can't be pulled in (e.g.
+a CI that doesn't install it):
+
+- `0x03` chip ID — `0x4A` identifies the AXP2101.
+- `0x18` bit 3 — fuel-gauge enable (set it if clear).
+- `0x00` (STATUS1) bit 3 — battery present / cell fitted.
+- `0xA4` — battery percent.
+
+Read `0xA4` only while STATUS1 bit 3 says a cell is fitted; with no cell, hide the
+reading rather than showing a bogus value. Verified: percent shown and rising
+while charging on a cell-fitted unit, and correctly hidden on a cell-less unit.
+
+### Panel can go black on a USB→battery switch or after a USB reset
+
+**[HW-VERIFIED symptom, cause UNVERIFIED, 2026-10-26].** The 3.5" panel has been
+seen to go dark when power switches from USB to battery, and again after an
+esptool USB reset; a hardware **RST** clears it and the board is otherwise fine.
+A power-rail dip across the switchover is suspected, not a GPIO/signal conflict —
+not yet investigated. Flagged so a dark screen right after a reset isn't mistaken
+for a bring-up failure.
+
 ### Display, touch, expander, battery, audio — bring-up summary
 
 **[HW-VERIFIED].** Full detail and pin map in [BOARD-WS-C5-35.md](BOARD-WS-C5-35.md).
@@ -352,6 +408,11 @@ clock on the units tested.
 | Expander CH32V006 | HW-VERIFIED | Backlight/resets |
 | R-selector camera-side mechanism | SCHEMATIC-CONFIRMED | R55/R56/R58/R59, official schematic, 2026-10-23 |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
+| NeoPixel LED on GPIO27 | **unusable** (HW-VERIFIED) | GPIO27 is I²C SDA; LED writes corrupt the bus, 2026-10-26 |
+| Battery AXP2101 via raw I²C regs | HW-VERIFIED | %/charge without XPowersLib; 0x03=0x4A, 0x18.3, 0x00.3, 0xA4, 2026-10-26 |
+| Backlight dimming via expander PWM | HW-VERIFIED | live dimming; `TFT_BL = -1`, driven on the CH32V006, 2026-10-26 |
+| USB stalls on large transfers | HW-VERIFIED | chunk (~512 KB/4 KB) to work around, 2026-10-26 |
+| Panel black on USB→battery / post-reset | symptom HW-VERIFIED, cause UNVERIFIED | RST clears; power-dip suspected, 2026-10-26 |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on
 hardware 2026-10-22: the CH32V006 expander bring-up, the ST7796 display
