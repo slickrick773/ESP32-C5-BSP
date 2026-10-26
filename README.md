@@ -27,12 +27,20 @@ every claim's tag.
 | 3 | LC76G GPS over I²C | ✅ hardware-verified (29 sats, HDOP ~0.6) |
 | 4 | AXP2101 battery readout | ✅ hardware-verified (89% / 4.15 V / charging) |
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
-| 6 | Wi-Fi+GPS+touch capstone ✅ hardware-verified; publish + SquachWatch migration pending |
+| 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
+
+Published (`v0.3.x`) and adopted across the C5 fleet (Marauder, PorkChop, Bruce,
+SquachWatch, GhostESP) — each port self-contained, no BSP dependency upstream.
 
 Chip-level findings that are **hardware-verified on the fleet and documented
 here, but not yet wrapped as BSP code**: the dual-band `set_band_mode()`-after-
 `start()` ordering, 5 GHz channel enumeration, and ES8311 audio bring-up. They
 live in the findings doc until a verified helper lands.
+
+Board-level traps are documented there too: the NeoPixel pin that is really the
+I²C SDA line (GPIO27), the backlight that runs off the expander (no `TFT_BL`
+pin), the AXP2101 fuel gauge read over raw I²C (no XPowersLib needed), the
+GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 
 ## Supported boards
 
@@ -52,11 +60,15 @@ src/
             esp32c5_tasks     single-core-aware task pinning + chip info
   board/    board-specific drivers; one proven board today (the 3.5)
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
-                       gps (LC76G over I²C) · board begin()/name()
+                       gps (LC76G over I²C) · battery (AXP2101) ·
+                       board begin()/name()
 examples/   one standalone PlatformIO project per capability
-            hello_board   display + touch
-            gps_i2c       LC76G GPS over I²C (fix + sat count)
-            single_core   single-core task pinning
+            hello_board            display + touch
+            gps_i2c                LC76G GPS over I²C (fix + sat count)
+            battery                AXP2101 readout (%, voltage, charge state)
+            touch_int              INT-gated touch (skips reads when no finger)
+            single_core            single-core task pinning
+            reliability_reference  capstone: Wi-Fi + GPS + touch + battery
 docs/       hardware findings, per-board notes, build guide
 ```
 
