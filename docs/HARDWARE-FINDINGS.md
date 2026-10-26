@@ -95,6 +95,20 @@ runs everything on the ROM loader — the esptool **stub crashes** on this rev (
 the baud change and on reads), so always `--no-stub`. The
 [`tools/c5flash`](../tools/c5flash) helper in this repo implements all of this.
 
+### Flashing must set the flash mode, or the C5 won't boot (and the screen stays dark)
+
+**[HW-VERIFIED 2026-10-26].** Writing the bootloader (the segment at `0x0`) with
+esptool `--flash-mode keep` leaves a **bad flash-mode byte in the image header**;
+the ROM rejects it — `invalid header: 0x….` → `ets_flash_boot` assert → watchdog
+reboot loop. The app never runs, so **every build "boots" to a dark screen**
+(backlight on) — trivially mistaken for a display/SPI/driver bug (it cost a long
+chase). **The tell is in the ROM log (`invalid header`) — read the console before
+you touch the display.** Fix: write with explicit `--flash-mode dio
+--flash-freq 80m` (merged image at `0x0`, or per-segment). `tools/c5flash` now
+sets these by default (it used `keep`, which was the bug). Enter download mode
+hands-free with `esptool --before usb-reset` once the board boots a healthy app —
+no BOOT-button hold needed.
+
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 
 **[HW-VERIFIED]** The C5 is 2.4 + 5 GHz. The order of operations is the trap:

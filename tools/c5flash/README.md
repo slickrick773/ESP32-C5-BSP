@@ -30,7 +30,11 @@ Example (full image):
 ## How it works
 - **write** — splits each image into 512 KB segments, one `write-flash` per
   segment (up to 4 retries, reconnecting with a reset on retry), then a single
-  `verify-flash` and a watchdog reset.
+  `verify-flash` and a watchdog reset. Writes with explicit
+  `--flash-mode dio --flash-freq 80m` so the bootloader header is patched
+  correctly — **`keep` leaves a bad flash-mode byte and the C5 ROM rejects it**
+  (`invalid header` → reboot loop → every build boots to a dark screen). Override
+  with `C5FLASH_MODE` / `C5FLASH_FREQ` / `C5FLASH_SIZE` if your board differs.
 - **read** — 64 KB windows; on a stall it retries with a shifted start offset,
   then falls back to 4 KB pieces.
 

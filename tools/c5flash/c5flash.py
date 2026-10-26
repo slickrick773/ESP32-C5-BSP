@@ -31,6 +31,15 @@ ESPTOOL = (os.environ.get("C5FLASH_ESPTOOL")
            or shutil.which("esptool") or shutil.which("esptool.py"))
 SEG = 512 * 1024
 
+# Flash params. On the C5, writing the bootloader segment (at 0x0) with "keep"
+# leaves a bad flash-mode byte in the image header, and the ROM rejects it:
+# "invalid header: 0x...." -> ets_flash_boot assert -> watchdog reboot loop. The
+# app never runs and the screen stays dark on every build. Set them explicitly so
+# esptool patches the header. Override via env if your board differs.
+FLASH_MODE = os.environ.get("C5FLASH_MODE", "dio")
+FLASH_FREQ = os.environ.get("C5FLASH_FREQ", "80m")
+FLASH_SIZE = os.environ.get("C5FLASH_SIZE", "keep")
+
 
 def port():
     p = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
@@ -96,8 +105,8 @@ def cmd_write(pairs):
         first = True
         for addr, p in pieces:
             for attempt in range(4):
-                ok, outp = et("--baud", "115200", "write-flash", "-z", "--flash-mode", "keep",
-                              "--flash-freq", "keep", "--flash-size", "keep", hex(addr), p,
+                ok, outp = et("--baud", "115200", "write-flash", "-z", "--flash-mode", FLASH_MODE,
+                              "--flash-freq", FLASH_FREQ, "--flash-size", FLASH_SIZE, hex(addr), p,
                               before="default-reset" if first else "no-reset")
                 if ok:
                     break
