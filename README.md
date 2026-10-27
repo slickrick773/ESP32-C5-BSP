@@ -30,7 +30,7 @@ every claim's tag.
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
 
 Published (`v0.3.x`) and adopted across the C5 fleet (Marauder, PorkChop, Bruce,
-SquachWatch, GhostESP) — each port self-contained, no BSP dependency upstream.
+SquachWatch, GhostESP, AWOKxDAG) — each port self-contained, no BSP dependency upstream.
 
 Chip-level findings that are **hardware-verified on the fleet and documented
 here, but not yet wrapped as BSP code**: the dual-band `set_band_mode()`-after-
@@ -69,6 +69,7 @@ examples/   one standalone PlatformIO project per capability
             touch_int              INT-gated touch (skips reads when no finger)
             single_core            single-core task pinning
             reliability_reference  capstone: Wi-Fi + GPS + touch + battery
+            screen_flush           clears ST7796 image retention (colour cycle)
 docs/       hardware findings, per-board notes, build guide
 tools/      c5flash   ROM-loader flash read/write that chunks around the
                       C5 USB large-transfer stall
