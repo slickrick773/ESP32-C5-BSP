@@ -5,6 +5,29 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
+## [0.3.2] — 2026-10-27
+
+### Added
+- **`examples/screen_flush`** — a standalone example that cycles the panel
+  through full-screen white/black + R/G/B to clear **ST7796 image retention**
+  (the faint ghost a long static, high-contrast screen can leave). Builds clean.
+
+### Fixed
+- **`tools/c5flash` now writes with explicit `--flash-mode dio --flash-freq 80m`.**
+  Writing the bootloader segment with `--flash-mode keep` left a bad flash-mode
+  byte in the image header; the ROM rejected it (`invalid header` →
+  `ets_flash_boot` assert → watchdog reboot loop), so every build "booted" to a
+  dark screen. Read the ROM/console log first when a flash won't boot.
+
+### Changed (hardware findings)
+- **Black panel after a USB reset — cause corrected.** It's the **NeoPixel on
+  GPIO27** (the I²C SDA line) corrupting the shared bus on reset, cleared by
+  disabling the NeoPixel (Marauder #1665) — *not* the power-rail dip the 0.3.1
+  note guessed ("not a GPIO/signal conflict" was wrong for the reset case). The
+  separate **USB→battery** panel-black stays its own symptom, still UNVERIFIED.
+- README: the fleet-adoption list now includes **AWOKxDAG**, and the
+  `screen_flush` example is listed.
+
 ## [0.3.1] — 2026-10-26
 
 ### Added (hardware findings)
