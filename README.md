@@ -50,6 +50,12 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 Other C5 boards can be added against the chip core + board-template structure —
 but none is claimed supported until someone runs it on that hardware.
 
+The Waveshare is one member of a wider **C5 touch-display class** (ESP32-C5 +
+ST7796 320×480 + FT6336) that the fleet's ports already carry side by side. What
+that core is, and exactly how the twin **Marauder Pancake C5** differs, is in
+[docs/C5-TOUCH-CLASS.md](docs/C5-TOUCH-CLASS.md) — so a driver written for one
+board lands on the other.
+
 ## Architecture
 
 ```
