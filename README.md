@@ -30,7 +30,7 @@ every claim's tag.
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
 
 Published (`v0.3.x`) and adopted across the C5 fleet (Marauder, PorkChop, Bruce,
-SquachWatch, GhostESP, AWOKxDAG) — each port self-contained, no BSP dependency upstream.
+SquachWatch, GhostESP, AWOKxDAG, Picoware) — each port self-contained, no BSP dependency upstream.
 
 Chip-level findings that are **hardware-verified on the fleet and documented
 here, but not yet wrapped as BSP code**: the dual-band `set_band_mode()`-after-
