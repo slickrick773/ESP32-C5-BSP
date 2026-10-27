@@ -67,9 +67,12 @@ example does this.
 Reading logs when scripted: use **pyserial** on the usbmodem port at 115200.
 `pio device monitor` needs an interactive TTY and fails when scripted.
 
-Download mode: flashing is native-USB auto-download on the units tested (no
-button dance needed). If auto-enter ever fails: **hold BOOT, tap RST, release
-BOOT**, then flash.
+Download mode: native-USB auto-download works hands-free **on firmware that
+leaves USB alone** (flashed dozens of times with no button dance). It depends on
+the running firmware, though: a build that hijacks **GPIO13/14** (a UART GPS, see
+below) kills native USB, so esptool fails with `No serial data received` and you
+must enter download mode by hand — **hold BOOT, tap RST, release BOOT**, then
+flash.
 
 **Never assign a UART to GPIO13/14 — they are the native USB D-/D+ lines.**
 [HW-VERIFIED] Because the console rides native USB (above), GPIO13 and GPIO14
@@ -356,7 +359,9 @@ three separate lessons, all on this shared bus:
 a NeoPixel status LED on **GPIO27**. On this board GPIO27 is the shared **I²C SDA**
 line (touch, expander, PMU and GPS all sit on it), so every LED update writes the
 pin and corrupts whatever I²C transaction is in flight. There is no usable
-NeoPixel here — leave the feature off on this board.
+NeoPixel here — leave the feature off on this board. This bus corruption is also
+the cause of the **black panel after a USB reset** (see that finding below);
+disabling the NeoPixel fixes both.
 
 > **Related [UNVERIFIED]:** the touch driver's per-read bus re-open (the "stiff"
 > triple `Wire.end()/begin()`, below) may have been compensating for this
@@ -388,14 +393,22 @@ Read `0xA4` only while STATUS1 bit 3 says a cell is fitted; with no cell, hide t
 reading rather than showing a bogus value. Verified: percent shown and rising
 while charging on a cell-fitted unit, and correctly hidden on a cell-less unit.
 
-### Panel can go black on a USB→battery switch or after a USB reset
+### Panel can go black after a USB reset (NeoPixel on GPIO27) — and, separately, on a USB→battery switch
 
-**[HW-VERIFIED symptom, cause UNVERIFIED, 2026-10-26].** The 3.5" panel has been
-seen to go dark when power switches from USB to battery, and again after an
-esptool USB reset; a hardware **RST** clears it and the board is otherwise fine.
-A power-rail dip across the switchover is suspected, not a GPIO/signal conflict —
-not yet investigated. Flagged so a dark screen right after a reset isn't mistaken
-for a bring-up failure.
+**[HW-VERIFIED cause, 2026-10-27].** A black panel (backlight still on) right after
+an esptool USB-triggered reset is the **NeoPixel on GPIO27**. GPIO27 is the shared
+**I²C SDA** line (see *NeoPixel is on GPIO27*, above), so the LED drive on reset
+corrupts the bus the display's expander/touch bring-up rides on. **Disabling the
+NeoPixel (Marauder [#1665](https://github.com/justcallmekoko/ESP32Marauder/pull/1665))
+fixes it.** A hardware **RST** clears a stuck panel in the meantime. An earlier
+note here guessed a power-rail dip "not a GPIO/signal conflict" — that was wrong
+for this case; it is the GPIO27/SDA conflict.
+
+**[symptom HW-VERIFIED, cause UNVERIFIED].** A *separate* black panel seen when
+power switches **USB→battery** is **not** confirmed to share this cause, and #1665
+is not known to fix it — still uninvestigated (a power-rail dip across the
+switchover remains the guess). A hardware **RST** clears it too. Flagged so a dark
+screen right after a reset or a power switch isn't mistaken for a bring-up failure.
 
 ### Display, touch, expander, battery, audio — bring-up summary
 
