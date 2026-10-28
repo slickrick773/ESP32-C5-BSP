@@ -1,0 +1,67 @@
+name: CI
+
+# Build every example on push and PR so a change that breaks the BSP API shows
+# up here as a red X, not three days later in a downstream fleet port that pins
+# to this repo. Each example is a standalone PlatformIO project that pulls the
+# BSP in via `lib_deps = symlink://../../`, so `pio run` in its folder compiles
+# the library too.
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - 'library.properties'
+      - 'library.json'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - 'library.properties'
+      - 'library.json'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - battery
+          - gps_i2c
+          - hello_board
+          - reliability_reference
+          - screen_flush
+          - single_core
+          - touch_int
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The pioarduino platform fork refuses Python 3.14+; pin 3.13.
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # Cache the PlatformIO core + the downloaded pioarduino platform/toolchain
+      # (the slow part of a cold build). Keyed on the example configs so a
+      # platform-pin bump invalidates it.
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('examples/*/platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - name: Build ${{ matrix.example }}
+        run: pio run -d examples/${{ matrix.example }}
