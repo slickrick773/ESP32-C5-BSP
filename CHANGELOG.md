@@ -7,8 +7,9 @@ evidence and claim tags.
 
 ## [0.4.0] — 2026-10-29 (proposed; not yet tagged)
 
-A reliability + tooling release. **No API or pin changes for existing consumers**;
-the changes make the package's packaged behaviour match its reliability promise.
+A reliability + tooling release. **No function-signature or pin changes**; there
+is one behaviour change — `recover()`'s return-value semantics (see below). The
+changes make the package's packaged behaviour match its reliability promise.
 Evidence levels are kept distinct: *host-tested* = logic proven by native mocked
 tests, *compile-tested* = builds in a clean consumer, *hardware-verified* = run on
 a real board (see [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md)).
@@ -22,10 +23,12 @@ a real board (see [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md)).
 - **Touch rejects short reads.** `ftRead()` demands all requested bytes and fails
   on a partial packet instead of zero-filling it, so a truncated read can no longer
   surface as a phantom point near `(0,0)`.
-- **Honest `I2cBus::recover()`.** Returns exactly its observable postcondition — SDA
-  sampled released (high) before the controller restart — and documents that it is
-  not a usability guarantee and that callers hold the lock. No logic change; the
-  prior version could claim success without checking.
+- **`I2cBus::recover()` — return-value semantics changed.** It now returns exactly
+  its observable postcondition: SDA sampled released (high) before the controller
+  restart. Previously an already-released SDA returned `false`, and an unsuccessful
+  recovery could return `true`; both are corrected. The header also now documents
+  that the result is not a usability guarantee and that callers hold the lock. No
+  in-tree caller depended on the old return value.
 
 ### Fixed (tooling — host-tested)
 - **`c5flash`**: the read fallback clamps the final partial chunk (a non-`0x1000`

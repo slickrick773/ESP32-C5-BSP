@@ -53,6 +53,8 @@ the BSP's `library.json` (the consumer does not declare it).
 
 Uses the shared bus + expander + touch + GPS + battery (no display, no TFT_eSPI,
 no display patch). This path is **compile-tested** in a clean isolated project.
+The complete, buildable program (and the display one) is preserved under
+[consumer-check/](consumer-check) — copy it rather than transcribing the steps.
 
 1. Create an isolated project (no `symlink://`, no shared build artifacts).
 2. Copy the scaffolding the library delivers but does not auto-configure:
@@ -71,8 +73,10 @@ no display patch). This path is **compile-tested** in a clean isolated project.
    board_build.partitions = partitions_ota_16mb.csv
    lib_deps = ESP32-C5-BSP=git+file:///abs/path/to/ws-c5-bsp#<commit-or-tag>
    ```
-4. Include the drivers (above), call `WsC5_35::begin()`, `Gps::begin()`,
-   `Battery::begin()`, etc., then `pio run`.
+4. Add `src/main.cpp` — the complete program is
+   [consumer-check/non-display/src/main.cpp](consumer-check/non-display/src/main.cpp)
+   (includes the drivers above and calls `WsC5_35::begin()`, `Gps::begin()`,
+   `Battery::begin()`, `Touch::read()`). Then `pio run`.
 
 ### Recorded evidence (validated against commit `f4d6928`, warm toolchain)
 
