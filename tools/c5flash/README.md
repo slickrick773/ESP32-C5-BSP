@@ -52,4 +52,21 @@ offset is `0x2000` on the C5*.
 - **write + verify** is well exercised — full bootloader + partitions + app in
   ~33 s on the 3.5" board, repeatedly, with no BOOT/RST buttons.
 - **read** is *less* exercised end to end — treat it as working-but-unproven.
+  Its chunking (including partial final chunks), short/failed responses, and the
+  port handling are covered by host tests.
 - Assumes the rev-v1.2 behaviour of always running `--no-stub`.
+
+## Port selection
+
+The port is resolved **once** per invocation and reused for every chunk and
+retry. Auto-detection requires exactly one `/dev/cu.usbmodem*` (macOS) or
+`/dev/ttyACM*` (Linux); with none or several it stops and asks for `--port DEV`
+rather than guessing.
+
+## Tests
+
+Host-only, no hardware (the port glob and the esptool transport are mocked):
+
+```
+python3 test/test_c5flash.py
+```

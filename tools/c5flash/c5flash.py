@@ -12,17 +12,21 @@ Strategy: keep one esptool process per operation but keep each operation small
 offset), retry only the failing piece, then verify.
 
 Needs esptool 5.x (pip install esptool, or set C5FLASH_ESPTOOL to its path).
-Port: first /dev/cu.usbmodem* (macOS) or /dev/ttyACM* (Linux).
+Port: auto-detected when exactly one /dev/cu.usbmodem* (macOS) or /dev/ttyACM*
+(Linux) is present; with none or several, pass --port. The port is resolved ONCE
+per invocation and reused for every chunk and retry.
 
 Usage:
-  c5flash.py read  <start> <end> <out.bin>
-  c5flash.py write <addr> <file> [<addr> <file> ...]      (verifies afterwards)
-  c5flash.py info
+  c5flash.py [--port DEV] read  <start> <end> <out.bin>
+  c5flash.py [--port DEV] write <addr> <file> [<addr> <file> ...]   (verifies after)
+  c5flash.py [--port DEV] info
 
-Status: write + verify is exercised heavily (full bootloader+partitions+app in
-~33 s on the 3.5" board, repeatedly, no buttons). read mode is less exercised
-end to end — treat it as working-but-unproven. Assumes the rev-v1.2 behaviour of
-always running --no-stub (the stub crashes at baud change and on reads).
+Status: write + verify is exercised heavily on hardware (full
+bootloader+partitions+app in ~33 s on the 3.5" board, repeatedly, no buttons).
+The read path's chunking -- including partial final chunks -- is covered by host
+tests (test/test_c5flash.py); end-to-end reads on hardware are still less
+exercised. Assumes the rev-v1.2 behaviour of always running --no-stub (the stub
+crashes at baud change and on reads).
 """
 import glob, os, shutil, subprocess, sys, tempfile
 
@@ -41,17 +45,33 @@ FLASH_FREQ = os.environ.get("C5FLASH_FREQ", "80m")
 FLASH_SIZE = os.environ.get("C5FLASH_SIZE", "keep")
 
 
-def port():
-    p = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
-    if not p:
-        sys.exit("no USB serial port found — is the board connected?")
-    return p[0]
+# The serial port for this invocation, resolved ONCE (see resolve_port) and
+# reused for every esptool call, so a chunked read/write and all its retries talk
+# to the same device even if the board re-enumerates mid-operation.
+PORT = None
+
+
+def resolve_port(explicit=None):
+    """Pick the serial port for this invocation. An explicit --port always wins.
+    Auto mode requires EXACTLY ONE candidate: zero or several is an error (never a
+    silent first-match), because a wrong guess drives the wrong device."""
+    if explicit:
+        return explicit
+    cands = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
+    if not cands:
+        sys.exit("no USB serial port found — is the board connected? (or pass --port)")
+    if len(cands) > 1:
+        sys.exit("multiple serial ports found; pass --port to choose one:\n  "
+                 + "\n  ".join(cands))
+    return cands[0]
 
 
 def et(*args, before="default-reset", after="no-reset", quiet=True):
     if not ESPTOOL:
         sys.exit("esptool not found: install esptool 5.x or set C5FLASH_ESPTOOL")
-    cmd = [ESPTOOL, "--chip", "esp32c5", "--port", port(), "--no-stub",
+    if PORT is None:
+        sys.exit("internal error: serial port not resolved before an esptool call")
+    cmd = [ESPTOOL, "--chip", "esp32c5", "--port", PORT, "--no-stub",
            "--before", before, "--after", after, *args]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if not quiet:
@@ -69,7 +89,8 @@ def read_piece(addr, n):
     if n > 0x1000:
         out = b""
         for a in range(addr, addr + n, 0x1000):
-            d = read_piece(a, 0x1000)
+            chunk = min(0x1000, addr + n - a)   # clamp the final partial piece
+            d = read_piece(a, chunk)
             if d is None:
                 return None
             out += d
@@ -132,15 +153,39 @@ def cmd_info():
             print(line)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
+def parse_port_opt(args):
+    """Pull a global --port DEV (or --port=DEV) out of args; return (dev, rest)."""
+    rest, dev, i = [], None, 0
+    while i < len(args):
+        a = args[i]
+        if a == "--port":
+            if i + 1 >= len(args):
+                sys.exit("--port needs a value")
+            dev = args[i + 1]; i += 2; continue
+        if a.startswith("--port="):
+            dev = a.split("=", 1)[1]; i += 1; continue
+        rest.append(a); i += 1
+    return dev, rest
+
+
+def main(args):
+    global PORT
+    explicit, rest = parse_port_opt(args)
+    if not rest:
         sys.exit(__doc__)
-    c = sys.argv[1]
-    if c == "read" and len(sys.argv) == 5:
-        cmd_read(*sys.argv[2:])
-    elif c == "write" and len(sys.argv) >= 4 and len(sys.argv) % 2 == 0:
-        cmd_write(sys.argv[2:])
+    c = rest[0]
+    # Resolve the port ONCE here; cmd_* and et() reuse it for every chunk/retry.
+    if c in ("read", "write", "info"):
+        PORT = resolve_port(explicit)
+    if c == "read" and len(rest) == 4:
+        cmd_read(*rest[1:])
+    elif c == "write" and len(rest) >= 3 and len(rest) % 2 == 1:
+        cmd_write(rest[1:])
     elif c == "info":
         cmd_info()
     else:
         sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
