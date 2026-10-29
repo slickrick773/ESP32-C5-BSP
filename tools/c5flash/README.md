@@ -13,14 +13,15 @@ that failed.
 ## Requirements
 - Python 3
 - **esptool 5.x** — `pip install esptool`, or point `C5FLASH_ESPTOOL` at the binary.
-- A C5 board on USB. The port is auto-detected (first `/dev/cu.usbmodem*` on
-  macOS, `/dev/ttyACM*` on Linux).
+- A C5 board on USB. The port is auto-detected when exactly one
+  `/dev/cu.usbmodem*` (macOS) or `/dev/ttyACM*` (Linux) is present; with none or
+  several, pass `--port DEV` (see [Port selection](#port-selection)).
 
 ## Usage
 ```
-./c5flash.py write <addr> <file> [<addr> <file> ...]   # writes, then verify-flash
-./c5flash.py read  <start> <end> <out.bin>
-./c5flash.py info                                       # chip type + base MAC
+./c5flash.py [--port DEV] write <addr> <file> [<addr> <file> ...]  # writes, then verify
+./c5flash.py [--port DEV] read  <start> <end> <out.bin>
+./c5flash.py [--port DEV] info                                      # chip type + base MAC
 ```
 Example (full image):
 ```
@@ -61,7 +62,11 @@ offset is `0x2000` on the C5*.
 The port is resolved **once** per invocation and reused for every chunk and
 retry. Auto-detection requires exactly one `/dev/cu.usbmodem*` (macOS) or
 `/dev/ttyACM*` (Linux); with none or several it stops and asks for `--port DEV`
-rather than guessing.
+rather than guessing. An empty `--port=` is rejected, not treated as auto.
+
+This retains the selected port **path** for the whole operation — not a
+guarantee that the path still maps to the same physical device if the board
+re-enumerates mid-operation (that is the cue to re-run).
 
 ## Tests
 

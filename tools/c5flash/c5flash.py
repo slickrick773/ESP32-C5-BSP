@@ -45,9 +45,11 @@ FLASH_FREQ = os.environ.get("C5FLASH_FREQ", "80m")
 FLASH_SIZE = os.environ.get("C5FLASH_SIZE", "keep")
 
 
-# The serial port for this invocation, resolved ONCE (see resolve_port) and
-# reused for every esptool call, so a chunked read/write and all its retries talk
-# to the same device even if the board re-enumerates mid-operation.
+# The serial port PATH for this invocation, resolved ONCE (see resolve_port) and
+# reused for every esptool call, so a chunked read/write and all its retries use
+# the same path. This retains the selected path, NOT a physical-device identity:
+# if the board re-enumerates mid-operation the OS may repoint that path, which is
+# the user's cue to re-run.
 PORT = None
 
 
@@ -55,7 +57,9 @@ def resolve_port(explicit=None):
     """Pick the serial port for this invocation. An explicit --port always wins.
     Auto mode requires EXACTLY ONE candidate: zero or several is an error (never a
     silent first-match), because a wrong guess drives the wrong device."""
-    if explicit:
+    if explicit is not None:
+        if not explicit.strip():
+            sys.exit("--port needs a non-empty value")
         return explicit
     cands = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
     if not cands:

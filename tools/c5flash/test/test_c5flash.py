@@ -85,6 +85,12 @@ class TestPort(unittest.TestCase):
     def test_explicit_port_wins(self):
         self.assertEqual(c5flash.resolve_port("/dev/ttyUSB9"), "/dev/ttyUSB9")
 
+    def test_empty_explicit_rejected(self):
+        # An explicit but empty --port= is a user error, not a request to auto-detect.
+        for bad in ("", "   "):
+            with self.assertRaises(SystemExit):
+                c5flash.resolve_port(bad)
+
     def test_single_candidate(self):
         with mock.patch("glob.glob", side_effect=[["/dev/cu.usbmodemAAA"], []]):
             self.assertEqual(c5flash.resolve_port(None), "/dev/cu.usbmodemAAA")

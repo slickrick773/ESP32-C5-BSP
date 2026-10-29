@@ -5,6 +5,47 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
+## [0.4.0] — 2026-10-29 (proposed; not yet tagged)
+
+A reliability + tooling release. **No API or pin changes for existing consumers**;
+the changes make the package's packaged behaviour match its reliability promise.
+Evidence levels are kept distinct: *host-tested* = logic proven by native mocked
+tests, *compile-tested* = builds in a clean consumer, *hardware-verified* = run on
+a real board (see [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md)).
+
+### Fixed (reliability — host-tested)
+- **One shared-bus locking policy on every runtime client.** `Battery::refresh()`
+  and `Expander::backlight()` now take the shared-bus `Guard` before any bus op and
+  do nothing on a failed acquisition (no reopen, no read/write), matching
+  `Gps::service()`. Previously both touched the bus with no lock, so a battery
+  refresh could tear down the bus inside a GPS transaction in another task.
+- **Touch rejects short reads.** `ftRead()` demands all requested bytes and fails
+  on a partial packet instead of zero-filling it, so a truncated read can no longer
+  surface as a phantom point near `(0,0)`.
+- **Honest `I2cBus::recover()`.** Returns exactly its observable postcondition — SDA
+  sampled released (high) before the controller restart — and documents that it is
+  not a usability guarantee and that callers hold the lock. No logic change; the
+  prior version could claim success without checking.
+
+### Fixed (tooling — host-tested)
+- **`c5flash`**: the read fallback clamps the final partial chunk (a non-`0x1000`
+  read no longer over-reads), auto port-detection requires exactly one candidate
+  (explicit `--port`, empty rejected), and the port path is resolved once per
+  invocation and reused across chunks/retries.
+
+### Added
+- **`test/host/`** — native (no-hardware) mocked regression tests compiling the real
+  drivers (20 assertions: locking, short-read, recovery, lock lifetime).
+- **`tools/c5flash/test/`** — host-only mocked tests (10) for the read/port fixes.
+- **`docs/CONSUMER-SETUP.md`** — the validated clean-consumer install (exact pin,
+  delivered example scaffolding, resolved toolchain), separating the *compile-tested*
+  non-display path from the still-*unvalidated* display path.
+
+### Changed
+- Version metadata aligned to `0.4.0` across `library.json`, `library.properties`,
+  and `ESP32C5_BSP.h` (the header previously reported a stale `0.3.0`). Historical
+  tags are retained.
+
 ## [0.3.2] — 2026-10-27
 
 ### Added

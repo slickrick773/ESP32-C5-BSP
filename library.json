@@ -1,6 +1,6 @@
 {
   "name": "ESP32-C5-BSP",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Board-support package that makes the ESP32-C5 stable and reproducible: shared-I2C discipline, LC76G GPS over I2C, ST7796 display, FT6336 touch, AXP2101 battery, CH32V006 expander, plus reusable C5 chip-level helpers.",
   "keywords": "esp32-c5, bsp, waveshare, st7796, ft6336, axp2101, lc76g, i2c",
   "repository": {
