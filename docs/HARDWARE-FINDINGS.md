@@ -100,17 +100,35 @@ the baud change and on reads), so always `--no-stub`. The
 
 ### Flashing must set the flash mode, or the C5 won't boot (and the screen stays dark)
 
-**[HW-VERIFIED 2026-10-26].** Writing the bootloader (the segment at `0x0`) with
-esptool `--flash-mode keep` leaves a **bad flash-mode byte in the image header**;
+**[HW-VERIFIED 2026-10-26].** Writing the bootloader (the segment at `0x2000` —
+see the offset note below) with esptool `--flash-mode keep` leaves a **bad
+flash-mode byte in the image header**;
 the ROM rejects it — `invalid header: 0x….` → `ets_flash_boot` assert → watchdog
 reboot loop. The app never runs, so **every build "boots" to a dark screen**
 (backlight on) — trivially mistaken for a display/SPI/driver bug (it cost a long
 chase). **The tell is in the ROM log (`invalid header`) — read the console before
 you touch the display.** Fix: write with explicit `--flash-mode dio
---flash-freq 80m` (merged image at `0x0`, or per-segment). `tools/c5flash` now
-sets these by default (it used `keep`, which was the bug). Enter download mode
-hands-free with `esptool --before usb-reset` once the board boots a healthy app —
-no BOOT-button hold needed.
+--flash-freq 80m` (a merged factory image written at `0x0`, or per-segment with
+the bootloader at `0x2000`). `tools/c5flash` now sets these by default (it used
+`keep`, which was the bug). Enter download mode hands-free with `esptool --before
+usb-reset` once the board boots a healthy app — no BOOT-button hold needed.
+
+### Bootloader offset is `0x2000` on the C5, not `0x0`
+
+**[HW-VERIFIED 2026-10-29].** The C5 ROM loads the second-stage bootloader from
+`0x2000` — the 8 KB below it is reserved for the flash-encryption key manager —
+unlike the S3/C3/C6, which load it from `0x0`. So hand-flash the bootloader at
+`0x2000`, the partition table at `0x8000`, and the app at `0x10000`. Writing the
+bootloader at `0x0` instead leaves `0x2000` holding bootloader *code*; the ROM
+reads that non-`0xE9` word as the image header and reboot-loops on `invalid
+header: 0x…` — the **same dark-screen symptom as the flash-mode bug above, a
+different cause**. Seen on a rev-v1.2 board (ROM `esp32c5-eco3-20250704`): the
+rejected header value was exactly the bootloader's own bytes at its internal
+offset `0x2000`; re-flashing the bootloader at `0x2000` is the fix. `pio run -t
+upload` already gets this right — the PlatformIO `espidf.py` builder derives
+`upload.bootloader_offset` = `0x2000` for `esp32c5` / `esp32p4` — so only
+hand-flashing via `c5flash` / `esptool` needs the explicit offset. (Source:
+ESP-IDF C5 bootloader guide + the on-disk pio builder.)
 
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 

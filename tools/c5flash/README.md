@@ -24,8 +24,18 @@ that failed.
 ```
 Example (full image):
 ```
-./c5flash.py write 0x0 bootloader.bin 0x8000 partitions.bin 0xe000 boot_app0.bin 0x10000 app.bin
+./c5flash.py write 0x2000 bootloader.bin 0x8000 partitions.bin 0xe000 boot_app0.bin 0x10000 app.bin
 ```
+**The bootloader goes at `0x2000` on the ESP32-C5**, not `0x0` like the S3/C3/C6 —
+the 8 KB below it is reserved for the flash-encryption key manager, and the C5 ROM
+loads the second-stage bootloader from `0x2000`. Writing it at `0x0` leaves `0x2000`
+holding bootloader *code*, so the ROM reads a non-`0xE9` word there, prints
+`invalid header` and reboot-loops to a dark screen. `pio run -t upload` handles this
+automatically (the PlatformIO `espidf.py` builder sets `upload.bootloader_offset` =
+`0x2000` for `esp32c5` / `esp32p4`); only hand-flashing needs the explicit offset.
+Partition table stays at `0x8000`, app at `0x10000`. See
+[../../docs/HARDWARE-FINDINGS.md](../../docs/HARDWARE-FINDINGS.md) → *Bootloader
+offset is `0x2000` on the C5*.
 
 ## How it works
 - **write** — splits each image into 512 KB segments, one `write-flash` per

@@ -31,7 +31,7 @@ ESPTOOL = (os.environ.get("C5FLASH_ESPTOOL")
            or shutil.which("esptool") or shutil.which("esptool.py"))
 SEG = 512 * 1024
 
-# Flash params. On the C5, writing the bootloader segment (at 0x0) with "keep"
+# Flash params. On the C5, writing the bootloader segment (at 0x2000) with "keep"
 # leaves a bad flash-mode byte in the image header, and the ROM rejects it:
 # "invalid header: 0x...." -> ets_flash_boot assert -> watchdog reboot loop. The
 # app never runs and the screen stays dark on every build. Set them explicitly so
