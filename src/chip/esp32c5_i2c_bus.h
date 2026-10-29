@@ -39,7 +39,12 @@ void reopen();
 // torn down mid-flight can leave the controller stuck, taking every device with
 // it). Pulses SCL up to 9 times to let the slave finish, then reopens. Reads
 // the lines with digitalRead only, so it issues no transaction of its own.
-// Returns true if the bus looked wedged and was recovered.
+//
+// Returns true iff SDA is observed RELEASED (high) at return -- i.e. the bus is
+// not held low and is usable, whether it was never wedged or the pulses freed
+// it. Returns false iff SDA is still held low (recovery did not free the bus) or
+// begin() has not run. The result is only ever this final digitalRead, an
+// inference about electrical state; confirm genuine recovery on hardware.
 bool recover();
 
 // Serialise bus owners. lock() blocks up to timeoutMs (0 = non-blocking try,

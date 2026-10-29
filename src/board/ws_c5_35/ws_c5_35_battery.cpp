@@ -46,7 +46,17 @@ bool begin() {
 
 void refresh() {
     if (!s_present) return;
-    Bus::reopen();   // C5 read quirk: re-open before the read burst
+
+    // Shared-bus policy: take the lock before ANY bus operation, and if it is
+    // not acquired do nothing at all -- no reopen, no read. Without this a
+    // battery refresh could Wire.end()/begin() and read the PMU in the middle of
+    // a GPS multi-frame transaction in another task, corrupting it. Mirrors
+    // Gps::service(): wait briefly, then skip this refresh (the snapshot is
+    // cached, so a skipped cycle just serves the previous values).
+    Bus::Guard g(100);
+    if (!g) return;
+
+    Bus::reopen();   // C5 read quirk: re-open before the read burst (lock held)
     s_batt = s_pmu.isBatteryConnect();
     s_pct  = s_pmu.getBatteryPercent();   // -1 when the gauge has no reading
     s_vmv  = s_pmu.getBattVoltage();

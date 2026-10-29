@@ -67,6 +67,12 @@ bool begin() {
 
 void backlight(uint8_t duty) {
     if (!s_ready) return;
+    // Shared-bus policy: this is a runtime bus write, so take the lock first and
+    // perform no bus operation if it is not acquired (another owner -- a GPS
+    // cycle, a battery refresh -- is mid-transaction). A skipped backlight write
+    // just leaves the brightness unchanged until the next call.
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return;
     exioWrite(EXIO_PWM_REG, duty);
 }
 

@@ -24,8 +24,17 @@ static bool ftRead(uint8_t reg, uint8_t* buf, uint8_t len) {
     Wire.beginTransmission(FT6336_ADDR);
     Wire.write(reg);
     if (Wire.endTransmission(false) != 0) return false;
-    Wire.requestFrom((int)FT6336_ADDR, (int)len);
-    for (uint8_t i = 0; i < len; i++) buf[i] = Wire.available() ? Wire.read() : 0;
+    // Reject a short read instead of zero-filling it. requestFrom returns the
+    // number of bytes actually received; the C5 bus can drop a transfer
+    // mid-flight, and the old code substituted 0 for the missing bytes and
+    // returned success -- which let parsePoint accept a phantom point near
+    // (0,0). A partial packet must never become a coordinate: demand all `len`
+    // bytes, drain any partial remainder, and fail otherwise.
+    if (Wire.requestFrom((int)FT6336_ADDR, (int)len) != (int)len) {
+        while (Wire.available()) Wire.read();
+        return false;
+    }
+    for (uint8_t i = 0; i < len; i++) buf[i] = (uint8_t)Wire.read();
     return true;
 }
 

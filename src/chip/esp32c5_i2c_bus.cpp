@@ -29,11 +29,11 @@ void reopen() {
 }
 
 bool recover() {
-    if (!s_up) return false;
-    // If SDA is high the bus is not wedged by a stuck slave; nothing to do.
+    if (!s_up) return false;   // not initialised -- cannot recover
     pinMode(s_sda, INPUT_PULLUP);
     pinMode(s_scl, INPUT_PULLUP);
-    if (digitalRead(s_sda) == HIGH) { reopen(); return false; }
+    // Not wedged: SDA is already released, so the bus is usable -- report success.
+    if (digitalRead(s_sda) == HIGH) { reopen(); return true; }
 
     // Pulse SCL up to 9 times so a mid-byte slave can finish and release SDA.
     pinMode(s_scl, OUTPUT_OPEN_DRAIN);
@@ -41,8 +41,13 @@ bool recover() {
         digitalWrite(s_scl, LOW);  delayMicroseconds(5);
         digitalWrite(s_scl, HIGH); delayMicroseconds(5);
     }
+    // Honest result: the return value is exactly the observable postcondition --
+    // SDA released (high) now. If a slave is still holding it low the pulses did
+    // not free the bus, and we say so rather than claiming a recovery we cannot
+    // see. reopen() after the read so the controller restarts on a clean bus.
+    const bool released = (digitalRead(s_sda) == HIGH);
     reopen();
-    return true;
+    return released;
 }
 
 bool lock(uint32_t timeoutMs) {
