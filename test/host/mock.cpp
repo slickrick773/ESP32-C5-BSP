@@ -77,9 +77,10 @@ void mockWireSetResponse(int reqRet, const uint8_t* bytes, int n) {
 
 // ---- FreeRTOS semaphore ----
 int g_takeResult = pdTRUE;
+int g_giveCount  = 0;
 SemaphoreHandle_t xSemaphoreCreateMutex()              { return (void*)1; }
 int  xSemaphoreTake(SemaphoreHandle_t, TickType_t)     { return g_takeResult; }
-void xSemaphoreGive(SemaphoreHandle_t)                 {}
+void xSemaphoreGive(SemaphoreHandle_t)                 { g_giveCount++; }
 
 // ---- XPowersLib stub state ----
 int g_pmuBeginResult = 1;

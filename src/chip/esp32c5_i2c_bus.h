@@ -32,7 +32,8 @@ void begin(int sda, int scl, uint32_t hz);
 
 // Re-open the bus (Wire.end + Wire.begin on the remembered pins). Call once at
 // the start of a read transaction on the C5; see sharp edge (1) above. No-op if
-// begin() has not run.
+// begin() has not run. Does NOT acquire the lock: a runtime caller must already
+// hold it (via lock()/Guard) around reopen() and the transaction it precedes.
 void reopen();
 
 // 9-clock recovery for a bus wedged by a slave holding SDA low (a transaction
@@ -40,11 +41,15 @@ void reopen();
 // it). Pulses SCL up to 9 times to let the slave finish, then reopens. Reads
 // the lines with digitalRead only, so it issues no transaction of its own.
 //
-// Returns true iff SDA is observed RELEASED (high) at return -- i.e. the bus is
-// not held low and is usable, whether it was never wedged or the pulses freed
-// it. Returns false iff SDA is still held low (recovery did not free the bus) or
-// begin() has not run. The result is only ever this final digitalRead, an
-// inference about electrical state; confirm genuine recovery on hardware.
+// Returns true iff SDA is observed RELEASED (high) when sampled, just BEFORE the
+// controller is reopened. That is the whole guarantee: SDA was not being held low
+// at that instant (whether it was never wedged or the pulses freed it). It does
+// NOT assert that the bus is usable or that any peripheral will respond -- those
+// require an actual transaction and hardware confirmation. Returns false iff SDA
+// is still held low, or begin() has not run.
+//
+// Like reopen(), recover() does NOT acquire the lock; a runtime caller must hold
+// it around the call.
 bool recover();
 
 // Serialise bus owners. lock() blocks up to timeoutMs (0 = non-blocking try,

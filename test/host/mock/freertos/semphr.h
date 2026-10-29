@@ -7,6 +7,7 @@
 typedef void* SemaphoreHandle_t;
 
 extern int g_takeResult;   // value xSemaphoreTake returns (pdTRUE / pdFALSE)
+extern int g_giveCount;    // number of xSemaphoreGive() calls (lock releases)
 
 SemaphoreHandle_t xSemaphoreCreateMutex();
 int               xSemaphoreTake(SemaphoreHandle_t s, TickType_t ticks);

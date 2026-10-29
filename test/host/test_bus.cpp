@@ -11,6 +11,12 @@ namespace Bus = Esp32C5::I2cBus;
 
 int main() {
     g_failures = 0;
+
+    // Before begin(): the bus is uninitialised, so recovery cannot run and must
+    // report failure rather than claim success. (Checked before begin() below.)
+    std::printf("recover() before begin():\n");
+    CHECK(Bus::recover() == false, "recover() == false before begin() (uninitialised)");
+
     Bus::begin(27, 26, 100000);   // sets pins, creates the mutex, marks the bus up
 
     std::printf("recover() returns an observable success condition:\n");
@@ -40,6 +46,20 @@ int main() {
     busOps = 0;
     { Bus::Guard g(0); if (g) busOps++; }
     CHECK(busOps == 1, "Guard body runs when the lock is acquired");
+
+    std::printf("lock lifetime: acquire pairs with exactly one release:\n");
+
+    // A Guard that takes the lock releases it (one give) on scope exit.
+    g_takeResult = pdTRUE;
+    int gives = g_giveCount;
+    { Bus::Guard g(0); }
+    CHECK(g_giveCount == gives + 1, "Guard releases the lock (one give) on scope exit");
+
+    // A Guard that fails to take the lock must NOT release one it never held.
+    g_takeResult = pdFALSE;
+    gives = g_giveCount;
+    { Bus::Guard g(0); }
+    CHECK(g_giveCount == gives, "a failed Guard does not release a lock it never held");
 
     std::printf("test_bus: %d failure(s)\n", g_failures);
     return g_failures;

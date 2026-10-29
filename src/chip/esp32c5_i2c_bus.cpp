@@ -32,7 +32,8 @@ bool recover() {
     if (!s_up) return false;   // not initialised -- cannot recover
     pinMode(s_sda, INPUT_PULLUP);
     pinMode(s_scl, INPUT_PULLUP);
-    // Not wedged: SDA is already released, so the bus is usable -- report success.
+    // Not wedged: SDA is already released. Report that (it is a statement about
+    // SDA only, not about whether the bus or any peripheral is actually usable).
     if (digitalRead(s_sda) == HIGH) { reopen(); return true; }
 
     // Pulse SCL up to 9 times so a mid-byte slave can finish and release SDA.
@@ -41,12 +42,12 @@ bool recover() {
         digitalWrite(s_scl, LOW);  delayMicroseconds(5);
         digitalWrite(s_scl, HIGH); delayMicroseconds(5);
     }
-    // Honest result: the return value is exactly the observable postcondition --
-    // SDA released (high) now. If a slave is still holding it low the pulses did
-    // not free the bus, and we say so rather than claiming a recovery we cannot
-    // see. reopen() after the read so the controller restarts on a clean bus.
+    // Honest result: sample SDA now, BEFORE reopening the controller, and return
+    // exactly that -- SDA observed released (high). If a slave is still holding it
+    // low the pulses did not free it, and we say so rather than claim a recovery
+    // we cannot see. This asserts nothing about bus usability beyond that sample.
     const bool released = (digitalRead(s_sda) == HIGH);
-    reopen();
+    reopen();   // restart the controller after the sample
     return released;
 }
 
