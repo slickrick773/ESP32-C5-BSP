@@ -78,37 +78,55 @@ The complete, buildable program (and the display one) is preserved under
    (includes the drivers above and calls `WsC5_35::begin()`, `Gps::begin()`,
    `Battery::begin()`, `Touch::read()`). Then `pio run`.
 
-### Recorded evidence (validated against commit `f4d6928`, warm toolchain)
+### Recorded evidence (isolated core, Python 3.13.16)
 
-Build **SUCCESS** — Flash 5.6% (351,710 B), RAM 6.2% (20,388 B). Factory image
-offsets: bootloader `0x2000` / partitions `0x8000` / boot_app0 `0xe000` / app
-`0x10000`. Pin verified: `pio pkg list` → `ESP32-C5-BSP @ 0.3.2+sha.f4d6928`;
-installed `git rev-parse HEAD` = `f4d6928`. Compiled BSP sources:
-`chip/{esp32c5_i2c_bus,esp32c5_tasks}`, `board/ws_c5_35/{board,expander,touch,gps,battery}`.
+Built in a fresh, **unshared** `PLATFORMIO_CORE_DIR` so no other session could
+mutate the packages mid-build:
 
-| Component | Resolved version |
-|-----------|------------------|
+```
+PLATFORMIO_CORE_DIR=<fresh-core> <py3.13>/pio run -e consumer           # non-display
+PLATFORMIO_CORE_DIR=<fresh-core> <py3.13>/pio run -e consumer_display   # display
+```
+
+| Build | Pinned commit (full SHA) | Toolchain | Result | Flash |
+|-------|--------------------------|-----------|--------|-------|
+| non-display | `b5f827160476065eb08c618115e42f8826d4a600` | fresh (cold download) | **SUCCESS** | 5.6% (353,078 B) |
+| non-display | `2f74ad480cc2e02ffade6da6618e3b07b2a0e954` | fresh project, warm core | **SUCCESS** | 5.6% (353,078 B) |
+| display | `2f74ad480cc2e02ffade6da6618e3b07b2a0e954` | fresh project, warm core | **SUCCESS** | 6.0% (380,334 B) |
+
+For each build the pin was verified: `pio pkg list` → `ESP32-C5-BSP @ 0.4.0+sha.<short>`,
+installed `git rev-parse HEAD` == the pinned full SHA, and the installed version
+macros read 0.4.0. Non-display compiled BSP sources:
+`chip/{esp32c5_i2c_bus,esp32c5_tasks}`, `board/ws_c5_35/{board,expander,touch,gps,battery}`;
+the display path adds TFT_eSPI (patched for the C5 via `apply_c5_tft_patch.py`).
+
+| Component | Resolved version (isolated core) |
+|-----------|----------------------------------|
 | platform espressif32 (pioarduino) | 55.3.312 |
-| framework-arduinoespressif32 (arduino-esp32) | 3.3.12 |
-| framework-arduinoespressif32-libs (ESP-IDF base) | 5.5.5+sha.b774170 |
+| framework-arduinoespressif32 | 3.3.12 |
+| framework-arduinoespressif32-libs | 5.5.5+sha.b774170ff46 |
 | toolchain-riscv32-esp | 14.2.0+20260121 |
 | tool-esptoolpy | 5.4.0 |
 | XPowersLib (transitive) | 0.3.3 |
 
-This is **compile-tested only** — it was a warm-toolchain isolated build, not a
-fully-cold install, and proves resolution + compilation, not runtime behaviour.
-Runtime behaviour of these drivers is covered separately (hardware-verified in
-HARDWARE-FINDINGS; locking/short-read/recovery logic host-tested in `test/host/`).
+All rows are **compile-tested only** — resolution + compilation, not runtime.
+Runtime behaviour is covered separately: hardware-verified in HARDWARE-FINDINGS; the
+locking / short-read / recovery logic is host-tested in `test/host/`. (An earlier
+`f4d6928` build in a *shared* warm core also passed; cold builds in a *shared* core
+failed spuriously — the isolation note under *Known rough edges* explains why.)
 
-## Display consumer — **NOT YET VALIDATED**
+> The final source/config candidate is validated by pinning a consumer to that
+> commit; the result is appended in the docs-only evidence commit that follows it.
+
+## Display consumer — **compile-tested (not hardware-verified)**
 
 A display consumer additionally needs, from `examples/hello_board/`:
 `apply_c5_tft_patch.py`, `tft_c5/` (the C5 processor port), `wsc5_user_setup.h`,
 plus `bodmer/TFT_eSPI@^2.5.43` in `lib_deps` and `extra_scripts =
 pre:apply_c5_tft_patch.py`. The BSP's `WsC5_35::begin()` brings the panel power and
-ST7796 reset up (via the expander) before `tft.init()`, but **the display consumer
-path has not been exercised by the clean-consumer validation** — treat it as
-unproven until a consumer build of it is run.
+ST7796 reset up (via the expander) before `tft.init()`. This path is now
+**compile-tested** in the isolated core (see Recorded evidence); it is **not**
+hardware-verified by this check — the panel/touch runtime is unproven here.
 
 ## Known rough edges (documented, not yet changed)
 
@@ -117,10 +135,11 @@ unproven until a consumer build of it is run.
 - `test/` and the examples are delivered to consumers (no export filter). Harmless
   to the build (only `src/` compiles); export filtering is deferred pending a test
   of its effect on git vs packaged installs.
-- **A nested `platformio.ini` anywhere in the repo breaks git-install consumer
-  builds.** Because a git dependency clones the whole repo into the consumer's
-  `libdeps/`, a stray project `platformio.ini` there makes the build fail
-  (`FRAMEWORK_LIBS_DIR` → `None`). Found while adding the reproducible consumer
-  programs; mitigated by shipping their config as `platformio.ini.txt`. Note this
-  is a *git-install* hazard that `export.exclude` would not fix (a git clone
-  ignores export rules), so avoidance — not export filtering — is the remedy.
+- **Build consumers in an isolated `PLATFORMIO_CORE_DIR` with a supported Python.**
+  Sharing the core (`~/.platformio`) with another session or tool that is
+  concurrently installing or mutating platform/framework packages can cause
+  spurious resolution failures (e.g. `FRAMEWORK_LIBS_DIR` → `None`) that look like a
+  project or library defect but are not — the same revisions build cleanly in a
+  fresh, unshared core. Use Python 3.10–3.13 (the pioarduino platform refuses 3.14+).
+  (A nested `platformio.ini` inside the cloned library is **not** a cause: the
+  clean-room build of a revision that ships one succeeded.)

@@ -8,7 +8,8 @@ evidence and claim tags.
 ## [0.4.0] — 2026-10-29 (proposed; not yet tagged)
 
 A reliability + tooling release. **No function-signature or pin changes**; there
-is one behaviour change — `recover()`'s return-value semantics (see below). The
+is a **notable return-value compatibility change** — `recover()`'s semantics (see
+below). The
 changes make the package's packaged behaviour match its reliability promise.
 Evidence levels are kept distinct: *host-tested* = logic proven by native mocked
 tests, *compile-tested* = builds in a clean consumer, *hardware-verified* = run on
