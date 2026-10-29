@@ -115,8 +115,12 @@ locking / short-read / recovery logic is host-tested in `test/host/`. (An earlie
 `f4d6928` build in a *shared* warm core also passed; cold builds in a *shared* core
 failed spuriously — the isolation note under *Known rough edges* explains why.)
 
-> The final source/config candidate is validated by pinning a consumer to that
-> commit; the result is appended in the docs-only evidence commit that follows it.
+> **Final-candidate confirmation.** Both consumer paths pinned to the final
+> source/config commit `1199057` (`119905792a07912249da420bfb06a26f2f51c6c1`) build
+> in the isolated core: non-display **SUCCESS** (5.6%, 353,078 B), display
+> **SUCCESS** (6.0%, 380,334 B), each resolving `ESP32-C5-BSP @ 0.4.0+sha.1199057`
+> with version macros 0.4.0. That commit is the tested code/config candidate; this
+> evidence line is the only change since it and is documentation-only.
 
 ## Display consumer — **compile-tested (not hardware-verified)**
 
