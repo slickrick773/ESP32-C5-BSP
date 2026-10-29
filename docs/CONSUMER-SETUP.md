@@ -117,3 +117,10 @@ unproven until a consumer build of it is run.
 - `test/` and the examples are delivered to consumers (no export filter). Harmless
   to the build (only `src/` compiles); export filtering is deferred pending a test
   of its effect on git vs packaged installs.
+- **A nested `platformio.ini` anywhere in the repo breaks git-install consumer
+  builds.** Because a git dependency clones the whole repo into the consumer's
+  `libdeps/`, a stray project `platformio.ini` there makes the build fail
+  (`FRAMEWORK_LIBS_DIR` → `None`). Found while adding the reproducible consumer
+  programs; mitigated by shipping their config as `platformio.ini.txt`. Note this
+  is a *git-install* hazard that `export.exclude` would not fix (a git clone
+  ignores export rules), so avoidance — not export filtering — is the remedy.
