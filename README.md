@@ -57,6 +57,10 @@ that core is, and exactly how the twin **Marauder Pancake C5** differs, is in
 [docs/C5-TOUCH-CLASS.md](docs/C5-TOUCH-CLASS.md) — so a driver written for one
 board lands on the other.
 
+GPS on this board runs over I²C — the LC76G on the shared bus — which needs no
+extra GPIO and leaves the BOOT button free. The I²C and UART options, and the
+trade-offs between them, are in [docs/GPS.md](docs/GPS.md).
+
 ## Architecture
 
 ```
@@ -77,7 +81,7 @@ examples/   one standalone PlatformIO project per capability
             single_core            single-core task pinning
             reliability_reference  capstone: Wi-Fi + GPS + touch + battery
             screen_flush           clears ST7796 image retention (colour cycle)
-docs/       hardware findings, per-board notes, build guide
+docs/       hardware findings, per-board notes, GPS wiring, build guide
 tools/      c5flash   ROM-loader flash read/write that chunks around the
                       C5 USB large-transfer stall
 ```
