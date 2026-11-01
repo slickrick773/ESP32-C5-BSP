@@ -64,6 +64,17 @@ bool begin() {
     return ok;
 }
 
+bool setOutput(uint8_t pin, bool level) {
+    if (!s_ready || pin > 7) return false;
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return false;
+    const uint8_t mask = (uint8_t)(1U << pin);
+    const uint8_t next = level ? (s_output | mask) : (s_output & ~mask);
+    if (!exioWrite(EXIO_OUT_REG, next)) return false;
+    s_output = next;
+    return true;
+}
+
 void backlight(uint8_t duty) {
     if (!s_ready) return;
     // Shared-bus policy: a runtime bus write takes the lock first and performs
