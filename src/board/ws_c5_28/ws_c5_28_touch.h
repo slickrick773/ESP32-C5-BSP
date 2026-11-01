@@ -8,7 +8,7 @@
 // single-byte, STOP-based read at 0x38), and — unlike the 3.5" — the proven
 // 2.8" read path does NOT re-open the bus per read. Mirrored from Rick's
 // working umbravox 2.8" port (device/touch.cpp CST3530 branch + the
-// cst3530_sample.h decode); pending BSP hardware-verification.
+// cst3530_sample.h decode); hardware-verified from this BSP (2026-10-31).
 #pragma once
 
 #include <stdint.h>
@@ -35,8 +35,16 @@ bool read(uint16_t& x, uint16_t& y);
 // read to minReadIntervalMs and bridges a dropped or skipped read by holding
 // the last contact for up to graceMs, so a drag draws a smooth line and a tap
 // does not feel stiff. A real release (no good read for graceMs) returns false.
-// Returns native-portrait panel coords. Pending BSP hardware-verification.
-bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs = 90, uint16_t minReadIntervalMs = 12);
+// Returns native-portrait panel coords. Hardware-verified on the 2.8" board:
+// taps AND continuous dragging track cleanly (2026-10-31).
+//
+// The defaults are tighter than the 3.5"'s FT6336 driver (90/12), from hardware
+// measurement on this board: the CST3530 takes a fresh read every ~8 ms with
+// effectively zero dropouts and reports new coordinates ~every 15 ms, so an 8 ms
+// cadence keeps a fast drag smooth, and it needs far less dropout-bridging than
+// the FT6336 (which the 90 ms grace is tuned for). A looser cadence makes a fast
+// drag read as angular "connect-the-dots".
+bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs = 60, uint16_t minReadIntervalMs = 8);
 
 // Map a native-portrait contact (from read()/poll()) to landscape screen
 // coordinates at ROTATION 1: sx = y, sy = (PANEL_W - 1) - x. Provided so the

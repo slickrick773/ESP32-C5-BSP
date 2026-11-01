@@ -6,14 +6,16 @@ touch controller, behind the same **CH32V006 I/O expander** on a shared I²C
 bus — but wired differently (different display/touch controllers, a different
 I²C bus, a different SPI pinout).
 
-> **Status: ported, pending BSP hardware-verification.** Unlike the 3.5", the
-> BSP's own 2.8" drivers have **not yet been run on hardware from this library.**
-> The pin map, reset timing, ST7789 init and CST3530 read path are **mirrored
-> from Rick's working umbravox 2.8" port**, which *is* hardware-accepted on the
-> physical 2.8" board — so this is a faithful port of proven code, not a guess.
-> It is promoted to "supported", phase by phase, only after `hello_board_28` is
-> flashed from this BSP and confirmed on the real 2.8" board. See the governing
-> law in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md).
+> **Status: hardware-verified (display + touch), 2026-10-31.** `hello_board_28`
+> was flashed from this BSP onto a physical Waveshare ESP32-C5-Touch-LCD-2.8 and
+> confirmed on the real board: the panel lights and renders correctly (readable,
+> landscape, right colors — no inversion/mirror/garble), and CST3530 touch
+> registers taps with sane coordinates and tracks a continuous drag smoothly.
+> The pin map, reset timing, ST7789 init and CST3530 read path were mirrored from
+> Rick's working umbravox 2.8" port and now **run from this library**, so the
+> display + touch phase is legitimately "supported" under the BSP's own law.
+> **Battery, audio and GPS remain later, unverified phases** (see the notes
+> below). See the governing law in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md).
 
 ## Build / flash
 
@@ -23,10 +25,11 @@ is no separate USB-UART bridge. If the board won't auto-enter download mode:
 
 The example (`examples/hello_board_28`) uses the `pioarduino` platform fork and
 drives the ST7789 with **Arduino_GFX** (`moononournation/GFX Library for Arduino
-@ 1.5.5`, the version the umbravox 2.8" port validates this panel with). Build
-with Python 3.10–3.13 (the platform refuses 3.14+).
+@ 1.6.9` — the version umbravox's `^1.5.5` resolves to and builds with; 1.5.5
+does not compile against this C5 Arduino core). Build with Python 3.10–3.13 (the
+platform refuses 3.14+). Flashed hands-free here with `tools/c5flash`.
 
-## Pin map (mirrored from the proven umbravox 2.8" port — pending BSP hw-check)
+## Pin map (hardware-verified on the real 2.8" board, 2026-10-31)
 
 | Function | Detail | Delta vs 3.5" |
 |---|---|---|
@@ -68,11 +71,16 @@ The CST3530 is read very differently from the 3.5"'s FT6336:
   `ny = ((p[7]&0xF0)<<4)|p[5]`, bounds 240×320.
 - **Landscape map** (rotation 1): `sx = ny`, `sy = 239 − nx` (`Touch::toLandscape`).
 - **No per-read bus re-open.** The 3.5"'s FT6336 needs the C5 `Wire.end()/begin()`
-  re-open each read; the CST3530's repeated-START read is proven to work *without*
-  it on the umbravox 2.8" board, so this path omits it. (To be re-confirmed on BSP
-  hardware.)
+  re-open each read; the CST3530's repeated-START read works *without* it —
+  confirmed on the real 2.8" board from this BSP (reads land every ~8 ms with
+  effectively zero dropouts).
 - **No sensitivity register.** The CST3530 has none documented, so there is no
   threshold to set (the FT6336 driver sets one).
+- **Tighter `poll()` cadence than the 3.5".** On-board timing showed the CST3530
+  takes a fresh read every ~8 ms with ~0 dropouts and reports new coordinates
+  ~every 15 ms, so `poll()` defaults to `minReadIntervalMs=8` / `graceMs=60`
+  (vs the FT6336's 90/12). A looser cadence makes a fast drag read as angular
+  "connect-the-dots"; at 8 ms the stroke is smooth (verified with Rick on hw).
 
 The host test `test/host/test_touch_28.cpp` exercises this decode (short-read
 rejection, a valid contact, finger-up, out-of-range, and the landscape map)
@@ -96,6 +104,19 @@ Waveshare ESP32-C5-Touch-LCD-2.8 v1.2.0 schematic (they may be simpler than the
 
 ## Verified in this BSP (on hardware)
 
-**None yet.** First milestone: `hello_board_28` (ST7789 display bring-up +
-CST3530 touch) flashed from this BSP and confirmed on the real 2.8" board. Until
-then every row above is "ported, pending BSP hardware-verification."
+**Display + touch — hardware-verified 2026-10-31.** `hello_board_28` was built
+from this BSP, flashed hands-free with `tools/c5flash` (verify OK), and run on a
+physical Waveshare ESP32-C5-Touch-LCD-2.8:
+
+- **CH32V006 expander** `0x24` brings the panel up on the SDA 0 / SCL 1 bus
+  (serial: `I/O expander 0x24 ready`).
+- **ST7789 display** inits and renders at 320×240 landscape — lit, readable,
+  correct colors (the `0xB0 00 E0` MSB-first RAMCTRL byte order is right: no
+  inversion/mirror/garble), confirmed on glass.
+- **CST3530 touch** `0x58` ACKs (serial: `CST3530 on I2C 0x58 (OK)`), registers
+  taps with sane in-range coordinates, and tracks a continuous drag smoothly at
+  the 8 ms `poll()` cadence.
+
+**Not yet verified (later phases):** battery, audio and GPS — their ICs are not
+yet confirmed against the v1.2.0 schematic, and the LC76G `0x58`/touch clash
+(above) is unresolved. Those remain "ported/planned, pending hardware."

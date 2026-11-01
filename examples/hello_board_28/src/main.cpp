@@ -82,12 +82,14 @@ void setup() {
 }
 
 void loop() {
-    // Pace the loop (~100 Hz). Spinning the draw flat out saturates the single
-    // C5 core and the display SPI, which starves the touch reads so points land
-    // far apart and a drag turns into jagged connect-the-dots.
+    // Sample at ~125 Hz (every 8 ms). On the 2.8" the CST3530 takes a fresh
+    // read every 8 ms with effectively zero dropouts (measured on hardware), and
+    // new coordinates arrive ~every 15 ms; sampling this tight keeps a fast drag
+    // to a few px between points, so the stroke is smooth. A slacker ~10-12 ms
+    // cadence stretches the gaps and the drag reads as angular connect-the-dots.
     static uint32_t last = 0;
     const uint32_t now = millis();
-    if (now - last < 10) return;
+    if (now - last < 8) return;
     last = now;
 
     // Connect consecutive contacts with a line segment so a drag draws a
@@ -102,6 +104,14 @@ void loop() {
         if (plx >= 0) gfx->drawLine(plx, ply, lx, ly, RGB565_CYAN);
         else          gfx->fillCircle(lx, ly, 2, RGB565_CYAN);
         plx = lx; ply = ly;
+        // Throttled serial report so a tap/drag can be checked over USB without
+        // the panel (~5 Hz). Native CST3530 coords (x<240, y<320) then the
+        // landscape screen coords (x<320, y<240).
+        static uint32_t lastPrint = 0;
+        if (now - lastPrint >= 200) {
+            lastPrint = now;
+            Serial.printf("[hello28] touch native=(%u,%u) screen=(%d,%d)\n", x, y, lx, ly);
+        }
     } else {
         plx = -1;   // finger up: break the stroke
     }

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // See ws_c5_28_expander.h. Bring-up sequence mirrored from the umbravox 2.8"
 // port (the `#if defined(WS_C5_28)` branch of its ws_c5_expander.cpp), which is
-// hardware-accepted on the physical 2.8" board. Pending BSP hardware-check.
+// hardware-accepted on the physical 2.8" board, and hardware-verified from this
+// BSP (expander 0x24 ready on the real 2.8" board via hello_board_28, 2026-10-31).
 #include "ws_c5_28_expander.h"
 #include "ws_c5_28_pins.h"
 #include "../../chip/esp32c5_i2c_bus.h"

@@ -28,10 +28,10 @@ on 3.14+.
   **Arduino_GFX** (`moononournation/GFX Library for Arduino @ 1.6.9`),
   reproducing the proven umbravox 2.8" path incl. the MSB-first RAMCTRL
   byte-order fix. No TFT_eSPI user setup and no C5 processor patch (Arduino_GFX
-  drives through the Arduino SPI class). **Status: ported, pending BSP
-  hardware-verification** — it builds clean and is flash-ready, but has not yet
-  been confirmed on the real 2.8" board, so it is the one example not yet
-  "observed working." See [docs/BOARD-WS-C5-28.md](../docs/BOARD-WS-C5-28.md).
+  drives through the Arduino SPI class). **Hardware-verified on the real 2.8"
+  board (2026-10-31):** flashed from this BSP, panel renders correctly and the
+  CST3530 tracks taps + a smooth drag at the 8 ms `poll()` cadence. See
+  [docs/BOARD-WS-C5-28.md](../docs/BOARD-WS-C5-28.md).
 - **`gps_i2c/`** — Phase 3. LC76G GNSS over I²C on the shared bus: a one-shot bus
   scan (confirms `0x50` is present), then link health, then fix + satellite
   count. Display-less (no TFT_eSPI). Wire the LC76G to SDA 27 / SCL 26 / 3V3 /

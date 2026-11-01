@@ -18,7 +18,8 @@ namespace Expander {
 // Open the shared I2C bus, mark the control lines as outputs, then pulse the
 // LCD reset and the touch reset (the 2.8"'s specific timing), and bring the
 // backlight up. Idempotent after success. Returns true if the expander
-// answered. Ported from the umbravox 2.8" port; pending BSP hardware-check.
+// answered. Ported from the umbravox 2.8" port; hardware-verified from this BSP
+// (expander 0x24 brings the panel up on the real 2.8" board, 2026-10-31).
 bool begin();
 
 // Was begin() successful?

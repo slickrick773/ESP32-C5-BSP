@@ -24,7 +24,7 @@ const char* boardName();
 // released and the backlight is on) and the CST3530 touch probe. Call once in
 // setup() BEFORE the display driver initialises. Returns true if the expander
 // answered; touch presence is reported separately via Touch::present().
-// Pending BSP hardware-verification.
+// Hardware-verified on the real 2.8" board (display + CST3530 touch, 2026-10-31).
 bool begin();
 
 }  // namespace WsC5_28

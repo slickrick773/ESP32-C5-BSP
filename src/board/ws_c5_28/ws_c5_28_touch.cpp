@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // See ws_c5_28_touch.h. Read path + decode mirrored from the umbravox 2.8"
-// port (device/touch.cpp CST3530 branch, device/cst3530_sample.h), which is
-// hardware-accepted on the physical 2.8" board. Pending BSP hardware-check.
+// port (device/touch.cpp CST3530 branch, device/cst3530_sample.h), and
+// hardware-verified from this BSP on the real 2.8" board (taps + smooth drag
+// via hello_board_28, 2026-10-31).
 #include "ws_c5_28_touch.h"
 #include "ws_c5_28_pins.h"
 #include "ws_c5_28_expander.h"
@@ -52,9 +53,11 @@ static bool writeReg(uint32_t reg, bool stop) {
 // expects every complete packet to be acked). Returns the decoded outcome.
 //
 // Note: NO per-read Wire.end()/begin() reopen here. The 3.5"'s FT6336 needs
-// that C5 workaround; the 2.8"'s CST3530 repeated-START read is proven to work
-// without it on the umbravox 2.8" board, so this path mirrors that. To be
-// re-confirmed on BSP hardware.
+// that C5 workaround; the 2.8"'s CST3530 repeated-START read works without it —
+// confirmed from this BSP on the real 2.8" board via hello_board_28
+// (2026-10-31). Measured there: reads land every ~8 ms with ~0 dropouts, which
+// is why poll()'s 2.8" cadence is tighter than the FT6336's (see the header) —
+// at 8 ms a drag tracks smoothly instead of reading as connect-the-dots.
 static Decoded sample(uint16_t& nx, uint16_t& ny) {
     uint8_t data[9];
     if (!writeReg(CST3530_REG_READ, false)) return Decoded::Fail;

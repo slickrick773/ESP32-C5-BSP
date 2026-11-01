@@ -47,10 +47,9 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 
 - **Waveshare ESP32-C5-Touch-LCD-3.5** — the one fully-proven board. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
-- **Waveshare ESP32-C5-Touch-LCD-2.8** — *ported, pending BSP
-  hardware-verification.* The 2.8" twin (ST7789 240×320, CST3530 touch), with
-  its board layer and `hello_board_28` example mirrored from a proven port but
-  **not yet flashed from this BSP.** Not claimed supported until it is. See
+- **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
+  touch). **Display + touch are hardware-verified** (flashed from this BSP and
+  run on the real board, 2026-10-31); battery/audio/GPS are later phases. See
   [docs/BOARD-WS-C5-28.md](docs/BOARD-WS-C5-28.md).
 
 Other C5 boards can be added against the chip core + board-template structure —
@@ -75,12 +74,13 @@ src/
             esp32c5_i2c_bus   shared-bus discipline: reopen, non-blocking lock,
                               timeout guard, 9-clock recovery
             esp32c5_tasks     single-core-aware task pinning + chip info
-  board/    board-specific drivers; one proven board (the 3.5), one ported
+  board/    board-specific drivers; two hardware-proven boards
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
                        board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
-                       board begin()/name()  — ported, pending BSP hw-check
+                       board begin()/name()  — display + touch hw-verified
+                       (battery/audio/gps later)
 examples/   one standalone PlatformIO project per capability
             hello_board            display + touch (3.5", TFT_eSPI)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
