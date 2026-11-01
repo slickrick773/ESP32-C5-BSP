@@ -17,11 +17,21 @@ on 3.14+.
 
 ## Available
 
-- **`hello_board/`** — Phase 1. Brings the board up through the BSP (expander
-  powers the panel + releases the ST7796 reset), paints the display, prints the
-  board name, and draws a stroke that follows FT6336 touch. Carries its own
-  board manifest, variant, partition table, TFT_eSPI user setup and the ESP32-C5
-  processor patch, so it builds without any other project's toolchain.
+- **`hello_board/`** — Phase 1 (Waveshare 3.5"). Brings the board up through the
+  BSP (expander powers the panel + releases the ST7796 reset), paints the
+  display, prints the board name, and draws a stroke that follows FT6336 touch.
+  Carries its own board manifest, variant, partition table, TFT_eSPI user setup
+  and the ESP32-C5 processor patch, so it builds without any other project's
+  toolchain.
+- **`hello_board_28/`** — Phase 1 for the Waveshare **2.8"** (ST7789 240×320,
+  CST3530 touch). Same proof as `hello_board`, but drives the panel with
+  **Arduino_GFX** (`moononournation/GFX Library for Arduino @ 1.6.9`),
+  reproducing the proven umbravox 2.8" path incl. the MSB-first RAMCTRL
+  byte-order fix. No TFT_eSPI user setup and no C5 processor patch (Arduino_GFX
+  drives through the Arduino SPI class). **Status: ported, pending BSP
+  hardware-verification** — it builds clean and is flash-ready, but has not yet
+  been confirmed on the real 2.8" board, so it is the one example not yet
+  "observed working." See [docs/BOARD-WS-C5-28.md](../docs/BOARD-WS-C5-28.md).
 - **`gps_i2c/`** — Phase 3. LC76G GNSS over I²C on the shared bus: a one-shot bus
   scan (confirms `0x50` is present), then link health, then fix + satellite
   count. Display-less (no TFT_eSPI). Wire the LC76G to SDA 27 / SCL 26 / 3V3 /

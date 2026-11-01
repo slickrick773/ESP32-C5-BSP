@@ -47,13 +47,19 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 
 - **Waveshare ESP32-C5-Touch-LCD-3.5** — the one fully-proven board. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
+- **Waveshare ESP32-C5-Touch-LCD-2.8** — *ported, pending BSP
+  hardware-verification.* The 2.8" twin (ST7789 240×320, CST3530 touch), with
+  its board layer and `hello_board_28` example mirrored from a proven port but
+  **not yet flashed from this BSP.** Not claimed supported until it is. See
+  [docs/BOARD-WS-C5-28.md](docs/BOARD-WS-C5-28.md).
 
 Other C5 boards can be added against the chip core + board-template structure —
 but none is claimed supported until someone runs it on that hardware.
 
-The Waveshare is one member of a wider **C5 touch-display class** (ESP32-C5 +
-ST7796 320×480 + FT6336) that the fleet's ports already carry side by side. What
-that core is, and exactly how the twin **Marauder Pancake C5** differs, is in
+The Waveshare boards are two members of a wider **C5 touch-display class**
+(ESP32-C5 + an SPI panel + an I²C capacitive touch) that the fleet's ports
+already carry side by side. What the shared core is, how the 2.8" and 3.5"
+differ, and exactly how the twin **Marauder Pancake C5** differs, is in
 [docs/C5-TOUCH-CLASS.md](docs/C5-TOUCH-CLASS.md) — so a driver written for one
 board lands on the other.
 
@@ -69,12 +75,15 @@ src/
             esp32c5_i2c_bus   shared-bus discipline: reopen, non-blocking lock,
                               timeout guard, 9-clock recovery
             esp32c5_tasks     single-core-aware task pinning + chip info
-  board/    board-specific drivers; one proven board today (the 3.5)
+  board/    board-specific drivers; one proven board (the 3.5), one ported
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
                        board begin()/name()
+            ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
+                       board begin()/name()  — ported, pending BSP hw-check
 examples/   one standalone PlatformIO project per capability
-            hello_board            display + touch
+            hello_board            display + touch (3.5", TFT_eSPI)
+            hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
             gps_i2c                LC76G GPS over I²C (fix + sat count)
             battery                AXP2101 readout (%, voltage, charge state)
             touch_int              INT-gated touch (skips reads when no finger)

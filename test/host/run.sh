@@ -9,6 +9,7 @@ CXX=${CXX:-g++}
 FLAGS="-std=c++17 -Imock"
 SRC=../../src
 BOARD=$SRC/board/ws_c5_35
+BOARD28=$SRC/board/ws_c5_28
 BIN=$(mktemp -d)
 fail=0
 
@@ -28,6 +29,7 @@ run_one() {
 run_one test_bus     test_bus.cpp     "$SRC/chip/esp32c5_i2c_bus.cpp"
 run_one test_clients test_clients.cpp "$BOARD/ws_c5_35_battery.cpp" "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 run_one test_touch   test_touch.cpp   "$BOARD/ws_c5_35_touch.cpp"   "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+run_one test_touch_28 test_touch_28.cpp "$BOARD28/ws_c5_28_touch.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 
 rm -rf "$BIN"
 if [ "$fail" -ne 0 ]; then
