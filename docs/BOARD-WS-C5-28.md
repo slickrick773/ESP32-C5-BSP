@@ -86,21 +86,39 @@ The host test `test/host/test_touch_28.cpp` exercises this decode (short-read
 rejection, a valid contact, finger-up, out-of-range, and the landscape map)
 against the real driver.
 
-## Onboard I²C: the GPS address clash to resolve
+## Onboard I²C address map (verified by bus scan, 2026-10-31)
 
-On the 3.5", the LC76G GPS answers at `0x50` / `0x54` / `0x58` on the shared bus.
-On the 2.8", **`0x58` is the CST3530 touch controller** — so the GPS's `0x58`
-("wake") address **clashes with touch.** Before the GPS phase, confirm against
-hardware whether the LC76G on this board uses a different address set, or whether
-the clash forces the GPS onto a different arrangement. This is flagged here so
-the GPS phase starts from the known conflict, not a surprise.
+A scan of the SDA 0 / SCL 1 bus on the real board (expander brought up first)
+found six devices:
 
-Power/audio ICs are **not yet confirmed** against the v1.2.0 schematic: the
-umbravox 2.8" config wires only display + touch + SD. Rick has the 2.8" with its
-included battery + speaker and an LC76G; battery, audio and GPS are **later
-phases**, each to start by confirming the actual charger/amp ICs on the
-Waveshare ESP32-C5-Touch-LCD-2.8 v1.2.0 schematic (they may be simpler than the
-3.5"'s AXP2101/ES8311, or the same).
+| Addr | Device |
+|---|---|
+| `0x18` | **ES8311 audio codec** — same codec as the 3.5" |
+| `0x24` | CH32V006 I/O expander *(verified)* |
+| `0x51` | RTC |
+| `0x58` | CST3530 touch *(verified)* |
+| `0x6B` | IMU |
+| `0x70` | onboard sensor |
+
+What this tells the later phases, grounded in the scan rather than the 3.5"'s
+parts list:
+
+- **Audio = ES8311 at `0x18`**, the *same* codec as the 3.5". The audio phase can
+  largely mirror the 3.5"'s ES8311 path once the 2.8"'s I²S pins and amp are
+  confirmed on the v1.2.0 schematic.
+- **Battery is NOT an I²C PMU.** There is **no AXP2101 (`0x34`)** and no fuel
+  gauge on the bus at all — so the 2.8" does not have the 3.5"'s AXP2101. Its
+  charge/level path is almost certainly a standalone charger IC plus a battery
+  ADC divider on a GPIO; the battery phase must start from the v1.2.0 schematic
+  to find that pin/charger (there are no I²C registers to read here).
+- **GPS:** the LC76G is not wired in this scan. When it is, note that its `0x58`
+  "wake" address **clashes with the CST3530 touch** already at `0x58` — resolve
+  before adding GPS (confirm the LC76G's address set on this board).
+- RTC `0x51`, IMU `0x6B` and the `0x70` sensor are onboard extras not yet
+  wrapped as BSP drivers.
+
+Battery, audio and GPS remain **later, unverified phases** — the scan sets their
+starting point, but none has been built or run yet.
 
 ## Verified in this BSP (on hardware)
 
