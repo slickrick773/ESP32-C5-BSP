@@ -12,9 +12,10 @@ I²C bus, a different SPI pinout).
 > landscape, right colors — no inversion/mirror/garble), and CST3530 touch
 > registers taps with sane coordinates and tracks a continuous drag smoothly.
 > The pin map, reset timing, ST7789 init and CST3530 read path were mirrored from
-> Rick's working umbravox 2.8" port and now **run from this library**, so the
+> the owner's working umbravox 2.8" port and now **run from this library**, so the
 > display + touch phase is legitimately "supported" under the BSP's own law.
-> **Battery, audio and GPS remain later, unverified phases** (see the notes
+> **Speaker playback is also hardware-verified** (the owner heard `audio_28` beeps,
+> 2026-10-31). **Battery, recording and GPS remain unverified** (see the notes
 > below). See the governing law in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md).
 
 ## Build / flash
@@ -35,7 +36,8 @@ platform refuses 3.14+). Flashed hands-free here with `tools/c5flash`.
 |---|---|---|
 | Display (ST7789) | SPI SCLK 6, MOSI 7, **MISO 8**, **CS 10**, **DC 9**; RST on the expander (−1) | MISO 2→8, CS 8→10, DC 5→9; ST7796→ST7789 |
 | Touch (CST3530) | I²C **SDA 0 / SCL 1**, addr **`0x58`**, INT **GPIO5**, 100 kHz | FT6336 `0x38`→CST3530 `0x58`; bus 27/26→0/1 |
-| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset (EXIO1), touch reset (EXIO0), backlight PWM | **no EXIO5 panel rail** on this board |
+| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset (EXIO1), touch reset (EXIO0), speaker amp enable (EXIO3), backlight PWM | **no EXIO5 panel rail** on this board |
+| Audio (ES8311) | I²C `0x18`; BCLK **24**, LRCK **25**, MCU DOUT **26**, MCU DIN **27** (recording unverified); **no MCLK**, clock from BCLK; amp enable **EXIO3** | distinct 2.8-inch pinout |
 | SD | CS **23** | 9→23 |
 | GPS (LC76G) | planned over I²C on the SDA 0 / SCL 1 bus — **address clash to resolve, see below** | same module as 3.5" |
 
@@ -80,7 +82,7 @@ The CST3530 is read very differently from the 3.5"'s FT6336:
   takes a fresh read every ~8 ms with ~0 dropouts and reports new coordinates
   ~every 15 ms, so `poll()` defaults to `minReadIntervalMs=8` / `graceMs=60`
   (vs the FT6336's 90/12). A looser cadence makes a fast drag read as angular
-  "connect-the-dots"; at 8 ms the stroke is smooth (verified with Rick on hw).
+  "connect-the-dots"; at 8 ms the stroke is smooth (verified with the owner on hw).
 
 The host test `test/host/test_touch_28.cpp` exercises this decode (short-read
 rejection, a valid contact, finger-up, out-of-range, and the landscape map)
@@ -103,9 +105,8 @@ found six devices:
 What this tells the later phases, grounded in the scan rather than the 3.5"'s
 parts list:
 
-- **Audio = ES8311 at `0x18`**, the *same* codec as the 3.5". The audio phase can
-  largely mirror the 3.5"'s ES8311 path once the 2.8"'s I²S pins and amp are
-  confirmed on the v1.2.0 schematic.
+- **Audio = ES8311 at `0x18`**. Speaker playback is now verified with
+  `audio_28`; see the corrected pin directions and playback details below.
 - **Battery is NOT an I²C PMU.** There is **no AXP2101 (`0x34`)** and no fuel
   gauge on the bus at all — so the 2.8" does not have the 3.5"'s AXP2101. Its
   charge/level path is almost certainly a standalone charger IC plus a battery
@@ -117,8 +118,8 @@ parts list:
 - RTC `0x51`, IMU `0x6B` and the `0x70` sensor are onboard extras not yet
   wrapped as BSP drivers.
 
-Battery, audio and GPS remain **later, unverified phases** — the scan sets their
-starting point, but none has been built or run yet.
+Battery and GPS remain **later, unverified phases**. The bus scan alone does
+not verify their operation; speaker playback was verified separately.
 
 ## Verified in this BSP (on hardware)
 
@@ -135,6 +136,64 @@ physical Waveshare ESP32-C5-Touch-LCD-2.8:
   taps with sane in-range coordinates, and tracks a continuous drag smoothly at
   the 8 ms `poll()` cadence.
 
-**Not yet verified (later phases):** battery, audio and GPS — their ICs are not
-yet confirmed against the v1.2.0 schematic, and the LC76G `0x58`/touch clash
-(above) is unresolved. Those remain "ported/planned, pending hardware."
+## Audio: ES8311 speaker playback
+
+**Hardware-verified playback, 2026-10-31.** `audio_28` was built from this BSP
+and flashed with `tools/c5flash` (verify OK). the owner confirmed audible repeating
+beeps on the connected speaker: 0.5 seconds on, 1.5 seconds silent. The
+waveform targets 440 Hz at the configured 16 kHz sample rate; actual output
+frequency was not measured.
+This is a listen test, not a measurement of audio quality or a recording test.
+
+- ES8311 control: `0x18` on SDA0/SCL1, using the shared bus lock.
+- I2S: **BCLK=24, LRCK=25, DOUT=26 (MCU → codec DSDIN), DIN=27
+  (codec ADC → MCU, unused for playback)**. **MCLK is not wired**; the codec
+  uses BCLK/SCLK. The initial pin list had DOUT/DIN reversed: DOUT=27 produced
+  silence despite successful codec readbacks and I2S writes. DOUT=26 produced
+  audible beeps, matching [Waveshare's BSP](https://github.com/waveshareteam/ESP32-C5-Touch-LCD-2.8/blob/main/examples/esp-idf/07_audio/components/esp32_c5_touch_lcd_2_8/include/bsp/esp32_c5_touch_lcd_2.8.h).
+- Start **Arduino ESP_I2S** before configuring the codec: 16 kHz, signed 16-bit
+  stereo, identical samples in both channels. Verified volume is `0xE0`, with
+  PCM peak amplitude 1000 and 5 ms tone ramps. Send zero samples in the gaps.
+- Amp enable is **EXIO3 (PA_CTRL)** on the `0x24` expander, not a GPIO.
+  `Expander::setOutput()` preserves the other output bits and reports failures.
+- `src/board/ws_c5_28/ws_c5_28_audio.*` owns codec registers and amplifier
+  control only; ESP_I2S and tone generation stay in `examples/audio_28`.
+  The register sequence follows the proven `porkchop-ws-c5` no-MCLK path.
+
+The first playback implementation crackled throughout the beep. Reducing PCM
+peak from 4000 to 1000 did not resolve it. Correcting DAC OSR register `0x04`
+from `0x10` to Espressif's 16 kHz value `0x20` did not resolve it either.
+
+**the owner confirmed no crackle on 2026-10-31** after precomputing the waveform and
+feeding ESP_I2S from a dedicated priority-5 task, at peak 1000 / volume `0xE0`
+/ DAC OSR `0x20`. Telemetry reported no short writes and a maximum 22 µs gap
+between a write returning and the next write call. This supports the combined
+PCM-delivery change; it does not prove whether scheduling or computation was
+the individual cause. Peak 4000 has not been reverified with this task.
+
+Temporary timing logs were removed after that listen test. The final logging
+cleanup was rebuilt and flashed with c5flash (verify OK). the owner confirmed
+the cleaned build still beeps without crackle on 2026-10-31. See
+[audio_28](../examples/audio_28/README.md) for build/upload steps and test history.
+
+**Not yet verified:** recording, battery and GPS. The LC76G `0x58`/touch clash
+is still unresolved. Display/touch and audio were verified in separate examples;
+simultaneous operation has not been claimed.
+
+### Shutdown behavior and evidence limits
+
+The example now retries amp-disable on codec setup failure, task creation
+failure, or short I2S writes. It attempts silence while retrying and only calls
+I2S shutdown after an acknowledged amp-disable write. Persistent I2C failure
+leaves the retry loop active; simultaneous I2S failure means neither silence
+nor physical clock continuity can be guaranteed. This failure-path change is
+build/host-tested and flashed with c5flash (verify OK). the owner confirmed this build still plays without crackle on 2026-10-31;
+hardware fault injection has not been performed. Normal
+playback generation, task priority, pin mapping, and codec settings are unchanged.
+
+`Audio::end()` disables only the amp, not the codec. Runtime bus operations are
+locked, but expander initialization must occur before concurrent bus clients.
+Host mocks check software behavior under injected faults, not physical wiring.
+Vendor-source review supports pin/register choices; the listen test confirms
+audible, crackle-free playback at the documented level, not ADC capture or
+measured frequency/distortion.

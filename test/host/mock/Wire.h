@@ -39,3 +39,8 @@ extern MockWire Wire;
 // Set the next read response: requestFrom() returns `reqRet`, read()/available()
 // serve `n` bytes from `bytes`.
 void mockWireSetResponse(int reqRet, const uint8_t* bytes, int n);
+
+// Optional register-map mode for codec/expander tests; off for packet tests.
+extern bool g_wireRegisterMode;
+extern uint8_t g_wireRegisters[128][256];
+extern int g_wireFailReg;  // NACK writes to this register; -1 disables

@@ -48,8 +48,9 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 - **Waveshare ESP32-C5-Touch-LCD-3.5** — the one fully-proven board. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
-  touch). **Display + touch are hardware-verified** (flashed from this BSP and
-  run on the real board, 2026-10-31); battery/audio/GPS are later phases. See
+  touch). **Display, touch and speaker playback are hardware-verified**
+  (separate BSP examples, 2026-10-31); recording, battery and GPS remain later
+  phases. the owner confirmed audible 440 Hz beeps from `audio_28`. See
   [docs/BOARD-WS-C5-28.md](docs/BOARD-WS-C5-28.md).
 
 Other C5 boards can be added against the chip core + board-template structure —
@@ -79,11 +80,12 @@ src/
                        gps (LC76G over I²C) · battery (AXP2101) ·
                        board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
-                       board begin()/name()  — display + touch hw-verified
-                       (battery/audio/gps later)
+                       audio (ES8311 playback) · board begin()/name()
+                       (recording/battery/gps later)
 examples/   one standalone PlatformIO project per capability
             hello_board            display + touch (3.5", TFT_eSPI)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
+            audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
             gps_i2c                LC76G GPS over I²C (fix + sat count)
             battery                AXP2101 readout (%, voltage, charge state)
             touch_int              INT-gated touch (skips reads when no finger)

@@ -56,16 +56,41 @@ void     MockWire::end()                     { g_wireEndCount++; }
 void     MockWire::setBufferSize(size_t)     {}
 uint16_t MockWire::getTimeOut()              { return 50; }
 void     MockWire::setTimeOut(uint16_t)      {}
-void     MockWire::beginTransmission(uint8_t) {}
-size_t   MockWire::write(uint8_t)            { g_wireWriteCount++; return 1; }
+bool g_wireRegisterMode = false;
+uint8_t g_wireRegisters[128][256] = {};
+int g_wireFailReg = -1;
+static uint8_t wireAddr, wireReg, wireValue;
+static int wireBytes;
+void MockWire::beginTransmission(uint8_t addr) { wireAddr = addr; wireBytes = 0; }
+size_t MockWire::write(uint8_t b) {
+    if (wireBytes == 0) wireReg = b;
+    else if (wireBytes == 1) wireValue = b;
+    ++wireBytes;
+    ++g_wireWriteCount;
+    return 1;
+}
 size_t   MockWire::write(const uint8_t*, size_t n) { g_wireWriteCount += (int)n; return n; }
-uint8_t  MockWire::endTransmission(bool)     { return g_wireEndTransStatus; }
-int      MockWire::requestFrom(int, int)     { g_wireReadPos = 0; return g_wireReqReturn; }
+uint8_t MockWire::endTransmission(bool) {
+    if (g_wireRegisterMode && wireBytes > 1 && wireReg == g_wireFailReg) return 2;
+    if (g_wireRegisterMode && wireBytes > 1 && !g_wireEndTransStatus)
+        g_wireRegisters[wireAddr][wireReg] = wireValue;
+    return g_wireEndTransStatus;
+}
+int MockWire::requestFrom(int addr, int) {
+    g_wireReadPos = 0;
+    if (g_wireRegisterMode) {
+        g_wireReadBuf[0] = g_wireRegisters[addr][wireReg];
+        g_wireReadLen = 1;
+        return 1;
+    }
+    return g_wireReqReturn;
+}
 int      MockWire::available()               { return g_wireReadLen - g_wireReadPos; }
 int      MockWire::read() {
     return (g_wireReadPos < g_wireReadLen) ? g_wireReadBuf[g_wireReadPos++] : -1;
 }
 MockWire Wire;
+
 
 void mockWireSetResponse(int reqRet, const uint8_t* bytes, int n) {
     g_wireReqReturn = reqRet;

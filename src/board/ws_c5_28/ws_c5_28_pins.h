@@ -6,7 +6,7 @@
 // from Rick's working umbravox 2.8" port and the Waveshare ESP32-C5-Touch-LCD-2.8
 // v1.2.0 schematic, then HARDWARE-VERIFIED from this BSP: display bring-up and
 // CST3530 touch run on the real 2.8" board via hello_board_28 (2026-10-31). See
-// docs/BOARD-WS-C5-28.md. (Battery/audio/GPS remain later, unverified phases.)
+// docs/BOARD-WS-C5-28.md. (Battery/GPS remain unverified; verified audio pins are in ws_c5_28_audio.h.)
 //
 // Deltas vs the 3.5" (ws_c5_35_pins.h): a different display controller
 // (ST7789, not ST7796), a different touch controller (CST3530 at 0x58, not

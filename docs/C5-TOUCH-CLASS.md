@@ -10,8 +10,8 @@ a driver written for one board lands on the other without guesswork.
 > and the ledger in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md)) is proven end to
 > end. The **Waveshare ESP32-C5-Touch-LCD-2.8** (see
 > [BOARD-WS-C5-28.md](BOARD-WS-C5-28.md)) is **hardware-verified for display +
-> touch** (flashed from this BSP and run on the real board, 2026-10-31); its
-> battery/audio/GPS are later, unverified phases. The **Marauder Pancake C5** is
+> touch and speaker playback** (separate BSP examples on the real board,
+> 2026-10-31); recording, battery and GPS are later, unverified phases. The **Marauder Pancake C5** is
 > the community twin, cross-referenced from the scene's shipping configs —
 > **not run on hardware by this BSP.** Treat the 3.5" and the 2.8" display/touch
 > columns as "what we verified," and the Pancake column as "what to expect."

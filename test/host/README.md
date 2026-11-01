@@ -37,3 +37,17 @@ The host tests cover **decision logic only**. They do not — and cannot — pro
   hardware question.
 - **Actual AXP2101 register reads** (XPowersLib is stubbed) and the GPS/touch
   happy-path timing (unchanged by this increment, but not re-run on hardware here).
+
+## 2.8-inch audio coverage
+
+`test_audio_28` checks codec ID/short-read/configuration failures, expander
+output preservation, BCLK selection, the vendor 16 kHz DAC oversampling value,
+volume writes, and amp shutdown. `test_audio_shutdown` compiles the example's
+actual shutdown helper against the real audio/expander drivers and a fake I2S
+transport. It verifies retry/recovery for lock and I2C failures, zero-only
+fallback writes, no I2S shutdown while amp-disable is unconfirmed, and reported
+I2S shutdown failure. Persistent-fault observation is bounded by the host fake;
+the firmware deliberately continues retrying with a scheduler yield.
+
+These are software failure-path checks. They do not prove electrical amp state,
+I2S pin wiring, actual clocks, analog audio quality, or concurrent hardware use.
