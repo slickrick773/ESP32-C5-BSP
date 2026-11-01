@@ -7,7 +7,7 @@
 //   3. the CST3530 touch is read and each touch point is drawn and printed.
 //
 // Display driver: Arduino_GFX (moononournation/GFX Library for Arduino),
-// reproducing Rick's hardware-accepted umbravox 2.8" bring-up exactly. The BSP
+// reproducing the owner's hardware-accepted umbravox 2.8" bring-up exactly. The BSP
 // board layer (src/board/ws_c5_28) is driver-agnostic; the Arduino_GFX
 // dependency is confined to THIS example. A TFT_eSPI variant is a separate,
 // later-validated example.

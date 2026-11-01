@@ -5,7 +5,7 @@
 // the example, because the opcodes (BEGIN_WRITE / WRITE_COMMAND_8 / …) are
 // Arduino_GFX's, and the BSP's src/ stays free of any one graphics library.
 //
-// Copied verbatim from Rick's working umbravox 2.8" port
+// Copied verbatim from the owner's working umbravox 2.8" port
 // (device/ws_c5_28_display.h), which is hardware-accepted on the physical 2.8"
 // board. Upstream attribution: Waveshare ESP32-C5-Touch-LCD-2.8 v1.2.0
 // examples/arduino/06_lvgl_demo/Display_ST7789.cpp (77a7dce). Arduino_GFX

@@ -33,7 +33,7 @@ on 3.14+.
   CST3530 tracks taps + a smooth drag at the 8 ms `poll()` cadence. See
   [docs/BOARD-WS-C5-28.md](../docs/BOARD-WS-C5-28.md).
 - **[`audio_28/`](audio_28/README.md)** — Waveshare **2.8-inch speaker playback**,
-  hardware-verified by Rick hearing repeating 440 Hz beeps (2026-10-31). Uses
+  hardware-verified by the owner hearing repeating 440 Hz beeps (2026-10-31). Uses
   Arduino ESP_I2S with no MCLK, MCU DOUT=26 / DIN=27, and EXIO3 amp enable.
   Codec control stays driver-agnostic in the BSP; recording is not verified.
 - **`gps_i2c/`** — Phase 3. LC76G GNSS over I²C on the shared bus: a one-shot bus
@@ -46,6 +46,10 @@ on 3.14+.
   are skipped when the FT6336 INT line says no finger is down, killing stale /
   phantom points. Serial only — prints that it reports no touch when untouched
   (no phantom) and tracks a finger when down.
+- **[`battery_28/`](battery_28/README.md)** — 2.8-inch raw battery ADC and
+  estimated voltage over the expander, with a screen timer and serial output.
+  Owner-confirmed continued operation after USB removal; voltage accuracy,
+  percentage and charging state are not verified.
 - **`battery/`** — Phase 4. AXP2101 readout via XPowersLib: percentage, cell
   voltage, charge/USB state. Boot I²C scan. Serial only. Needs a LiPo on the
   MX1.25 `BAT` header for percentage/voltage.

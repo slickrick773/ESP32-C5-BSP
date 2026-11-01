@@ -15,7 +15,8 @@ I²C bus, a different SPI pinout).
 > the owner's working umbravox 2.8" port and now **run from this library**, so the
 > display + touch phase is legitimately "supported" under the BSP's own law.
 > **Speaker playback is also hardware-verified** (the owner heard `audio_28` beeps,
-> 2026-10-31). **Battery, recording and GPS remain unverified** (see the notes
+> 2026-10-31). **Battery voltage readout and continued battery-only operation are verified;
+> voltage accuracy, recording and GPS remain unverified** (see the notes
 > below). See the governing law in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md).
 
 ## Build / flash
@@ -107,19 +108,21 @@ parts list:
 
 - **Audio = ES8311 at `0x18`**. Speaker playback is now verified with
   `audio_28`; see the corrected pin directions and playback details below.
-- **Battery is NOT an I²C PMU.** There is **no AXP2101 (`0x34`)** and no fuel
-  gauge on the bus at all — so the 2.8" does not have the 3.5"'s AXP2101. Its
-  charge/level path is almost certainly a standalone charger IC plus a battery
-  ADC divider on a GPIO; the battery phase must start from the v1.2.0 schematic
-  to find that pin/charger (there are no I²C registers to read here).
+- **Battery voltage uses the expander ADC**, not the 3.5-inch AXP2101.
+  Waveshare's battery example reads two little-endian bytes from register
+  `0x06` at `0x24`; the 10-bit sample uses nominal 3.3 V / 3:1 scaling.
+  This corrects the earlier speculation that no I2C battery register existed.
+  See [`battery_28`](../examples/battery_28/README.md) for the pinned source,
+  conversion, failure behavior, and hardware-validation limits. Voltage is
+  not a battery percentage or charge-state measurement.
 - **GPS:** the LC76G is not wired in this scan. When it is, note that its `0x58`
   "wake" address **clashes with the CST3530 touch** already at `0x58` — resolve
   before adding GPS (confirm the LC76G's address set on this board).
 - RTC `0x51`, IMU `0x6B` and the `0x70` sensor are onboard extras not yet
   wrapped as BSP drivers.
 
-Battery and GPS remain **later, unverified phases**. The bus scan alone does
-not verify their operation; speaker playback was verified separately.
+The bus scan alone does not verify battery or GPS operation. The battery
+readout and USB-disconnect test are documented below; GPS remains unverified.
 
 ## Verified in this BSP (on hardware)
 
@@ -176,7 +179,7 @@ cleanup was rebuilt and flashed with c5flash (verify OK). the owner confirmed
 the cleaned build still beeps without crackle on 2026-10-31. See
 [audio_28](../examples/audio_28/README.md) for build/upload steps and test history.
 
-**Not yet verified:** recording, battery and GPS. The LC76G `0x58`/touch clash
+**Not yet verified:** recording, battery-voltage accuracy, charging status and GPS. The LC76G `0x58`/touch clash
 is still unresolved. Display/touch and audio were verified in separate examples;
 simultaneous operation has not been claimed.
 
@@ -197,3 +200,13 @@ Host mocks check software behavior under injected faults, not physical wiring.
 Vendor-source review supports pin/register choices; the listen test confirms
 audible, crackle-free playback at the documented level, not ADC capture or
 measured frequency/distortion.
+
+## Battery voltage and battery-only check
+
+The `battery_28` example reads the expander ADC and displays nominal voltage,
+raw samples, a running seconds counter and a blinking indicator. The serial-only
+build returned raw 425–426 (4113–4123 mV estimated) with USB and battery connected.
+The screen build was flashed with verification OK; the owner confirmed continued
+screen/counter updates after USB was unplugged. Voltage accuracy, cold-start on
+battery, charging state and runtime capacity remain unverified. No battery
+percentage is claimed. GPS wiring and operation remain a separate phase.

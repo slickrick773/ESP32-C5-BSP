@@ -6,7 +6,7 @@
 // expander owns the ST7789 reset (EXIO1), CST3530 touch reset (EXIO0),
 // speaker amplifier enable (EXIO3), and backlight PWM. None of these is a GPIO, so the display
 // cannot come up until the expander has released the resets. begin() does that
-// in the order the hardware needs (mirrored from Rick's working umbravox 2.8"
+// in the order the hardware needs (mirrored from the owner's working umbravox 2.8"
 // port), and is idempotent.
 #pragma once
 

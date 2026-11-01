@@ -3,7 +3,7 @@
 //
 // The second board in the C5 touch-display class. One place for its hardware
 // constants, so nothing downstream has to rediscover them. These were mirrored
-// from Rick's working umbravox 2.8" port and the Waveshare ESP32-C5-Touch-LCD-2.8
+// from the owner's working umbravox 2.8" port and the Waveshare ESP32-C5-Touch-LCD-2.8
 // v1.2.0 schematic, then HARDWARE-VERIFIED from this BSP: display bring-up and
 // CST3530 touch run on the real 2.8" board via hello_board_28 (2026-10-31). See
 // docs/BOARD-WS-C5-28.md. (Battery/GPS remain unverified; verified audio pins are in ws_c5_28_audio.h.)

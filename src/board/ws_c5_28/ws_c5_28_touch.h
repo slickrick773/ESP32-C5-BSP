@@ -6,7 +6,7 @@
 // re-learning the touch API. The controller underneath is different: a CST3530
 // at 0x58, read with a four-byte register and a repeated START (the FT6336 is a
 // single-byte, STOP-based read at 0x38), and — unlike the 3.5" — the proven
-// 2.8" read path does NOT re-open the bus per read. Mirrored from Rick's
+// 2.8" read path does NOT re-open the bus per read. Mirrored from the owner's
 // working umbravox 2.8" port (device/touch.cpp CST3530 branch + the
 // cst3530_sample.h decode); hardware-verified from this BSP (2026-10-31).
 #pragma once

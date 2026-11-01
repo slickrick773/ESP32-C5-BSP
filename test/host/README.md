@@ -51,3 +51,8 @@ the firmware deliberately continues retrying with a scheduler yield.
 
 These are software failure-path checks. They do not prove electrical amp state,
 I2S pin wiring, actual clocks, analog audio quality, or concurrent hardware use.
+
+The `test_battery_28` suite checks 2.8-inch expander ADC decoding and nominal
+voltage conversion, initialization/lock failures, NACK/short/invalid reads,
+caller-data preservation, and read-only sampling. It does not validate physical
+voltage accuracy, charging, or battery presence.
