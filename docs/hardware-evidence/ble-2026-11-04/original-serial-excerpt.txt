@@ -1,0 +1,6 @@
+Selected lines observed from the original running firmware before probe flashing:
+[3145238][E][BLEAdvertising.cpp:1792] start(): Error enabling advertising; rc=519,
+[blues] advertising start failed; will retry
+
+This excerpt establishes the enable failure only. The original application did
+not expose an INTERNAL-largest-block measurement through this serial capture.

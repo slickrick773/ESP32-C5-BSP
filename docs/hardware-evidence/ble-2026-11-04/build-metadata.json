@@ -1,0 +1,7 @@
+{
+  "core": "arduino-esp32 3.3.10",
+  "idf": "5.5.4",
+  "fqbn": "esp32:esp32:esp32c5:PSRAM=enabled,PartitionScheme=huge_app,CDCOnBoot=cdc",
+  "source_sha256": "2ef56760822651d497d12dbfa6d54f73d1c2e5df7b07db747a550a02947f4518",
+  "app_sha256": "332a44597d9f0190105e11bf345de0dfd0c0fdbfe1f8ccd16288658e4678861a"
+}

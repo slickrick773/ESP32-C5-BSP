@@ -1,0 +1,120 @@
+TRIAL target 17500
+ESP-ROM:esp32c5-eco3-20250704
+Build:Jul  4 2025
+rst:0xc (SW_CPU),boot:0x3f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x40810296
+SPI mode:DIO, clock div:1
+load:0x408556b0,len:0x1258
+load:0x4084bba0,len:0xca4
+load:0x4084e5a0,len:0x315c
+entry 0x4084bba0
+E (1273) MSPI Timing: Failed to allocate dummy cacheline for PSRAM memory barrier!
+PROBE core=3.3.10 idf=v5.5.4 psram=8388608
+HEAP before-init cap0_free=211104 cap0_largest=180212 cap1_free=211104 cap1_largest=180212 cap2_free=195188 cap2_largest=180212 failures=0 last_size=0 last_caps=0x0
+HEAP after-gatt cap0_free=172960 cap0_largest=155636 cap1_free=172960 cap1_largest=155636 cap2_free=157044 cap2_largest=155636 failures=0 last_size=0 last_caps=0x0
+CONFIG data_rc=0 scan_rc=0
+Commands: p <target-free-bytes> (pressure 256-byte blocks), f (free alternating blocks), a (start), s (stop), r (release all), x (reboot), h (heap)
+COMMAND p 17500
+HEAP pressure cap0_free=17544 cap0_largest=15348 cap1_free=17544 cap1_largest=15348 cap2_free=1628 cap2_largest=1524 failures=0 last_size=0 last_caps=0x0
+COMMAND a
+HEAP before-start cap0_free=17544 cap0_largest=15348 cap1_free=17544 cap1_largest=15348 cap2_free=1628 cap2_largest=1524 failures=0 last_size=0 last_caps=0x0
+ADV rc=0 active=1
+HEAP after-start cap0_free=16120 cap0_largest=15348 cap1_free=16120 cap1_largest=15348 cap2_free=204 cap2_largest=124 failures=0 last_size=0 last_caps=0x0
+COMMAND h
+HEAP query cap0_free=16120 cap0_largest=15348 cap1_free=16120 cap1_largest=15348 cap2_free=204 cap2_largest=124 failures=0 last_size=0 last_caps=0x0
+TRIAL target 17000
+ESP-ROM:esp32c5-eco3-20250704
+Build:Jul  4 2025
+rst:0xc (SW_CPU),boot:0x3f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x40810296
+SPI mode:DIO, clock div:1
+load:0x408556b0,len:0x1258
+load:0x4084bba0,len:0xca4
+load:0x4084e5a0,len:0x315c
+entry 0x4084bba0
+E (1273) MSPI Timing: Failed to allocate dummy cacheline for PSRAM memory barrier!
+PROBE core=3.3.10 idf=v5.5.4 psram=8388608
+HEAP before-init cap0_free=211104 cap0_largest=180212 cap1_free=211104 cap1_largest=180212 cap2_free=195188 cap2_largest=180212 failures=0 last_size=0 last_caps=0x0
+HEAP after-gatt cap0_free=172960 cap0_largest=155636 cap1_free=172960 cap1_largest=155636 cap2_free=157044 cap2_largest=155636 failures=0 last_size=0 last_caps=0x0
+CONFIG data_rc=0 scan_rc=0
+Commands: p <target-free-bytes> (pressure 256-byte blocks), f (free alternating blocks), a (start), s (stop), r (release all), x (reboot), h (heap)
+COMMAND p 17000
+HEAP pressure cap0_free=17272 cap0_largest=15348 cap1_free=17272 cap1_largest=15348 cap2_free=1356 cap2_largest=1268 failures=0 last_size=0 last_caps=0x0
+COMMAND a
+HEAP before-start cap0_free=17272 cap0_largest=15348 cap1_free=17272 cap1_largest=15348 cap2_free=1356 cap2_largest=1268 failures=0 last_size=0 last_caps=0x0
+ADV rc=0 active=1
+HEAP after-start cap0_free=16192 cap0_largest=15348 cap1_free=16192 cap1_largest=15348 cap2_free=276 cap2_largest=196 failures=1 last_size=292 last_caps=0x80c
+COMMAND h
+HEAP query cap0_free=16192 cap0_largest=15348 cap1_free=16192 cap1_largest=15348 cap2_free=276 cap2_largest=196 failures=28 last_size=292 last_caps=0x80c
+TRIAL target 17500
+ESP-ROM:esp32c5-eco3-20250704
+Build:Jul  4 2025
+rst:0xc (SW_CPU),boot:0x3f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x40810296
+SPI mode:DIO, clock div:1
+load:0x408556b0,len:0x1258
+load:0x4084bba0,len:0xca4
+load:0x4084e5a0,len:0x315c
+entry 0x4084bba0
+E (1273) MSPI Timing: Failed to allocate dummy cacheline for PSRAM memory barrier!
+PROBE core=3.3.10 idf=v5.5.4 psram=8388608
+HEAP before-init cap0_free=211104 cap0_largest=180212 cap1_free=211104 cap1_largest=180212 cap2_free=195188 cap2_largest=180212 failures=0 last_size=0 last_caps=0x0
+HEAP after-gatt cap0_free=172960 cap0_largest=155636 cap1_free=172960 cap1_largest=155636 cap2_free=157044 cap2_largest=155636 failures=0 last_size=0 last_caps=0x0
+CONFIG data_rc=0 scan_rc=0
+Commands: p <target-free-bytes> (pressure 256-byte blocks), f (free alternating blocks), a (start), s (stop), r (release all), x (reboot), h (heap)
+COMMAND p 17500
+HEAP pressure cap0_free=17544 cap0_largest=15348 cap1_free=17544 cap1_largest=15348 cap2_free=1628 cap2_largest=1524 failures=0 last_size=0 last_caps=0x0
+COMMAND a
+HEAP before-start cap0_free=17544 cap0_largest=15348 cap1_free=17544 cap1_largest=15348 cap2_free=1628 cap2_largest=1524 failures=0 last_size=0 last_caps=0x0
+ADV rc=0 active=1
+HEAP after-start cap0_free=16120 cap0_largest=15348 cap1_free=16120 cap1_largest=15348 cap2_free=204 cap2_largest=124 failures=0 last_size=0 last_caps=0x0
+COMMAND h
+HEAP query cap0_free=16120 cap0_largest=15348 cap1_free=16120 cap1_largest=15348 cap2_free=204 cap2_largest=124 failures=0 last_size=0 last_caps=0x0
+TRIAL target 17000
+ESP-ROM:esp32c5-eco3-20250704
+Build:Jul  4 2025
+rst:0xc (SW_CPU),boot:0x3f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x40810296
+SPI mode:DIO, clock div:1
+load:0x408556b0,len:0x1258
+load:0x4084bba0,len:0xca4
+load:0x4084e5a0,len:0x315c
+entry 0x4084bba0
+E (1273) MSPI Timing: Failed to allocate dummy cacheline for PSRAM memory barrier!
+PROBE core=3.3.10 idf=v5.5.4 psram=8388608
+HEAP before-init cap0_free=211104 cap0_largest=180212 cap1_free=211104 cap1_largest=180212 cap2_free=195188 cap2_largest=180212 failures=0 last_size=0 last_caps=0x0
+HEAP after-gatt cap0_free=172960 cap0_largest=155636 cap1_free=172960 cap1_largest=155636 cap2_free=157044 cap2_largest=155636 failures=0 last_size=0 last_caps=0x0
+CONFIG data_rc=0 scan_rc=0
+Commands: p <target-free-bytes> (pressure 256-byte blocks), f (free alternating blocks), a (start), s (stop), r (release all), x (reboot), h (heap)
+COMMAND p 17000
+HEAP pressure cap0_free=17272 cap0_largest=15348 cap1_free=17272 cap1_largest=15348 cap2_free=1356 cap2_largest=1268 failures=0 last_size=0 last_caps=0x0
+COMMAND a
+HEAP before-start cap0_free=17272 cap0_largest=15348 cap1_free=17272 cap1_largest=15348 cap2_free=1356 cap2_largest=1268 failures=0 last_size=0 last_caps=0x0
+ADV rc=0 active=1
+HEAP after-start cap0_free=16192 cap0_largest=15348 cap1_free=16192 cap1_largest=15348 cap2_free=276 cap2_largest=196 failures=1 last_size=292 last_caps=0x80c
+COMMAND h
+HEAP query cap0_free=16192 cap0_largest=15348 cap1_free=16192 cap1_largest=15348 cap2_free=276 cap2_largest=196 failures=28 last_size=292 last_caps=0x80c
+TRIAL target 17500
+ESP-ROM:esp32c5-eco3-20250704
+Build:Jul  4 2025
+rst:0xc (SW_CPU),boot:0x3f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x40810296
+SPI mode:DIO, clock div:1
+load:0x408556b0,len:0x1258
+load:0x4084bba0,len:0xca4
+load:0x4084e5a0,len:0x315c
+entry 0x4084bba0
+E (1273) MSPI Timing: Failed to allocate dummy cacheline for PSRAM memory barrier!
+PROBE core=3.3.10 idf=v5.5.4 psram=8388608
+HEAP before-init cap0_free=211104 cap0_largest=180212 cap1_free=211104 cap1_largest=180212 cap2_free=195188 cap2_largest=180212 failures=0 last_size=0 last_caps=0x0
+HEAP after-gatt cap0_free=172960 cap0_largest=155636 cap1_free=172960 cap1_largest=155636 cap2_free=157044 cap2_largest=155636 failures=0 last_size=0 last_caps=0x0
+CONFIG data_rc=0 scan_rc=0
+Commands: p <target-free-bytes> (pressure 256-byte blocks), f (free alternating blocks), a (start), s (stop), r (release all), x (reboot), h (heap)
+COMMAND p 17500
+HEAP pressure cap0_free=17544 cap0_largest=15348 cap1_free=17544 cap1_largest=15348 cap2_free=1628 cap2_largest=1524 failures=0 last_size=0 last_caps=0x0
+COMMAND a
+HEAP before-start cap0_free=17544 cap0_largest=15348 cap1_free=17544 cap1_largest=15348 cap2_free=1628 cap2_largest=1524 failures=0 last_size=0 last_caps=0x0
+ADV rc=0 active=1
+HEAP after-start cap0_free=16120 cap0_largest=15348 cap1_free=16120 cap1_largest=15348 cap2_free=204 cap2_largest=124 failures=0 last_size=0 last_caps=0x0
+COMMAND h
+HEAP query cap0_free=16120 cap0_largest=15348 cap1_free=16120 cap1_largest=15348 cap2_free=204 cap2_largest=124 failures=0 last_size=0 last_caps=0x0
