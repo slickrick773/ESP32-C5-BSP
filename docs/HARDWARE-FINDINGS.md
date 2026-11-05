@@ -22,6 +22,8 @@ physical board. Each finding is tagged:
 
 - **[HW-VERIFIED]** — observed on real hardware, with the observation noted.
 - **[IDF]** — compiles and the API exists; not independently bench-confirmed here.
+- **[SOURCE-VERIFIED]** — inspected version-pinned source/configuration; not a hardware result.
+- **[USER-REPORTED]** — supplied hardware evidence, not independently reproduced here.
 - **[UNVERIFIED]** — a working theory or an inference, flagged so no one builds on
   it as if it were fact.
 
@@ -129,6 +131,236 @@ upload` already gets this right — the PlatformIO `espidf.py` builder derives
 `upload.bootloader_offset` = `0x2000` for `esp32c5` / `esp32p4` — so only
 hand-flashing via `c5flash` / `esptool` needs the explicit offset. (Source:
 ESP-IDF C5 bootloader guide + the on-disk pio builder.)
+
+### Legacy BLE advertising under internal-RAM pressure (3.3.10)
+
+**[HW-VERIFIED 2026-11-04, failure reproduced over USB serial]** On the
+Waveshare 3.5-inch board running a memory-constrained test application, the
+Arduino NimBLE advertising path repeatedly reports `Error enabling advertising;
+rc=519` after initialization. This verifies the failure, not a universal
+minimum-RAM requirement or successful over-air interoperability.
+
+**[USER-REPORTED hardware measurements, 2026-11-04]** The supplied firmware
+measurements are approximately 20 KB internal free during WiFi scanning, 55 KB
+after `WiFi.mode(WIFI_OFF)`, and 12.5 KB after BLE init + GATT. Initialization
+and host sync succeed; even flags + one 128-bit UUID without scan response fail
+at advertising start. These heap figures have not been independently reproduced
+in that application. WiFi is off during the failing attempt; coexistence tuning
+is not the proposed remedy.
+
+`519 = 0x200 + 0x07`: NimBLE's HCI error namespace plus Memory Capacity Exceeded.
+The failure is at advertising enable, not the earlier payload-setting step.
+This is consistent with controller resource exhaustion, but the return code
+alone does **not** prove a failed general-heap allocation, its size, or
+fragmentation. Controller-private pools can also exhaust.
+
+#### Measure the eligible heap, not the PSRAM-inclusive heap
+
+**[SOURCE-VERIFIED, installed Arduino 3.3.10 and IDF v5.5.4]**
+`ESP.getFreeHeap()` uses `MALLOC_CAP_INTERNAL` (not an explicit `8BIT` mask).
+`ESP.getMaxAllocHeap()` uses that same mask for the largest block. A largest
+block measured with only `MALLOC_CAP_8BIT` includes PSRAM and cannot diagnose
+controller allocation failures. The C5 controller allocation helpers use
+`INTERNAL | 8BIT | DMA`; record this more restrictive mask as well:
+
+```cpp
+#include "esp_heap_caps.h"
+static void logBleHeap(const char *phase) {
+    const uint32_t caps[] = {
+        MALLOC_CAP_INTERNAL,
+        MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT,
+        MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT | MALLOC_CAP_DMA
+    };
+    for (unsigned i = 0; i < 3; ++i) {
+        Serial.printf("%s caps=0x%lx free=%u largest=%u min=%u\n", phase,
+            (unsigned long)caps[i],
+            (unsigned)heap_caps_get_free_size(caps[i]),
+            (unsigned)heap_caps_get_largest_free_block(caps[i]),
+            (unsigned)heap_caps_get_minimum_free_size(caps[i]));
+    }
+}
+```
+
+The isolated bench results below demonstrate both capability exhaustion and
+fragmentation. To establish which applies in the full application, capture before WiFi shutdown, after shutdown and scan-result cleanup, before
+BLE init, after host sync/GATT registration, immediately before advertising,
+and immediately after the return. Record allocation failures with
+`heap_caps_register_failed_alloc_callback`; the callback must not allocate or
+block. Log the saved size/capabilities afterward. Distinguish deliberate test
+pressure failures from new failures during advertising.
+
+The [heap probe](../examples/ble_heap_probe) provides these masks, controlled
+pressure, fragmentation and raw GAP return codes. A threshold is conditional on
+the exact binary, allocation history and advertising mode. Establish it with
+fresh-boot first-start trials, and report lowest passing and highest failing
+**(free, largest)** pairs. Compare similar totals with different largest blocks:
+success after coalescing/freeing a large block implicates fragmentation; a failed
+request larger than all eligible free RAM implicates total capacity. Both can
+limit different runs. Do not convert a net heap delta into the peak allocation
+requirement or treat repeated starts using retained allocations as cold trials.
+
+#### Bench results: free INTERNAL is not the controller's free heap
+
+**[HW-VERIFIED 2026-11-04, isolated probe on the user-confirmed board]** Stock
+3.3.10 / IDF v5.5.4, requested FQBN/options, 8 MB PSRAM reported, WiFi never
+started. Each row below begins with a fresh boot, BLE init, minimal GATT server,
+and successful advertising/empty scan-response data configuration. Pressure is
+applied **after** configuration and **before the first legacy connectable
+advertising enable**. All numbers are bytes immediately before enable.
+
+| Trial | INTERNAL free | INTERNAL largest | INTERNAL\|8BIT\|DMA free | DMA-eligible largest | Result |
+|---|---:|---:|---:|---:|---|
+| Baseline | 172,856 | 155,636 | 156,940 | 155,636 | `rc=0`, active, no allocation failures |
+| ~12.5 KB | 12,648 | 12,276 | 268 | 188 | **`rc=519`, inactive**, failed internal/DMA allocation |
+| ~20 KB | 20,264 | 15,348 | 4,348 | 4,084 | `rc=0`, active, no allocation failures |
+| ~18 KB | 18,088 | 15,348 | 2,172 | 2,036 | `rc=0`, active, no allocation failures |
+| Lowest clean sampled point | 17,544 | 15,348 | 1,628 | 1,524 | `rc=0`, active, no allocation failures |
+| Lower point | 17,272 | 15,348 | 1,356 | 1,268 | `rc=0`, active, **repeated 292-byte allocation failures** |
+| Still lower | 16,728 | 15,348 | 812 | 724 | `rc=0`, active, **repeated 20-byte allocation failures** |
+| Fragmented: alternate pressure blocks freed | 92,888 | 12,276 | 78,604 | 244 | `rc=0`, active, **repeated 292-byte allocation failures** |
+
+For all rows, INTERNAL and INTERNAL|8BIT measurements matched; DMA eligibility
+removed a substantial portion of usable memory. At normal/near-boundary points,
+**15,916 bytes of free INTERNAL RAM were not DMA eligible**. At the ~12.5 KB
+point, pressure also consumed some of that non-DMA memory. The largest INTERNAL
+block alone therefore hides the actual exhausted resource.
+
+The fragmentation trial proves a separate limit: 78,604 eligible free bytes
+cannot satisfy a 292-byte contiguous allocation when the largest eligible block
+is 244 bytes. Releasing the remaining pressure blocks let the active controller
+finish allocating; the failure counter stopped advancing in the recorded
+recovery interval. Retrying `start` while already active returned `2`; this is
+not a second cold-start trial.
+
+**Measured bounds, not a universal minimum:** in this allocation pattern, the
+lowest clean sampled first-start point was 1,628 eligible free bytes with a
+1,524-byte largest block; 1,356/1,268 already produced continuing failures.
+Three additional fresh-boot repeats of the 1,628/1,524 point had zero failures
+through approximately four seconds after start; two additional 1,356/1,268
+repeats each recorded 28 failures by that observation point.
+Thus the clean-start boundary is bracketed within those sampled pairs, not
+specified to the byte. A largest block of 244 is demonstrably insufficient for
+the observed 292-byte request. The exact minimum largest block independently
+of total free was not established. The clean runs retained 1,424 bytes after
+start; that is a net delta, not a measured peak requirement.
+
+**A zero GAP return code and `active=1` are insufficient acceptance criteria.**
+The pressure tests exposed continued controller allocation failures after that
+success indication. No second BLE receiver or application peer was used here:
+these are host/controller start and allocator measurements, **not confirmed
+over-air discovery or a working application-level transfer**. The full
+application's exact heap layout/GATT workload still needs the same instrumentation.
+
+The probe also logged `Failed to allocate dummy cacheline for PSRAM memory
+barrier!` at boot while reporting 8 MB PSRAM. Its cause was not investigated;
+these runs do not validate a custom PSRAM-host build.
+
+Evidence: [raw enable trials](hardware-evidence/ble-2026-11-04/enable-trials.log),
+[boundary repeats](hardware-evidence/ble-2026-11-04/repeat-trials.log),
+[build/source hashes](hardware-evidence/ble-2026-11-04/build-metadata.json), and
+[probe source](../examples/ble_heap_probe/ble_heap_probe.ino).
+
+#### PSRAM and the stock core
+
+**[SOURCE-VERIFIED; PSRAM-host build not hardware-tested here]**
+`CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL=y` routes allocations through the
+host's configurable allocator to `SPIRAM | 8BIT`. It is selectable when PSRAM
+capability allocation or PSRAM malloc integration is enabled. Controller
+internal/DMA allocations remain internal, and ordinary task-stack allocation
+is not automatically migrated by this option.
+
+In this stock build, `CONFIG_BT_LE_MSYS_INIT_IN_CONTROLLER=y` delegates shared
+MSYS initialization to `r_esp_ble_msys_init`. Therefore **do not promise that
+EXTERNAL moves the shared MSYS pools**, or that it recovers the entire reported
+42 KB. Measure the host savings separately. The configured MSYS payload storage
+alone is 24 × 128 + 24 × 320 = 10,752 bytes, before bookkeeping; it is not a
+measurement of movable memory.
+
+Arduino's BLE C++ wrapper is compiled from source, but its IDF NimBLE host and
+controller support are supplied in prebuilt SDK libraries. A sketch `-D` flag or
+local `sdkconfig.defaults` does not rebuild those libraries. Use a consistent
+custom Arduino SDK/library build, or Arduino as an ESP-IDF component with a
+matching supported IDF version, and rebuild affected components. Do not edit
+only `sdkconfig.h`: that can make headers disagree with the linked library.
+PSRAM enabled and `huge_app` alone do not relocate existing internal allocations;
+`huge_app` changes flash partition capacity.
+
+#### Configuration levers for a custom build
+
+**[SOURCE-VERIFIED availability; memory benefit/bridge stability UNVERIFIED]**
+These are configuration candidates, not measured advertising fixes:
+
+| Lever | Stock 3.3.10 / relevance |
+|---|---|
+| `BT_NIMBLE_MAX_CONNECTIONS` | 3; try 1 for one bridge peer. C5 controller defaults derive from the NimBLE setting. `BT_LE_MAX_CONNECTIONS` is gated off with NimBLE, so it is the wrong knob for this build. |
+| `BT_LE_CONN_RESERVED_MEMORY_COUNT` | 2, capped by maximum connections. With max connections 1, reserve 1; setting 0 defers memory demand until connect and can merely move the failure. |
+| `BT_LE_EXT_ADV_RESERVED_MEMORY_COUNT` | 2, capped by configured advertising instances (default mapping here is 1). Kconfig documents preallocation versus later allocation failure for extended instances. Lowering it is not an established fix for legacy enable; legacy behavior needs measurement. |
+| `BT_NIMBLE_MSYS_1_BLOCK_COUNT/SIZE`, `BT_NIMBLE_MSYS_2_BLOCK_COUNT/SIZE` | 24/128 and 24/320. Counts can reduce shared pool footprint in a rebuilt SDK. Start with conservative count reductions and test traffic; retain adequate block sizes for the actual ATT/ACL use. Corresponding `BT_LE_MSYS_*` controls are gated off with NimBLE. |
+| `BT_NIMBLE_TRANSPORT_ACL_FROM_LL_COUNT`, `BT_NIMBLE_TRANSPORT_EVT_COUNT`, `BT_NIMBLE_TRANSPORT_EVT_DISCARD_COUNT` | 24, 30, 8. Reducing counts can reduce baseline resource demand; excessive reduction causes packet/event starvation. No measured reduction of the single enable allocation is established. |
+| `BT_NIMBLE_ROLE_CENTRAL`, `BT_NIMBLE_ROLE_OBSERVER`, `BT_NIMBLE_GATT_CLIENT` | Enabled; disable unused roles/client in a peripheral-only bridge. Keep peripheral, broadcaster and GATT server. |
+| `BT_NIMBLE_ATT_PREFERRED_MTU`, `BT_NIMBLE_ATT_MAX_PREP_ENTRIES` | 256, 64. Tune to protocol requirements; smaller MTU needs application chunking and is not itself a controller advertising-memory fix. |
+| Host/controller task stacks | Both 5120 bytes. Reduce only after stack high-water measurements under connections, security and transfers. |
+| `BT_CTRL_BLE_ADV_REPORT_*`, duplicate-scan caches | Concern scan reports/observer operation, not this peripheral's advertising payload. Not a demonstrated enable fix. |
+| `BT_CTRL_BLE_MAX_ACT` / `BTDM_*` | Other-controller-family advice; not the C5 NimBLE control to paste into this build. |
+
+All listed SDK Kconfig changes require rebuilding the affected SDK components in
+this stock-library workflow. Some controller configuration fields exist at the
+low-level init API, but the normal `BLEDevice::init()` path owns initialization;
+independently changing fields without keeping host/controller limits consistent
+is not a validated shortcut.
+
+A conservative custom-build starting point (not a complete sdkconfig):
+
+```ini
+CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL=y
+# CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_INTERNAL is not set
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
+CONFIG_BT_LE_CONN_RESERVED_MEMORY_COUNT=1
+# CONFIG_BT_NIMBLE_ROLE_CENTRAL is not set
+# CONFIG_BT_NIMBLE_ROLE_OBSERVER is not set
+# CONFIG_BT_NIMBLE_GATT_CLIENT is not set
+CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y
+CONFIG_BT_NIMBLE_ROLE_BROADCASTER=y
+CONFIG_BT_NIMBLE_GATT_SERVER=y
+```
+
+Enable board-appropriate PSRAM and confirm it initializes before NimBLE; resolve
+Kconfig dependencies using the actual SDK, then inspect generated sdkconfig and
+map files. Keep security required by the bridge. Leave buffer sizes and stacks
+unchanged for the first PSRAM-host comparison so the effect can be isolated.
+
+#### Recommended application sequence
+
+1. With the stock core, stop scanning and scan callbacks, release scan results
+   (`WiFi.scanDelete()` for Arduino scan results), turn WiFi off and verify the
+   returned status. Free application-owned capture/scan queues; WiFi shutdown
+   does not free those allocations for the application.
+2. Move eligible UI/history/capture buffers explicitly to PSRAM, checking every
+   allocation. Keep ISR/cache-disabled/DMA-constrained memory in its required
+   region. Avoid assuming default `malloc` chooses PSRAM for small objects.
+3. Instrument the DMA-eligible heap and recover at least the tested clean
+   comparison point (4,348 bytes free / 4,084 largest at ~20 KB INTERNAL) before
+   comparing the full application. This is a bring-up target, not a proven
+   connection/transfer budget. Initialize BLE, register only the required GATT
+   service, and **start
+   advertising before rebuilding optional UI/worker allocations**. Budget for
+   connection, subscription, security and notification bursts too. Starting
+   early changes allocation order; it does not create memory.
+4. If stock-core memory remains insufficient, compare the custom PSRAM-host,
+   single-peer build above. Then reduce selected pool counts one change at a
+   time, recording the same heap snapshots and bridge workload results.
+5. Require remote discovery, an application-level transfer and reconnect before
+   claiming interoperability. A successful GAP start alone is only
+   controller/host enable success.
+
+Source anchors (version-pinned):
+[Arduino heap helpers](https://github.com/espressif/arduino-esp32/blob/3.3.10/cores/esp32/Esp.cpp),
+[Arduino advertising](https://github.com/espressif/arduino-esp32/blob/3.3.10/libraries/BLE/src/BLEAdvertising.cpp),
+[C5 controller allocation](https://github.com/espressif/esp-idf/blob/v5.5.4/components/bt/controller/esp32c5/bt.c),
+[BT allocators](https://github.com/espressif/esp-idf/blob/v5.5.4/components/bt/porting/mem/bt_osi_mem.c),
+[shared MSYS initialization](https://github.com/espressif/esp-idf/blob/v5.5.4/components/bt/porting/mem/os_msys_init.c),
+[NimBLE Kconfig](https://github.com/espressif/esp-idf/blob/v5.5.4/components/bt/host/nimble/Kconfig.in),
+[C5 Kconfig](https://github.com/espressif/esp-idf/blob/v5.5.4/components/bt/controller/esp32c5/Kconfig.in).
 
 ### Dual-band radio: `set_band_mode()` must come AFTER `esp_wifi_start()`
 
@@ -444,6 +676,7 @@ clock on the units tested.
 
 | Capability | Level | Evidence |
 |---|---|---|
+| Legacy BLE enable under pressure | HW-VERIFIED, isolated probe | `rc=519` at 12,648 INTERNAL free / 268 DMA-eligible free; clean sampled start at 17,544 / 1,628; fragmentation also causes failures, 2026-11-04 |
 | Single-core / unicore | HW-VERIFIED | core 0 of 1; createPinnedTask pins to core 0, 2026-10-23 |
 | Console on USB-JTAG @115200 | HW-VERIFIED | Boot/panic logs observed |
 | Arduino `Serial` on USB (CDC_ON_BOOT=1) | HW-VERIFIED | 2026-10-22, hello_board |
