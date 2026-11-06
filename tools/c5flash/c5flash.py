@@ -87,7 +87,9 @@ def read_piece(addr, n):
     for shift in (0, 2, 5, 16, 32, 7, 11):
         fd, path = tempfile.mkstemp(); os.close(fd)
         ok, _ = et("read-flash", hex(addr - shift), str(n + shift), path)
-        data = open(path, "rb").read(); os.unlink(path)
+        with open(path, "rb") as source:
+            data = source.read()
+        os.unlink(path)
         if ok and len(data) == n + shift:
             return data[shift:]
     if n > 0x1000:
@@ -112,7 +114,8 @@ def cmd_read(start, end, out):
             sys.exit(f"read failed at {a:#x}")
         buf += d
         print(f"\rread {a - start + n:>9}/{end - start} bytes", end="", flush=True)
-    open(out, "wb").write(buf)
+    with open(out, "wb") as destination:
+        destination.write(buf)
     print(f"\nwrote {out} ({len(buf)} bytes)")
 
 
@@ -121,11 +124,14 @@ def cmd_write(pairs):
     tmp = tempfile.mkdtemp()
     try:
         for addr_s, path in zip(pairs[::2], pairs[1::2]):
-            addr, data = int(addr_s, 0), open(path, "rb").read()
+            addr = int(addr_s, 0)
+            with open(path, "rb") as source:
+                data = source.read()
             verify += [hex(addr), path]
             for i in range(0, len(data), SEG):
                 p = os.path.join(tmp, f"seg_{addr + i:08x}.bin")
-                open(p, "wb").write(data[i:i + SEG])
+                with open(p, "wb") as segment:
+                    segment.write(data[i:i + SEG])
                 pieces.append((addr + i, p))
         first = True
         for addr, p in pieces:
@@ -141,8 +147,9 @@ def cmd_write(pairs):
             first = False
             print(f"wrote {os.path.getsize(p):>7} bytes at {addr:#09x}")
         ok, outp = et("verify-flash", *verify, before="no-reset", after="watchdog-reset")
-        print("verify:", "OK" if ok and "mismatch" not in outp else "FAILED")
-        if not ok:
+        verified = ok and "mismatch" not in outp.lower()
+        print("verify:", "OK" if verified else "FAILED")
+        if not verified:
             sys.exit(outp[-600:])
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

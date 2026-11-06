@@ -126,5 +126,32 @@ class TestPort(unittest.TestCase):
             self.assertNotIn("/dev/cu.usbmodemBBB", cmd)
 
 
+class TestWrite(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.image = os.path.join(self.tmp, "app.bin")
+        with open(self.image, "wb") as image:
+            image.write(b"test image")
+
+    def run_write_with_verify(self, ok, output):
+        def fake_et(*args, **kwargs):
+            if args and args[0] == "verify-flash":
+                return ok, output
+            return True, ""
+        with mock.patch.object(c5flash, "et", fake_et):
+            c5flash.cmd_write(["0x10000", self.image])
+
+    def test_verify_transport_failure_exits(self):
+        with self.assertRaises(SystemExit):
+            self.run_write_with_verify(False, "transport failed")
+
+    def test_verify_textual_mismatch_exits(self):
+        with self.assertRaises(SystemExit):
+            self.run_write_with_verify(True, "Verify MISMATCH at address 0x10000")
+
+    def test_verify_success_returns(self):
+        self.run_write_with_verify(True, "Hash of data verified")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

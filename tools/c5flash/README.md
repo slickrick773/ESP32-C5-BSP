@@ -41,7 +41,8 @@ offset is `0x2000` on the C5*.
 ## How it works
 - **write** — splits each image into 512 KB segments, one `write-flash` per
   segment (up to 4 retries, reconnecting with a reset on retry), then a single
-  `verify-flash` and a watchdog reset. Writes with explicit
+  `verify-flash` and a watchdog reset. A transport failure or reported mismatch
+  prints `verify: FAILED` and exits unsuccessfully. Writes with explicit
   `--flash-mode dio --flash-freq 80m` so the bootloader header is patched
   correctly — **`keep` leaves a bad flash-mode byte and the C5 ROM rejects it**
   (`invalid header` → reboot loop → every build boots to a dark screen). Override
