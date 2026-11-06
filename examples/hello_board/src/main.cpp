@@ -15,13 +15,15 @@ static TFT_eSPI tft;
 
 void setup() {
     Serial.begin(115200);
+    // Suppress backlight before app delays. The user still observes an earlier
+    // flash; its timing relative to boot stages has not been measured.
+    const bool exio = begin(0);
     delay(300);
     Serial.println();
     Serial.printf("[hello] %s\n", boardName());
 
     // Expander FIRST: it powers the rail and releases the ST7796 reset, both of
     // which the panel needs before tft.init(). Also probes the FT6336.
-    const bool exio = begin();
     Serial.printf("[hello] expander %s, touch %s\n",
                   exio ? "up" : "MISSING",
                   Touch::present() ? "present" : "missing");
@@ -38,6 +40,7 @@ void setup() {
     tft.drawString(boardName(), 10, 44, 2);
     tft.drawString(Touch::present() ? "touch: FT6336 OK" : "touch: NOT FOUND", 10, 66, 2);
     tft.drawString("tap the screen", 10, 92, 2);
+    Expander::backlight(255);
 }
 
 void loop() {
