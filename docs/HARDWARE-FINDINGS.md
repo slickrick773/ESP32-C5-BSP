@@ -628,6 +628,213 @@ leaves `TFT_BL = -1` **without** routing through the expander gets no dimming at
 all — only the on-screen level bar moves while the panel stays full brightness.
 Live dimming confirmed via the expander PWM path.
 
+### Hide panel memory until the first frame
+
+**[OBSERVED FAILURE 2026-11-05; cause narrowed 2026-11-05 — see the measured blocks below].**
+Full dark-boot acceptance is **FAILED**. The user still observes uninitialized
+panel illumination on cold boot and the previous frame during reset. In a
+three-delay diagnostic, illumination persisted before expander initialization,
+then the display stayed dark until the completed UI was revealed. Video timing
+has not been correlated with execution timestamps; it does not locate the flash
+within ROM, second-stage bootloader, or application execution.
+
+`begin(0)` requests zero backlight PWM before panel initialization and keeps it
+zero until the consumer reveals its first frame. Moving this earlier in setup,
+writing PWM before mode/power changes, and calling it from Arduino `initVariant()`
+have **not** eliminated the cold-boot flash. These observations do not establish
+an unavoidable hardware limitation or the expander's power-on defaults.
+
+A bounded early bootloader I2C write was tested on hardware and **did not help.**
+**[OBSERVED FAILURE 2026-11-05.]** With the experimental IDF 5.5.2 after-init
+bootloader installed (PWM=0 written to `0x24` reg `0x05` in `bootloader_after_init`;
+`[dark-start] result=0 attempts=1` — ACKed; flash verification passed) and
+`hello_board` holding `begin(0)` dark until its first frame, the user still
+observes **both** the fuzzy cold-boot flash and the retained previous frame on
+reset. The application boots and normal display and touch are confirmed.
+
+**Conclusion.** Full dark-boot acceptance remains **FAILED**. The behaviour is now
+characterised (see the measured blocks below): the backlight is on at power-up, and
+the expander's PWM output controls it — a write of `0x00` to expander register
+`0x05` is observed to darken the panel, a physical RST restores the glow and
+re-defaults the PWM response, and esp_restart (SW reset) does not. The glow appears
+in ROM download mode with neither the second-stage bootloader nor the application
+running, so it does not require any user-flashed ESP firmware. The tested ESP-side
+suppressions — `begin(0)`, an `initVariant()` hook, and the after-init bootloader
+PWM=0 write — did not eliminate the observed flash. Whether an earlier ROM-level
+action could pre-empt it is **unresolved**: the first-illumination timing against
+ROM startup and power application was not measured. Candidate approaches to remove
+it entirely — a change to the CH32's power-up state (its firmware, not published by
+the vendor) or a hardware gate on the backlight — are plausible, not established
+requirements. **Not established** either: whether the expander actively drives the
+backlight line high at power-up or the line defaults high undriven (the raw register
+readback does not settle this), and the flash's exact optical duration (no scope or
+photodiode).
+
+*Source facts (kept distinct from the conclusion).* Expander PWM drives backlight
+brightness at runtime (live dimming, HW-VERIFIED above). The BSP and the vendor
+`07_lvgl_demo/Board_IO.cpp` both write 8-bit expander registers and write PWM=0
+before enabling power; vendor `01_exio/io_extension.cpp` instead sends 16-bit
+mode/output values — which form the installed CH32 firmware actually expects is
+**not established**, and an initialization/protocol mismatch is not ruled out. An
+absent vendor getter does not prove the device cannot read back mode/output/PWM.
+The schematic labels CH32 PC3 as EXIO_PWM (LCD_BL via Q2/R40), PA7/RESET as
+connected to CHIP_PU, EXIO5 as PA_CTRL and EXIO6 as SYS_OUT, while vendor code
+names EXIO5 BOARD_POWER_EXIO; the board's actual EXIO5/EXIO6 functions and whether
+the CH32 is reset with the ESP are **unresolved.** Do not change expander
+power/reset outputs until these are established.
+
+*Hypotheses.* The three candidates were: **A** illumination only *before* the early
+write; **B** illumination *continues after* the acknowledged write; **C**
+illumination *stops, then returns* during later init. The download-mode isolation
+result — the backlight glows with neither the second-stage bootloader nor the
+application running — points to **A**: the glow is present without any user-flashed
+ESP write, and a software PWM=0 write ends it. The tested writes and hooks
+(`begin(0)`, `initVariant()`, after-init bootloader PWM=0) did not eliminate the
+flash; the first-illumination timing against ROM startup was not measured, so
+whether `bootloader_before_init()` or a ROM-level hook could pre-empt it is
+**unresolved** — untested, not demonstrated dead-ends. Cold boot and
+reset behave differently: the retained previous frame is seen on reset; on one true
+cold boot the final image was the live application, not a retained frame, but
+whether stale GRAM briefly shows during the cold transient was not characterised.
+What remains unmeasured is the flash's optical duration (no scope/photodiode).
+Preserve rollback, flash layout, watchdogs and ROM
+recovery when evaluating any hardware-level candidate. See the
+[experimental probe and recovery plan](../tools/startup_probe/README.md).
+
+**[MEASURED 2026-11-05 — expander read-probe v1, reads only, no register writes.]**
+A read-only app (`examples/exio_probe/`, flashed at `0x10000` over the installed
+*experimental* bootloader) read `0x24` at application start via pointer write +
+repeated START + 2-byte `requestFrom`. **Raw bytes returned** (each register
+ACKed; `requestFrom` returned 2 bytes): `mode 0x02 → 23 FF`, `output 0x03 → 23 00`,
+`input 0x04 → 37 00`, `pwm 0x05 → 00 FF`, `adc 0x06 → 01xx–02xx (differs between
+reads)`. The ADC responses differed; this does not validate the semantics of other registers.
+
+These are **raw readings only.** This capture does **not** establish: that two
+returned bytes identify a 16-bit firmware (a 2-byte `requestFrom` returns 2 bytes
+regardless of register width); that the `pwm` low byte `00` was *caused* by the
+bootloader's PWM-off write (it may be a prior or default state); or that
+`mode`/`output` = `0x23` — which equals the previous `hello_board` run's final
+writes — establishes register retention or any visual-symptom mechanism. Because
+the probe ran *after* the experimental bootloader's PWM write, it cannot show an
+untreated PWM baseline. Reset reason, sample timing, an untreated (stock-bootloader)
+baseline, and separately captured cold-power / reset-button / software-reset runs
+are all required before these readings can be interpreted; register values cannot
+establish optical timing or acceptance.
+
+**[REPORTED 2026-11-05 — read-probe v2, stock bootloader restored.]**
+The preceding investigation reported restoration and verification of the stock
+bootloader, followed by these raw observations: AXP2101 register 0x00 returned
+0x20; a flasher-triggered reset reported ESP reset reason POWERON(1), while
+`esp_restart()` reported SW(3); expander responses were `02→23FF`, `03→2300`,
+`04→3700`, `05→00FF`. These observations do not prove physical supply removal,
+CH32 reset coupling, register width or persistence mechanisms. An ESP POWERON
+reason alone is not proof that the entire board lost power.
+
+The v2 timestamp was `micros()`, not a measured offset from application entry or
+power application. It also replaced the requestFrom return count with bytes
+consumed; those counts should be recorded separately. Its first stored sample
+could be missed when USB reconnected, since only later samples were repeated.
+
+On takeover, a fresh ROM read of 0x2000..0x8000 matched the verified original
+bootloader-region backup byte-for-byte. This, rather than the absence of a log
+line, establishes which bootloader is installed. The v3 probe saves its earliest
+setup sample before console initialization and replays that same sample on each
+report. It records ESP timer timestamps and deltas from setup entry for each
+transaction, reset reason, boot identifier, pointer-selection status, requested
+count, returned count, actual count and raw bytes. It performs no register-value
+writes. Its PMU reading is raw evidence, not proof that no battery or other supply
+is attached. Physical cold-power and button-reset captures remain outstanding.
+
+**[MEASURED 2026-11-05 — v3 after user-reported long unplug/reconnect.]**
+The board reappeared through the hub. The captured boot reported USB(11), with
+raw responses `02→FFFF`, `03→0000`, `04→0000`, `05→FFFF` and PMU `00→20`.
+Three subsequent serial-requested esp_restart trials each reported SW(3), with
+the same responses for expander 0x02..0x05. Each pointer selection succeeded,
+requested/reported/stored counts matched, and per-transaction timestamps were
+recorded. ADC responses varied. USB-reset boots appeared when opening the host
+serial connection despite configuring DTR/RTS false; the capture must not be
+called passive or assumed to preserve the first power-on sample. v4 adds a
+checksum-protected four-boot RTC history to investigate that measurement gap.
+These responses differ from the preceding state, but do not identify register
+width, CH32 reset coupling or physical backlight timing.
+
+**[MEASURED/USER-OBSERVED 2026-11-05 — v4 post-power history.]**
+After the requested unplug/reconnect, the user reported that the screen “stays
+glowing.” RTC history preserved an initial POWERON(1) sample and the later
+USB(11) sample under different boot identifiers. Both returned `02→FFFF`,
+`03→0000`, `04→0000`, `05→FFFF`; the first PWM read spanned ESP timer
+24452..24975 us (2334 us after setup entry at its start), not elapsed time from
+physical power application. All recorded transport statuses/counts were valid.
+This pairs a visible persistent glow with those raw responses; it does not yet
+measure the physical PWM waveform or prove which read bytes carry PWM state.
+
+**[MEASURED 2026-11-05 — v5 controlled PWM-only write.]**
+With the stock bootloader still installed, v5 sent a single explicit write of
+0x00 to expander register 0x05. The transaction returned status 0; immediate
+reads returned `00` for length one and `00FF` for length two, replacing the
+preceding `FFFF` two-byte response. Subsequent samples preserved mode/output
+responses `FFFF`/`0000`. No mode, output or reset registers were written. This
+establishes a response change associated with the PWM write. The user subsequently
+confirmed that the glow disappeared and the screen was dark. Thus a PWM-only
+zero write is sufficient to suppress the persistent glow in this tested state,
+without mode/output initialization. The response latency was not measured, and
+the second byte's semantics remain undetermined. This does not yet locate the
+brief flash in the normal display application's boot sequence.
+A subsequent serial reopen/USB(11) reset and one explicit esp_restart/SW(3)
+reset each preserved the observed PWM response `00FF`, with mode/output still
+`FFFF`/`0000`, and no new PWM write. The user then confirmed the screen was dark before pressing physical RST and
+that the glow returned after RST. The saved button-reset boot reported
+POWERON(1), with raw PWM response `FFFF` (mode/output `FFFF`/`0000`); the later
+USB(11) boot preserved those readings. Thus the tested RST event changed both
+the PWM response and visible state, unlike esp_restart. This is consistent with
+resetting or reinitializing the expander, but does not directly measure its reset
+pin or prove the schematic's exact coupling. It disproves treating all reset
+types as equivalent or assuming PWM stays unchanged across the reset button.
+After another PWM-zero write, the user held RST for approximately five seconds:
+the screen stayed dark while held and the glow returned after release. This
+further narrows the observed transition to after reset release in this test;
+it does not measure the exact latency or identify the CH32 instruction that
+changes the pin.
+
+
+
+**[USER-OBSERVED + ROM-VERIFIED 2026-11-05 — download-mode isolation.]**
+The user held BOOT, tapped/released RST and released BOOT, then reported that the
+screen glowed in download mode. ROM-only esptool connected with `--before no-reset`
+and `--after no-reset`; verification of the original bootloader region succeeded
+without requesting another reset. This confirms ROM download access for the
+observed condition, where the second-stage bootloader and application are not
+running. The observed glow therefore does not require execution of either.
+
+The tests support investigating the expander's startup PWM/output behavior as
+a possible source of the startup glow. They do not identify its firmware implementation, an
+undocumented persistent setting, a physical PWM waveform, or a guaranteed
+ESP-only fix for the brief flash on a normal boot. The inspected vendor resources
+and host drivers do not provide an identified CH32 firmware image/source or a
+documented persistent default-off command. A lasting fix for illumination while
+the ESP remains in download mode needs control independent of that ESP
+bootloader/application, such as an expander startup change or a hardware gate.
+Both require board-specific validation and recovery provisions. A faster ESP
+hook may shorten normal-start illumination but is not an accepted fix yet.
+
+After these captures, stock bootloader was left intact and hello_board was
+rebuilt with the isolated core, flashed only at 0x10000 and verified. The
+read/controlled-PWM probe is no longer the installed application. Dark-boot
+acceptance remains FAILED.
+
+**[MEASURED/USER-OBSERVED 2026-11-05 — real-app cold boot after restore.]**
+On a real cold power-up of the restored hello_board app, the user observed a
+brief boot transient that resolved to the live application screen: serial
+reported `[hello] expander up, touch present`, and the panel showed the app's
+own content (board name, `touch: FT6336 OK`, `tap the screen`) with a user-drawn
+touch stroke tracking correctly. The final image is the live application, not a
+retained frame. The brief flash is the residual of the power-up backlight state
+documented above; its optical duration was not measured, and whether `begin(0)`
+measurably shortens it was not tested. The
+retained-previous-frame symptom did not persist to the final image on this cold
+boot; it is seen on reset, and whether stale GRAM briefly shows during the cold
+transient was not characterised.
+
 ### Battery: the AXP2101 fuel gauge reads over plain I²C (no XPowersLib needed)
 
 **[HW-VERIFIED 2026-10-26].** The AXP2101 PMU (`0x34`) exposes a fuel gauge you can

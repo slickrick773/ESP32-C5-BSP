@@ -31,6 +31,39 @@ does not carry the C5). Each example's `platformio.ini` pins it.
 
 ## Board-specific notes
 
+- **Application backlight suppression (dark-boot acceptance failed).** `begin(0)` preserves panel power/reset timing,
+  resets SPI2, deselects both display and SD, and leaves the expander backlight
+  at zero. Initialize graphics, draw the complete first frame, then call
+  `Expander::backlight(255)`. Call `begin(0)` before console waits or other
+  startup delays. Tests distinguish reset types: PWM-zero response persisted
+  through esp_restart, while physical RST brought the glow back and changed
+  that response to FF. Do not assume the reset button preserves PWM state. Plain `begin()` remains backward-compatible and starts at
+  full brightness.
+  **Observed failure (2026-11-05):** cold power-up still briefly shows
+  uninitialized panel memory; reset still shows the previous frame. Earlier
+  PWM writes, an `initVariant()` hook, and an experimental after-init bootloader
+  PWM=0 (ACKed on hardware) each failed to eliminate either symptom, with normal
+  display and touch preserved. The backlight is on at power-up and the expander's
+  PWM output controls it (a PWM=0 write darkens the panel; physical RST restores the
+  glow, esp_restart does not). The glow appears in ROM download mode with neither the
+  second-stage bootloader nor the application running, so it does not require
+  user-flashed ESP firmware. The tested writes and hooks (`begin(0)`,
+  `initVariant()`, after-init bootloader PWM=0) did not eliminate the observed flash;
+  whether an earlier ROM-level action could pre-empt it is unresolved (first-illumination
+  timing against ROM startup was not measured). Candidate fixes — a change to the CH32's
+  power-up state or a hardware gate — are plausible, not established requirements. Not
+  established: driven-vs-undriven at power-up, and the optical duration (not
+  instrumented). The retained frame is seen on reset and did not persist to the final
+  image on a true cold boot. See
+  [the evidence record](HARDWARE-FINDINGS.md#hide-panel-memory-until-the-first-frame).
+- **One shared SPI owner.** Display and SD share SPI2. Keep one live SPI object,
+  bracket each device with its own transaction and chip select, and never tear
+  down the bus merely because SD initialization failed. `prepareSharedSpi()` is
+  available separately; `begin()` calls it automatically.
+- **Classified touch samples.** `Touch::readSample()` reports `Contact`,
+  `Released`, `Unavailable`, or `Error`. Existing `read()` and `poll()` remain
+  compatible boolean APIs.
+
 - **One shared I²C bus** (SDA 27 / SCL 26) carries the FT6336, ES8311, CH32V006,
   AXP2101 **and** the GPS. Coexistence depends on the bus discipline documented in
   HARDWARE-FINDINGS: per-read bus re-open + retry for touch, STOP-based reads for

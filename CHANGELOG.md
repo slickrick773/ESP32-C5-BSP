@@ -5,6 +5,52 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
+## Unreleased
+
+### Added
+- Optional dark startup via `Board::begin(0)` / `Expander::begin(0)`, preserving
+  the full-brightness default and existing reset timing.
+- Reusable ESP32-C5 SPI2 reset plus one-time per-board `prepareSharedSpi()`,
+  with display and SD deselected before either device uses the shared bus.
+  Repeated board initialization does not reset an already prepared SPI bus.
+- Additive classified touch sampling (`Contact`, `Released`, `Unavailable`,
+  `Error`) while preserving `read()` and `poll()`.
+- CI coverage for both 2.8-inch examples, native driver tests, flasher tests,
+  and isolated consumer builds.
+
+### Fixed
+- `c5flash write` now exits unsuccessfully whenever verification reports a
+  textual mismatch, even if the transport subprocess itself returned zero.
+- Overview documentation now matches the verified 2.8-inch battery evidence.
+
+Current local validation passed 13 flasher tests, the expanded host driver suite,
+bounded bootloader-I2C fault tests, all ten example builds, and two clean
+file-based consumer builds of the uncommitted library snapshot. Arduino builds
+used Python 3.13 and an isolated PlatformIO core. The git-based consumer CI job
+has not been run against this candidate.
+
+Full dark-boot acceptance **FAILED**: cold boot still briefly shows uninitialized
+panel memory, and reset still shows the retained previous frame. The behaviour was
+characterised: the backlight is on at power-up and the expander's PWM output
+controls it — a PWM=0 write to expander register `0x05` is observed to darken the
+panel, a physical RST restores the glow and re-defaults the PWM response, and
+esp_restart does not. The glow appears in ROM download mode with neither the
+second-stage bootloader nor the application running, so it does not require any
+user-flashed ESP firmware. The tested ESP-side suppressions (`begin(0)`, an
+`initVariant()` hook, the after-init bootloader PWM=0 write) did not eliminate the
+observed flash; whether an earlier ROM-level action could pre-empt it is unresolved,
+as the first-illumination timing against ROM startup was not measured. Candidate
+approaches to remove it entirely — a change to the CH32's power-up state (firmware
+not published by the vendor) or a hardware gate — are plausible, not established
+requirements. Not established: whether
+the expander drives the line high at power-up or it defaults high undriven, and the
+flash's optical duration (not instrumented). The retained frame is seen on reset and
+did not persist to the final image on a true cold boot. An experimental IDF 5.5.2
+after-init bootloader PWM=0 probe was built, host-tested, explicitly authorized,
+flashed and verified (`[dark-start] result=0 attempts=1`, normal display and touch),
+and eliminated **neither** symptom. See
+[its limits and recovery plan](tools/startup_probe/README.md).
+
 ## [0.4.0] — 2026-10-29 (proposed; not yet tagged)
 
 A reliability + tooling release. **No function-signature or pin changes**; there
