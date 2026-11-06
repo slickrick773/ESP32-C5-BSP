@@ -30,7 +30,7 @@ static bool exioSet(uint8_t pin, bool level) {
 
 bool present() { return s_ready; }
 
-bool begin() {
+bool begin(uint8_t initialBacklight) {
     // Run ONCE. Pulsing EXIO1 (LCD reset) again after the panel is initialised
     // would blank it, so this guard makes a repeat call a safe no-op.
     if (s_ready) return true;
@@ -54,10 +54,9 @@ bool begin() {
     ok = ok && exioSet(EXIO_TP_RST, false);  delay(100);
     ok = ok && exioSet(EXIO_TP_RST, true);   delay(500);   // CST3530 boot
 
-    // Backlight up, so a sketch that only calls begin() gets a lit panel (as on
-    // the 3.5"). A sketch that wants the umbravox "dark until the first frame is
-    // drawn" behaviour can call backlight(0) before tft init and raise it after.
-    ok = ok && exioWrite(EXIO_PWM_REG, 0xFF);
+    // Default remains full brightness. Consumers that must hide panel memory
+    // during graphics startup pass 0 and reveal it after the first frame.
+    ok = ok && exioWrite(EXIO_PWM_REG, initialBacklight);
 
     s_ready = ok;
     Serial.printf("[ws-c5-28] I/O expander 0x24 %s\n", ok ? "ready" : "NOT FOUND");

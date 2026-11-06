@@ -91,20 +91,29 @@ bool begin() {
     return s_present;
 }
 
-bool read(uint16_t& x, uint16_t& y) {
-    if (!s_present) return false;
+SampleResult readSample() {
+    SampleResult result = { SampleStatus::Unavailable, 0, 0 };
+    if (!s_present) return result;
 
     // Skip this frame rather than stall if another owner (e.g. a GPS cycle)
     // holds the bus -- poll()'s grace bridges the gap so it is not felt.
-    if (!Bus::lock(0)) return false;
+    if (!Bus::lock(0)) return result;
 
-    uint16_t nx = 0, ny = 0;
-    const Decoded d = sample(nx, ny);
+    const Decoded d = sample(result.x, result.y);
 
     Bus::unlock();
 
-    if (d != Decoded::Touch) return false;
-    x = nx; y = ny;
+    if (d == Decoded::Touch) result.status = SampleStatus::Contact;
+    else if (d == Decoded::Lift) result.status = SampleStatus::Released;
+    else result.status = SampleStatus::Error;
+    return result;
+}
+
+bool read(uint16_t& x, uint16_t& y) {
+    const SampleResult result = readSample();
+    if (result.status != SampleStatus::Contact) return false;
+    x = result.x;
+    y = result.y;
     return true;
 }
 

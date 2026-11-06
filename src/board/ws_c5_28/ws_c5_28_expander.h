@@ -16,11 +16,11 @@ namespace WsC5_28 {
 namespace Expander {
 
 // Open the shared I2C bus, mark the control lines as outputs, then pulse the
-// LCD reset and the touch reset (the 2.8"'s specific timing), and bring the
-// backlight up. Idempotent after success. Returns true if the expander
+// LCD reset and the touch reset (the 2.8"'s specific timing), and set the
+// requested initial backlight duty. Idempotent after success. Returns true if the expander
 // answered. Ported from the umbravox 2.8" port; hardware-verified from this BSP
 // (expander 0x24 brings the panel up on the real 2.8" board, 2026-10-31).
-bool begin();
+bool begin(uint8_t initialBacklight = 255);
 
 // Set one output latch bit (0..7), preserving all other outputs.
 // Requires begin(); returns false on invalid pin, lock timeout, or I2C failure.

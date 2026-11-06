@@ -17,6 +17,14 @@
 namespace WsC5_35 {
 namespace Touch {
 
+enum class SampleStatus : uint8_t { Contact, Released, Unavailable, Error };
+
+struct SampleResult {
+    SampleStatus status;
+    uint16_t x;
+    uint16_t y;
+};
+
 // Probe the FT6336 and set a responsive threshold. The expander must be up
 // (begin() calls Expander::begin() to be safe). Returns true if it answered.
 bool begin();
@@ -31,6 +39,12 @@ bool present();
 // self-selecting at boot). Without this call the driver polls as before.
 // Calibration is the consumer's job, not the BSP's. Verified on hardware.
 void beginInt(int gpio);
+
+// Confirmed release is not retried; malformed/failed reads get one retry.
+// This policy also applies to the boolean read() wrapper.
+// One classified sample. Unlike the legacy boolean read(), this distinguishes
+// a confirmed release from a busy/unavailable bus and a malformed I2C read.
+SampleResult readSample();
 
 // One raw read. Fills x,y (native-portrait panel coords) and returns true on a
 // valid 1-/2-finger touch; false on finger-up, a dropped read, or a busy bus.

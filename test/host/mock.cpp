@@ -32,7 +32,10 @@ int digitalRead(int pin) {
     return HIGH;
 }
 
-void digitalWrite(int pin, int) {
+unsigned g_pinWriteCount[32] = {};
+int g_pinLevel[32] = {};
+void digitalWrite(int pin, int value) {
+    if (pin >= 0 && pin < 32) { ++g_pinWriteCount[pin]; g_pinLevel[pin] = value; }
     if (pin == g_sclPin) g_sclWriteCount++;
 }
 
@@ -59,6 +62,8 @@ void     MockWire::setTimeOut(uint16_t)      {}
 bool g_wireRegisterMode = false;
 uint8_t g_wireRegisters[128][256] = {};
 int g_wireFailReg = -1;
+MockWireWrite g_wireWrites[256];
+unsigned g_wireWritesLen = 0;
 static uint8_t wireAddr, wireReg, wireValue;
 static int wireBytes;
 void MockWire::beginTransmission(uint8_t addr) { wireAddr = addr; wireBytes = 0; }
@@ -71,12 +76,16 @@ size_t MockWire::write(uint8_t b) {
 }
 size_t   MockWire::write(const uint8_t*, size_t n) { g_wireWriteCount += (int)n; return n; }
 uint8_t MockWire::endTransmission(bool) {
+    if (wireBytes > 1 && g_wireWritesLen < 256)
+        g_wireWrites[g_wireWritesLen++] = {wireAddr, wireReg, wireValue};
     if (g_wireRegisterMode && wireBytes > 1 && wireReg == g_wireFailReg) return 2;
     if (g_wireRegisterMode && wireBytes > 1 && !g_wireEndTransStatus)
         g_wireRegisters[wireAddr][wireReg] = wireValue;
     return g_wireEndTransStatus;
 }
+unsigned g_wireRequestCount = 0;
 int MockWire::requestFrom(int addr, int) {
+    ++g_wireRequestCount;
     g_wireReadPos = 0;
     if (g_wireRegisterMode) {
         g_wireReadBuf[0] = g_wireRegisters[addr][wireReg];

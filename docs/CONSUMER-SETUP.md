@@ -36,6 +36,23 @@ The board surface is `WsC5_35::begin()` / `WsC5_35::boardName()` (directly in
 `WsC5_35`); peripherals are sub-namespaces (`WsC5_35::Gps`, `::Battery`, `::Touch`,
 `::Expander`).
 
+For display consumers, prefer `WsC5_35::begin(0)`, render the first full frame,
+then call `WsC5_35::Expander::backlight(255)`. `begin()` still means full
+brightness. Board startup resets SPI2 and deselects display and SD; graphics
+adapters retain ownership of library-specific transfers. Touch consumers that
+need diagnostics can use `Touch::readSample()` to distinguish contact, release,
+temporary unavailability, and malformed reads while legacy `read()`/`poll()`
+remain supported.
+
+### Current uncommitted candidate check (2026-11-05)
+
+Both display and non-display consumers built successfully from fresh directories
+using a copied library snapshot via `file://`, Python 3.13, and an isolated
+PlatformIO core. This validates the current source/package compilation without
+committing it. It is not a run of the git-pinned CI job, nor hardware acceptance.
+All ten examples also built with that isolated core. Dark-boot acceptance remains
+failed; see [the startup investigation](../tools/startup_probe/README.md).
+
 ## Pinning the dependency
 
 Pin an exact commit (or a tag). Local git, for an unpublished revision:

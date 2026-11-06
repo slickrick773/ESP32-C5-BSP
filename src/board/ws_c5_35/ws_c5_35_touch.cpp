@@ -38,17 +38,20 @@ static bool ftRead(uint8_t reg, uint8_t* buf, uint8_t len) {
     return true;
 }
 
-// Parse one TD_STATUS read into a validated on-panel point.
-static bool parsePoint(uint16_t& x, uint16_t& y) {
+enum class Parsed : uint8_t { Contact, Released, Error };
+
+// Parse one TD_STATUS read into a classified, validated on-panel sample.
+static Parsed parsePoint(uint16_t& x, uint16_t& y) {
     uint8_t data[7];
-    if (!ftRead(TD_STATUS, data, 7)) return false;
+    if (!ftRead(TD_STATUS, data, 7)) return Parsed::Error;
     const uint8_t points = data[0] & 0x0F;
-    if (points < 1 || points > 2) return false;
+    if (points == 0) return Parsed::Released;
+    if (points > 2) return Parsed::Error;
     const uint16_t rx = ((uint16_t)(data[1] & 0x0F) << 8) | data[2];
     const uint16_t ry = ((uint16_t)(data[3] & 0x0F) << 8) | data[4];
-    if (rx >= PANEL_W || ry >= PANEL_H) return false;
+    if (rx >= PANEL_W || ry >= PANEL_H) return Parsed::Error;
     x = rx; y = ry;
-    return true;
+    return Parsed::Contact;
 }
 
 bool present() { return s_present; }
@@ -92,33 +95,49 @@ void beginInt(int gpio) {
     Serial.printf("[ws-c5] FT6336 INT gate on GPIO%d\n", gpio);
 }
 
-bool read(uint16_t& x, uint16_t& y) {
+SampleResult readSample() {
+    SampleResult result = { SampleStatus::Unavailable, 0, 0 };
     // INT gate (opt-in via beginInt): if INT says "no finger" (high), skip the
     // I2C read entirely. A blind read with no finger can return a stale/phantom
     // point -- gating on the level kills that (e.g. a menu row self-selecting at
     // boot). The win is skipping the read, not interrupt latency; a level read
     // each poll is enough. Default (s_intGpio < 0) keeps the plain polling path.
-    if (s_intGpio >= 0 && digitalRead(s_intGpio) != LOW) return false;
+    if (s_intGpio >= 0 && digitalRead(s_intGpio) != LOW) {
+        result.status = SampleStatus::Released;
+        return result;
+    }
 
     // Skip this frame rather than stall if another owner (e.g. a GPS cycle)
     // holds the bus -- poll()'s grace bridges the gap so it is not felt.
-    if (!Bus::lock(0)) return false;
+    if (!Bus::lock(0)) return result;
 
     // The C5's I2C controller leaves reads unable to complete until the bus is
     // re-opened; do it ONCE at the top of the transaction (not per retry --
     // that was the Phase-1 stiffness: three full Wire.end()/begin() per read).
     Bus::reopen();
 
-    bool ok = parsePoint(x, y);
-    if (!ok) {
+    Parsed parsed = parsePoint(result.x, result.y);
+    if (parsed == Parsed::Error) {
         // The FT6336 intermittently drops a single read even with a finger held.
         // One cheap retry (no second reopen) rides out that transient without
-        // paying the reopen cost again; a genuine finger-up fails this too.
-        ok = parsePoint(x, y);
+        // paying the reopen cost again. A confirmed zero-contact packet is
+        // returned immediately, without retry; this changes legacy read timing.
+        parsed = parsePoint(result.x, result.y);
     }
 
     Bus::unlock();
-    return ok;
+    if (parsed == Parsed::Contact) result.status = SampleStatus::Contact;
+    else if (parsed == Parsed::Released) result.status = SampleStatus::Released;
+    else result.status = SampleStatus::Error;
+    return result;
+}
+
+bool read(uint16_t& x, uint16_t& y) {
+    const SampleResult result = readSample();
+    if (result.status != SampleStatus::Contact) return false;
+    x = result.x;
+    y = result.y;
+    return true;
 }
 
 bool poll(uint16_t& x, uint16_t& y, uint16_t graceMs, uint16_t minReadIntervalMs) {

@@ -30,3 +30,6 @@ uint32_t millis();
 
 struct MockSerial { int printf(const char* fmt, ...); };
 extern MockSerial Serial;
+
+extern unsigned g_pinWriteCount[32];
+extern int g_pinLevel[32];

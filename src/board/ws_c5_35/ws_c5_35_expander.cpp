@@ -27,7 +27,7 @@ static bool exioSet(uint8_t pin, bool level) {
 
 bool present() { return s_ready; }
 
-bool begin() {
+bool begin(uint8_t initialBacklight) {
     // Run ONCE. Pulsing EXIO1 (LCD reset) again after the panel is initialised
     // would blank it, so this guard makes a repeat call a safe no-op.
     if (s_ready) return true;
@@ -41,7 +41,10 @@ bool begin() {
     // both resets released -- resetting the touch chip while its rail is off
     // leaves the FT6336 unresponsive.
     const uint8_t ctrl = (uint8_t)((1U << EXIO_TP_RST) | (1U << EXIO_LCD_RST) | (1U << EXIO_POWER));
-    bool ok = exioWrite(EXIO_MODE_REG, 0xFF) &&
+    // Suppress retained PWM before changing output modes or panel power.
+    // Otherwise those changes can expose panel RAM before the later PWM write.
+    bool ok = exioWrite(EXIO_PWM_REG, 0x00) &&
+              exioWrite(EXIO_MODE_REG, 0xFF) &&
               exioWrite(EXIO_OUT_REG, 0x00) &&
               exioWrite(EXIO_PWM_REG, 0x00) &&
               exioWrite(EXIO_MODE_REG, ctrl);
@@ -58,7 +61,7 @@ bool begin() {
     ok = ok && exioSet(EXIO_LCD_RST, true);  delay(120);
     ok = ok && exioSet(EXIO_TP_RST, false);  delay(20);
     ok = ok && exioSet(EXIO_TP_RST, true);   delay(300);   // FT6336 boot
-    ok = ok && exioWrite(EXIO_PWM_REG, 0xFF);              // backlight full
+    ok = ok && exioWrite(EXIO_PWM_REG, initialBacklight);
 
     s_ready = ok;
     Serial.printf("[ws-c5] I/O expander 0x24 %s\n", ok ? "ready" : "NOT FOUND");

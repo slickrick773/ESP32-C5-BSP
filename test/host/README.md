@@ -56,3 +56,8 @@ The `test_battery_28` suite checks 2.8-inch expander ADC decoding and nominal
 voltage conversion, initialization/lock failures, NACK/short/invalid reads,
 caller-data preservation, and read-only sampling. It does not validate physical
 voltage accuracy, charging, or battery presence.
+
+Startup regression coverage checks both board variants with zero and default
+brightness, initialization failure/retry, deferred reveal, and repeat-safe SPI
+preparation. The separate bounded bootloader bus tests are documented in
+[the experimental probe](../../tools/startup_probe/README.md).

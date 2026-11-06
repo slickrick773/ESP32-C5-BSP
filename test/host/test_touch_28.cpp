@@ -45,6 +45,10 @@ int main() {
     bool got = WsC5_28::Touch::read(x, y);
     CHECK(got == false, "read() returns false on a short (partial) packet");
     CHECK(x == 0xFFFF && y == 0xFFFF, "read() publishes no coordinate on a short read");
+    mockWireSetResponse(4, full, 9);
+    const auto bad = WsC5_28::Touch::readSample();
+    CHECK(bad.status == WsC5_28::Touch::SampleStatus::Error,
+          "readSample() classifies a short packet as Error");
 
     std::printf("Touch::read() accepts a complete packet:\n");
     x = 0; y = 0;
@@ -53,6 +57,12 @@ int main() {
     got = WsC5_28::Touch::read(x, y);
     CHECK(got == true, "read() returns true on a complete 1-contact packet");
     CHECK(x == 100 && y == 200, "read() decodes the correct native coordinate");
+    mockWireSetResponse(9, full, 9);
+    const auto contact = WsC5_28::Touch::readSample();
+    CHECK(contact.status == WsC5_28::Touch::SampleStatus::Contact,
+          "readSample() classifies a valid point as Contact");
+    CHECK(contact.x == 100 && contact.y == 200,
+          "readSample() publishes the valid coordinate");
 
     std::printf("Touch::read() treats finger-up as no touch:\n");
     x = 0xFFFF; y = 0xFFFF;
@@ -61,6 +71,10 @@ int main() {
     got = WsC5_28::Touch::read(x, y);
     CHECK(got == false, "read() returns false on a finger-up packet");
     CHECK(x == 0xFFFF && y == 0xFFFF, "read() publishes no coordinate on finger-up");
+    mockWireSetResponse(9, full, 9);
+    const auto lift = WsC5_28::Touch::readSample();
+    CHECK(lift.status == WsC5_28::Touch::SampleStatus::Released,
+          "readSample() distinguishes a confirmed release");
 
     std::printf("Touch::read() rejects an out-of-range coordinate:\n");
     x = 0xFFFF; y = 0xFFFF;
@@ -68,6 +82,12 @@ int main() {
     mockWireSetResponse(9, full, 9);
     got = WsC5_28::Touch::read(x, y);
     CHECK(got == false, "read() returns false when nx >= 240");
+
+    g_takeResult = pdFALSE;
+    const auto busy = WsC5_28::Touch::readSample();
+    CHECK(busy.status == WsC5_28::Touch::SampleStatus::Unavailable,
+          "readSample() distinguishes a busy shared bus");
+    g_takeResult = pdTRUE;
 
     std::printf("Touch::toLandscape() maps native->landscape at rotation 1:\n");
     int sx = -1, sy = -1;

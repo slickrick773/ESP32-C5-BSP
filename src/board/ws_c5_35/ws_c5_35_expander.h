@@ -15,8 +15,10 @@ namespace Expander {
 
 // Open the shared I2C bus, mark the control lines as outputs, bring the rail up
 // with both resets released, then pulse each reset. Idempotent after success.
-// Returns true if the expander answered. Verified on hardware.
-bool begin();
+// Returns true if the expander answered. `initialBacklight` defaults to the
+// legacy full-brightness behaviour; pass 0 to keep the panel dark until the
+// first complete frame is ready. Verified on hardware with the default value.
+bool begin(uint8_t initialBacklight = 255);
 
 // Was begin() successful?
 bool present();

@@ -16,6 +16,14 @@
 namespace WsC5_28 {
 namespace Touch {
 
+enum class SampleStatus : uint8_t { Contact, Released, Unavailable, Error };
+
+struct SampleResult {
+    SampleStatus status;
+    uint16_t x;
+    uint16_t y;
+};
+
 // Probe the CST3530 and set GPIO5 (its INT line) as an input. The expander must
 // be up (begin() calls Expander::begin() to be safe). Returns true if the chip
 // ACKed at 0x58. (The CST3530 has no documented sensitivity register, so unlike
@@ -24,6 +32,10 @@ bool begin();
 
 // Was the CST3530 found?
 bool present();
+
+// One classified sample. Unlike the legacy boolean read(), this distinguishes
+// a confirmed release from a busy/unavailable bus and a malformed I2C read.
+SampleResult readSample();
 
 // One raw read. Fills x,y (native-portrait panel coords, x<240 y<320) and
 // returns true on a valid single-contact touch; false on finger-up, a dropped

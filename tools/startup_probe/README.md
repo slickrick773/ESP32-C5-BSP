@@ -160,26 +160,3 @@ alter security fuses or boot straps in software to work around recovery errors.
 - The initial preparation made no flash writes. After explicit authorization,
   the candidate was flashed and verified as recorded above. Optical acceptance
   remains unverified; startup logs confirm the probe and application ran.
-
-## Next fix requirements
-
-The inspected [vendor resources](https://docs.waveshare.com/ESP32-C5-Touch-LCD-3.5/Resources-And-Documents)
-and repository provide ESP examples and the schematic, but no identified CH32
-firmware source/image or persistent default-off command. Before changing that
-MCU, obtain its exact firmware/revision, default PWM behavior, protocol and a
-recoverable programming procedure. Do not substitute generic CH32 firmware or
-write undocumented configuration registers.
-
-A concise vendor inquiry, prepared but not sent:
-
-> On ESP32-C5-Touch-LCD-3.5, the backlight glows after power-up and RST release,
-> including in ESP ROM download mode. A write of 00 to I2C address 24 register 05
-> alone turns it off; raw readback changes from FFFF to 00FF. esp_restart preserves
-> the dark state, whereas physical RST restores the glow. Is there a supported
-> persistent default-off setting, or CH32V006 firmware that initializes its
-> backlight PWM output off until commanded on? Please provide the firmware/source,
-> precise register protocol, reset-pin configuration, programming and recovery
-> procedure for this board revision.
-
-These are observations and a request for the missing implementation details,
-not a claim that the electrical startup waveform has been measured.

@@ -44,6 +44,13 @@ platform refuses 3.14+). Flashed hands-free here with `tools/c5flash`.
 
 ## Display: the ST7789 byte-order fix
 
+To request a dark panel during graphics initialization, call `begin(0)`, initialize graphics and draw
+the first complete frame, then call `Expander::backlight(255)`. Plain `begin()`
+retains full-brightness startup. Both forms reset SPI2 and deselect display and
+SD before the first transaction; `prepareSharedSpi()` exposes that step for
+consumers that bring up only selected peripherals. Keep one live SPI owner and
+do not tear it down when SD initialization fails.
+
 The panel is native 240×320 portrait; `ROTATION 1` lands it 320×240 landscape.
 Two panel facts matter and are both in the proven init (`ws28Init[]`, carried in
 `examples/hello_board_28/src/ws_c5_28_display.h`; the register table is documented
@@ -88,6 +95,10 @@ The CST3530 is read very differently from the 3.5"'s FT6336:
 The host test `test/host/test_touch_28.cpp` exercises this decode (short-read
 rejection, a valid contact, finger-up, out-of-range, and the landscape map)
 against the real driver.
+
+`Touch::readSample()` additionally distinguishes `Contact`, `Released`,
+`Unavailable`, and `Error`; the existing `read()` and `poll()` boolean APIs stay
+compatible.
 
 ## Onboard I²C address map (verified by bus scan, 2026-10-31)
 

@@ -27,6 +27,13 @@ int main() {
     bool got = WsC5_35::Touch::read(x, y);
     CHECK(got == false, "read() returns false on a short (partial) packet");
     CHECK(x == 0xFFFF && y == 0xFFFF, "read() publishes no coordinate on a short read");
+    mockWireSetResponse(3, partial, 3);
+    g_wireRequestCount = 0;
+    const auto bad = WsC5_35::Touch::readSample();
+    CHECK(bad.status == WsC5_35::Touch::SampleStatus::Error,
+          "readSample() classifies a short packet as Error");
+
+    CHECK(g_wireRequestCount == 2, "malformed read gets exactly one retry");
 
     // Full read: 7 bytes, one valid point at (100, 200).
     std::printf("Touch::read() accepts a complete packet:\n");
@@ -36,6 +43,27 @@ int main() {
     got = WsC5_35::Touch::read(x, y);
     CHECK(got == true, "read() returns true on a complete packet");
     CHECK(x == 100 && y == 200, "read() parses the correct coordinate on a full read");
+
+    mockWireSetResponse(7, full, 7);
+    const auto contact = WsC5_35::Touch::readSample();
+    CHECK(contact.status == WsC5_35::Touch::SampleStatus::Contact,
+          "readSample() classifies a valid point as Contact");
+    CHECK(contact.x == 100 && contact.y == 200,
+          "readSample() publishes the valid coordinate");
+
+    const uint8_t released[7] = { 0, 0, 0, 0, 0, 0, 0 };
+    mockWireSetResponse(7, released, 7);
+    g_wireRequestCount = 0;
+    const auto lift = WsC5_35::Touch::readSample();
+    CHECK(lift.status == WsC5_35::Touch::SampleStatus::Released,
+          "readSample() distinguishes a confirmed release");
+
+    CHECK(g_wireRequestCount == 1, "confirmed release is not retried");
+
+    g_takeResult = pdFALSE;
+    const auto busy = WsC5_35::Touch::readSample();
+    CHECK(busy.status == WsC5_35::Touch::SampleStatus::Unavailable,
+          "readSample() distinguishes a busy shared bus");
 
     std::printf("test_touch: %d failure(s)\n", g_failures);
     return g_failures;

@@ -37,6 +37,12 @@ run_one test_audio_28 test_audio_28.cpp "$BOARD28/ws_c5_28_audio.cpp" "$BOARD28/
 
 run_one test_audio_shutdown -I"$SRC" test_audio_shutdown.cpp "$BOARD28/ws_c5_28_audio.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 
+run_one test_startup test_startup.cpp "$BOARD/ws_c5_35_board.cpp" "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+run_one test_startup_28 -DBOARD_28 test_startup.cpp "$BOARD28/ws_c5_28_board.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+for name in test_startup test_startup_28; do
+    if [[ -x "$BIN/$name" ]]; then "$BIN/$name" default || fail=1; fi
+done
+
 rm -rf "$BIN"
 if [ "$fail" -ne 0 ]; then
     echo "RESULT: SOME HOST TESTS FAILED"
