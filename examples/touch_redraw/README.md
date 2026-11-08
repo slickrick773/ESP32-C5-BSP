@@ -28,3 +28,19 @@ showed no visible fuzzy flash or retained frame. Scrolling and Toggle worked on
 recheck after an initial intermittent Toggle miss.
 
 Tested application SHA-256: `e8e57ee9ea70fe8e667ed85611b7f3f18e7f9db54e05ae2a01224c267c52e572`.
+
+The source rename for publication produced a different application binary that
+compiled successfully. The cold-boot and physical-reset observations above apply
+only to the tested SHA-256, not to that rebuilt publication image.
+
+## Published-source startup recheck — 2026-11-07
+
+A clean build from published source commit
+`367e8f5a85016556f563f0836b1f364f2b8e127e` was installed application-only and
+verified with c5flash. The user confirmed clean startup in response to the
+cold-boot and physical-reset check, reporting that it comes up great.
+This is acceptance of this specific image; it does not resolve the separate
+Hello Board startup findings or establish their electrical cause.
+
+Tested application SHA-256:
+`8b8c3a57a4f0eb3dfd76ca6eb5d3e61c3d2e50c3448a495ae83e5d31dd833acf` (412,384 bytes).

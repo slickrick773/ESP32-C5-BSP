@@ -32,19 +32,20 @@ static const size_t kFlushN = sizeof(kFlush) / sizeof(kFlush[0]);
 
 void setup() {
     Serial.begin(115200);
+    const bool exio = begin(0);   // darken retained panel state immediately
     delay(300);
     Serial.println();
     Serial.printf("[flush] %s — screen retention flush\n", boardName());
 
     // Expander FIRST: it powers the rail and releases the ST7796 reset, both of
     // which the panel needs before tft.init() (same order as hello_board).
-    const bool exio = begin();
     Serial.printf("[flush] expander %s\n", exio ? "up" : "MISSING");
 
     tft.init();
     tft.setRotation(1);                           // landscape
     tft.invertDisplay(PANEL_NEEDS_INVERSION);     // ST7796 wants inversion on
     tft.fillScreen(TFT_BLACK);
+    Expander::backlight(255);
     Serial.printf("[flush] cycling full-screen colours (%u ms each). "
                   "Run ~10-20 min, then reflash your firmware.\n", HOLD_MS);
 }

@@ -40,27 +40,19 @@ static Arduino_GFX* gfx =
 
 void setup() {
     Serial.begin(115200);
+    const bool exio = begin(0);   // darken retained panel state immediately
     delay(300);
     Serial.println();
     Serial.printf("[hello28] %s\n", boardName());
 
-    // Expander FIRST: it releases the ST7789 reset and turns the backlight on,
-    // both of which the panel needs before the display driver initialises. Also
-    // probes the CST3530.
-    const bool exio = begin();
+    // Board FIRST: reset/deselect shared SPI, release panel/touch resets, keep
+    // the backlight dark, and probe the CST3530 before graphics initialises.
     Serial.printf("[hello28] expander %s, touch %s\n",
                   exio ? "up" : "MISSING",
                   Touch::present() ? "present" : "missing");
 
-    // Deselect the microSD (CS 23) before the first display transaction: it
-    // shares the SPI bus, and a floating CS can corrupt the panel's first write.
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
-
-    // The panel's reset is already released by the expander; Arduino_GFX just
-    // runs ws28Init[] over SPI. (If a soft reset ever leaves the panel blank,
-    // the fix is an SPI2 peripheral-block reset before begin() — see the
-    // umbravox 2.8" port; not needed from a clean power-up.)
+    // Board::begin() reset SPI2 and deselected both devices before this first
+    // transaction. Arduino_GFX now runs ws28Init[] over the shared bus.
     if (!gfx->begin(SPI_HZ)) {
         Serial.println("[hello28] gfx->begin() FAILED");
         for (;;) delay(1000);
@@ -79,6 +71,7 @@ void setup() {
     gfx->println(Touch::present() ? "touch: CST3530 OK" : "touch: NOT FOUND");
     gfx->setCursor(10, 64);
     gfx->println("tap the screen");
+    Expander::backlight(255);
 }
 
 void loop() {

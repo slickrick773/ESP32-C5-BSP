@@ -17,6 +17,11 @@ on 3.14+.
 
 ## Available
 
+- **[Touch and scrolling sample](touch_redraw/README.md)** — Waveshare C5
+  **3.5-inch**. Scroll the list, tap a row to select it, switch Toggle, and tap
+  Count to increment the counter. The backlight turns on after the first
+  complete frame. Cold boot and physical reset passed the user check for the
+  documented test image. Open the sample for build instructions and test details.
 - **`hello_board/`** — Phase 1 (Waveshare 3.5"). Brings the board up through the
   BSP (expander powers the panel + releases the ST7796 reset), paints the
   display, prints the board name, and draws a stroke that follows FT6336 touch.
@@ -26,7 +31,7 @@ on 3.14+.
 - **`hello_board_28/`** — Phase 1 for the Waveshare **2.8"** (ST7789 240×320,
   CST3530 touch). Same proof as `hello_board`, but drives the panel with
   **Arduino_GFX** (`moononournation/GFX Library for Arduino @ 1.6.9`),
-  reproducing the proven umbravox 2.8" path incl. the MSB-first RAMCTRL
+  reproducing the proven downstream 2.8" path incl. the MSB-first RAMCTRL
   byte-order fix. No TFT_eSPI user setup and no C5 processor patch (Arduino_GFX
   drives through the Arduino SPI class). **Hardware-verified on the real 2.8"
   board (2026-10-31):** flashed from this BSP, panel renders correctly and the

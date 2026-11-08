@@ -11,6 +11,9 @@ on:
     paths:
       - 'src/**'
       - 'examples/**'
+      - 'test/**'
+      - 'tools/c5flash/**'
+      - 'docs/consumer-check/**'
       - 'library.properties'
       - 'library.json'
       - '.github/workflows/ci.yml'
@@ -18,6 +21,9 @@ on:
     paths:
       - 'src/**'
       - 'examples/**'
+      - 'test/**'
+      - 'tools/c5flash/**'
+      - 'docs/consumer-check/**'
       - 'library.properties'
       - 'library.json'
       - '.github/workflows/ci.yml'
@@ -31,12 +37,16 @@ jobs:
       matrix:
         example:
           - battery
+          - battery_28
+          - audio_28
           - gps_i2c
           - hello_board
+          - hello_board_28
           - reliability_reference
           - screen_flush
           - single_core
           - touch_int
+          - touch_redraw
 
     steps:
       - uses: actions/checkout@v4
@@ -65,3 +75,52 @@ jobs:
 
       - name: Build ${{ matrix.example }}
         run: pio run -d examples/${{ matrix.example }}
+
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run BSP driver tests
+        run: ./test/host/run.sh
+      - name: Run c5flash tests
+        run: python3 tools/c5flash/test/test_c5flash.py
+
+  clean-consumers:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        consumer: [non-display, display]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: consumer-pio-${{ runner.os }}-${{ hashFiles('docs/consumer-check/**', 'examples/hello_board/platformio.ini') }}
+          restore-keys: |
+            consumer-pio-${{ runner.os }}-
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+      - name: Assemble clean consumer
+        shell: bash
+        run: |
+          project="docs/consumer-check/${{ matrix.consumer }}"
+          mkdir -p "$project/boards" "$project/variants"
+          cp examples/hello_board/boards/ws-c5-35.json "$project/boards/"
+          cp -R examples/hello_board/variants/ws-c5-35 "$project/variants/"
+          cp examples/hello_board/partitions_ota_16mb.csv "$project/"
+          sed -i "s|git+file:///path/to/ws-c5-bsp#<commit-or-tag>|git+file://${GITHUB_WORKSPACE}#${GITHUB_SHA}|" "$project/platformio.ini"
+          if [[ "${{ matrix.consumer }}" == "display" ]]; then
+            cp examples/hello_board/apply_c5_tft_patch.py "$project/"
+            cp examples/hello_board/wsc5_user_setup.h "$project/"
+            cp -R examples/hello_board/tft_c5 "$project/"
+          fi
+      - name: Build clean consumer
+        run: pio run -d docs/consumer-check/${{ matrix.consumer }}

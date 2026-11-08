@@ -2,8 +2,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <Arduino_GFX_Library.h>
-#include <board/ws_c5_28/ws_c5_28_pins.h>
-#include <board/ws_c5_28/ws_c5_28_expander.h>
+#include <board/ws_c5_28/ws_c5_28_board.h>
 #include <board/ws_c5_28/ws_c5_28_battery.h>
 #include "ws_c5_28_display.h"
 using namespace WsC5_28;
@@ -16,11 +15,10 @@ static bool screenReady = false;
 
 void setup() {
     Serial.begin(115200); // Never wait for USB: battery-only boot must proceed.
+    prepareSharedSpi();
+    if (!Expander::begin(0)) return;
     delay(300);
     Battery::begin();
-    if (!Expander::begin()) return;
-    pinMode(SD_CS, OUTPUT);
-    digitalWrite(SD_CS, HIGH);
     if (!gfx->begin(40000000)) return;
     screenReady = true;
     gfx->fillScreen(RGB565_BLACK);
@@ -36,6 +34,7 @@ void setup() {
     gfx->println("Voltage estimate only; no charge %.");
     gfx->setCursor(10, 221);
     gfx->println("Power source is not detected by software.");
+    Expander::backlight(255);
 }
 void loop() {
     if (!screenReady) { delay(1000); return; }

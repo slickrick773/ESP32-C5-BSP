@@ -10,8 +10,9 @@ a driver written for one board lands on the other without guesswork.
 > and the ledger in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md)) is proven end to
 > end. The **Waveshare ESP32-C5-Touch-LCD-2.8** (see
 > [BOARD-WS-C5-28.md](BOARD-WS-C5-28.md)) is **hardware-verified for display +
-> touch and speaker playback** (separate BSP examples on the real board,
-> 2026-10-31); recording, battery and GPS are later, unverified phases. The **Marauder Pancake C5** is
+> touch, speaker playback, battery-voltage readout, and continued battery-only
+> operation** (separate BSP examples on the real board). Voltage accuracy,
+> charging state, runtime capacity, recording, and GPS remain unverified. The **Marauder Pancake C5** is
 > the community twin, cross-referenced from the scene's shipping configs —
 > **not run on hardware by this BSP.** Treat the 3.5" and the 2.8" display/touch
 > columns as "what we verified," and the Pancake column as "what to expect."
@@ -48,12 +49,12 @@ wiring; across to the Pancake they are peripheral and wiring.
 | Display SPI pins | MISO 2, CS 8, DC 5 | **MISO 8, CS 10, DC 9** | board-dependent |
 | Touch I²C bus | SDA 27 / SCL 26 | **SDA 0 / SCL 1** | board-dependent |
 | LCD / touch reset / backlight | behind a **CH32V006 I/O expander** (`0x24`) — no `TFT_RST`, no `TFT_BL`, no LEDC | same expander `0x24`, but **no EXIO5 panel rail** (resets only) | **direct GPIO** |
-| Power / battery | **AXP2101 PMU** (raw I²C, or XPowersLib) | **not yet confirmed** (schematic check pending; may be simpler) | **MAX17048** fuel gauge |
+| Power / battery | **AXP2101 PMU** (raw I²C, or XPowersLib) | CH32V006 expander ADC voltage estimate; continued battery-only operation verified, accuracy/charging/runtime unverified | **MAX17048** fuel gauge |
 | GPS | **LC76G over I²C** on the shared touch bus (`0x50`/`0x54`/`0x58`) | LC76G planned on SDA 0 / SCL 1 — **`0x58` clashes with CST3530 touch**, resolve first | none |
 | Storage | microSD (CS 9) · **32 MB** flash | microSD (**CS 23**) | — |
 | RGB LED | **unusable** — "NeoPixel" on **GPIO27 is SDA** (black-panel-on-reset trap; Marauder #1665) | GPIO27 is not the bus here; nothing defined on it | usable RGB |
 | Touch INT gate | **GPIO3** — gating reads on INT kills phantom/offset taps | **GPIO5** (set as input; CST3530 INT mode not yet characterised) | board-dependent |
-| Onboard extras | ES8311 codec (`0x18`), RTC (`0x51`), IMU (`0x6B`) on the shared bus | **not yet confirmed** (schematic check pending) | — |
+| Onboard extras | ES8311 codec (`0x18`), RTC (`0x51`), IMU (`0x6B`) on the shared bus | ES8311 `0x18`, RTC `0x51`, IMU `0x6B`, sensor `0x70` observed by bus scan | — |
 
 ### Writing for the Waveshare when you have Pancake code
 

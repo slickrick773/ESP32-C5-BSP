@@ -820,7 +820,7 @@ hook may shorten normal-start illumination but is not an accepted fix yet.
 After these captures, stock bootloader was left intact and hello_board was
 rebuilt with the isolated core, flashed only at 0x10000 and verified. The
 read/controlled-PWM probe is no longer the installed application. Dark-boot
-acceptance remains FAILED.
+acceptance for this restored Hello Board image remains FAILED.
 
 **[MEASURED/USER-OBSERVED 2026-11-05 — real-app cold boot after restore.]**
 On a real cold power-up of the restored hello_board app, the user observed a
@@ -828,12 +828,44 @@ brief boot transient that resolved to the live application screen: serial
 reported `[hello] expander up, touch present`, and the panel showed the app's
 own content (board name, `touch: FT6336 OK`, `tap the screen`) with a user-drawn
 touch stroke tracking correctly. The final image is the live application, not a
-retained frame. The brief flash is the residual of the power-up backlight state
-documented above; its optical duration was not measured, and whether `begin(0)`
+retained frame. The brief flash was observed alongside the startup illumination history
+documented above; its electrical cause and optical duration remain unmeasured,
+and whether `begin(0)`
 measurably shortens it was not tested. The
 retained-previous-frame symptom did not persist to the final image on this cold
 boot; it is seen on reset, and whether stale GRAM briefly shows during the cold
 transient was not characterised.
+
+**[USER-OBSERVED 2026-11-07 — same-board application comparison.]**
+The user reported a clean cold boot and physical reset with a consumer
+application using the published first-frame startup API. On the same board,
+a verified application-only write of the current hello_board example reproduced
+a fuzzy cold-boot flash. After drawing on the display, a physical reset showed
+a fuzzy flash and part of the previous drawing in a different color. The
+consumer application was restored and the application write verified. This
+comparison records the observed runs. The reason for the difference and the
+optical timing remain unmeasured. This hardware observation concerns the working
+consumer application, not the compile-only `docs/consumer-check` fixtures.
+
+The standalone scrolling sample also passed user-observed cold boot and physical
+reset with no visible fuzzy flash or retained frame. Its tested application
+SHA-256 is `e8e57ee9ea70fe8e667ed85611b7f3f18e7f9db54e05ae2a01224c267c52e572`.
+The publication source rename produced a different, successfully compiled binary;
+that build has no corresponding hardware acceptance. The earlier ROM-download
+mode glow and Hello Board observations remain open evidence, not proof of an
+electrical cause or measured optical timing.
+
+**[USER-OBSERVED 2026-11-07 — published-source sample recheck.]**
+A clean build of the scrolling sample from published source commit
+`367e8f5a85016556f563f0836b1f364f2b8e127e` was installed application-only with
+c5flash and verification OK. The user confirmed clean startup in response to
+the cold-boot and physical-reset check, reporting that it comes up great.
+Tested application SHA-256:
+`8b8c3a57a4f0eb3dfd76ca6eb5d3e61c3d2e50c3448a495ae83e5d31dd833acf`
+(412,384 bytes). This is a separate accepted image from the earlier scrolling
+build. It does not transfer acceptance to Hello Board or establish the electrical
+cause or optical timing of its startup flash. Individual control behaviors were
+not separately reported during this recheck.
 
 ### Battery: the AXP2101 fuel gauge reads over plain I²C (no XPowersLib needed)
 

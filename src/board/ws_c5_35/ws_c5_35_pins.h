@@ -48,7 +48,7 @@ constexpr uint8_t  EXIO_OUT_REG  = 0x03;    // output latch
 constexpr uint8_t  EXIO_PWM_REG  = 0x05;    // backlight PWM
 constexpr uint8_t  EXIO_TP_RST   = 0;       // EXIO0 -> FT6336 reset
 constexpr uint8_t  EXIO_LCD_RST  = 1;       // EXIO1 -> ST7796 reset
-constexpr uint8_t  EXIO_POWER    = 5;       // EXIO5 -> panel power / backlight
+constexpr uint8_t  EXIO_POWER    = 5;       // vendor BOARD_POWER_EXIO; actual rail function unverified
 
 // ---- Other devices on the shared bus (addresses, for reference) -------------
 constexpr uint8_t  ES8311_ADDR   = 0x18;    // audio codec (Phase later)

@@ -62,11 +62,11 @@ static void drawStatus() {
 
 void setup() {
     Serial.begin(115200);
+    begin(0);           // darken retained panel state before any startup delay
     delay(300);
     Serial.println();
     Serial.printf("[cap] %s\n", boardName());
 
-    begin();            // expander + touch, on the shared bus
     Gps::begin();
     Battery::begin();
 
@@ -85,6 +85,7 @@ void setup() {
     startScan();
 
     drawStatus();
+    Expander::backlight(255);
 }
 
 void loop() {

@@ -48,9 +48,10 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 - **Waveshare ESP32-C5-Touch-LCD-3.5** — the one fully-proven board. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
-  touch). **Display, touch and speaker playback are hardware-verified**
-  (separate BSP examples, 2026-10-31); recording, battery and GPS remain later
-  phases. the owner confirmed audible 440 Hz beeps from `audio_28`. See
+  touch). **Display, touch, speaker playback, battery-voltage readout, and
+  continued battery-only operation are hardware-verified** in separate BSP
+  examples. Voltage accuracy, charging state, runtime capacity, recording, and
+  GPS remain unverified. See
   [docs/BOARD-WS-C5-28.md](docs/BOARD-WS-C5-28.md).
 
 Other C5 boards can be added against the chip core + board-template structure —
@@ -67,6 +68,15 @@ GPS on this board runs over I²C — the LC76G on the shared bus — which needs
 extra GPIO and leaves the BOOT button free. The I²C and UART options, and the
 trade-offs between them, are in [docs/GPS.md](docs/GPS.md).
 
+## Touch and scrolling sample
+
+**[Open the touch and scrolling sample](examples/touch_redraw/README.md)** —
+Waveshare C5 3.5-inch example with a scrolling list, tap-to-select rows, Toggle,
+and Count controls. The backlight turns on after the first complete frame.
+Cold boot and physical reset passed the user check for the documented test image.
+
+See [all examples](examples/README.md) for the other runnable samples.
+
 ## Architecture
 
 ```
@@ -75,14 +85,16 @@ src/
             esp32c5_i2c_bus   shared-bus discipline: reopen, non-blocking lock,
                               timeout guard, 9-clock recovery
             esp32c5_tasks     single-core-aware task pinning + chip info
+            esp32c5_spi       deterministic SPI2 peripheral reset
   board/    board-specific drivers; two hardware-proven boards
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
                        board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
-                       audio (ES8311 playback) · board begin()/name()
-                       (recording/battery/gps later)
+                       audio (ES8311 playback) · battery voltage ·
+                       board begin()/name() (recording/gps later)
 examples/   one standalone PlatformIO project per capability
+            touch_redraw           touch + scrolling list, row selection, Toggle, Count (3.5")
             hello_board            display + touch (3.5", TFT_eSPI)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)

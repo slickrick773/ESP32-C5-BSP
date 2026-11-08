@@ -8,8 +8,8 @@
 // Two layers:
 //   chip/   reusable across any ESP32-C5 (single-core pinning, dual-band
 //           band-switch ordering, USB-Serial-JTAG console, 5 GHz channel quirks)
-//   board/  board-specific drivers; one hardware-proven board today, the
-//           Waveshare ESP32-C5-Touch-LCD-3.5 (board/ws_c5_35)
+//   board/  board-specific drivers for the hardware-proven Waveshare 3.5-inch
+//           and 2.8-inch C5 touch-display boards
 //
 // A capability is only exposed here once it has been observed on real hardware.
 // See docs/HARDWARE-FINDINGS.md for the three levels of proof and every claim's
