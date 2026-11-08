@@ -28,6 +28,7 @@ every claim's tag.
 | 4 | AXP2101 battery readout | ✅ hardware-verified (89% / 4.15 V / charging) |
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
+| Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 
 Published (`v0.3.x`) and adopted across the C5 fleet (Marauder, PorkChop, Bruce,
 Picoware, Launcher) — each port self-contained, no BSP dependency upstream. Three
