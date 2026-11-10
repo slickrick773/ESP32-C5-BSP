@@ -29,6 +29,8 @@ every claim's tag.
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
+| Sample | [Speaker test](examples/audio_35/README.md) — three 440 Hz tones through the ES8311 (3.5-inch) | ✅ hardware-tested; clean playback confirmed by the owner, 2026-11-10 |
+| Sample | [Microphone level test](examples/mic_35/README.md) — ES8311 capture level over serial (3.5-inch) | ⚠️ hardware-tested for level response only, 2026-11-10; no captured audio listened to, recording quality unverified |
 
 Phases 1–6 describe the **3.5-inch** board. Board-specific support is listed below.
 

@@ -934,6 +934,8 @@ clock on the units tested.
 | Battery AXP2101 via raw I²C regs | HW-VERIFIED | %/charge without XPowersLib; 0x03=0x4A, 0x18.3, 0x00.3, 0xA4, 2026-10-26 |
 | Backlight dimming via expander PWM | HW-VERIFIED | live dimming; `TFT_BL = -1`, driven on the CH32V006, 2026-10-26 |
 | USB stalls on large transfers | HW-VERIFIED | chunk (~512 KB/4 KB) to work around, 2026-10-26 |
+| ES8311 speaker playback (3.5-inch) | HW-VERIFIED (owner listen) | BSP `audio_35`: three 440 Hz tones heard clean, 2026-11-10; pitch accuracy and display+audio UNVERIFIED |
+| ES8311 microphone capture (3.5-inch) | level response HW-VERIFIED, recording quality UNVERIFIED | BSP `mic_35`: left-slot AC RMS ~23 silent, ~2059 with claps (clipped at default gain), right slot zero, 2026-11-10; no captured audio listened to |
 | Panel black on USB→battery / post-reset | symptom HW-VERIFIED, cause UNVERIFIED | RST clears; power-dip suspected, 2026-10-26 |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on

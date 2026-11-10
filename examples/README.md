@@ -65,7 +65,8 @@ on 3.14+.
 
 - **[audio_35](audio_35/README.md)** — 3.5-inch ES8311 speaker test. Three nominal
   440 Hz tones, then automatic stop; clean playback confirmed by the owner on
-  November 10, 2026. No display rendering; recording and pitch accuracy unverified.
+  November 10, 2026. No display rendering; pitch accuracy unverified. Capture is
+  a separate example, `mic_35`.
 - **[mic_35](mic_35/README.md)** — 3.5-inch ES8311 microphone level test. Three
   1-second captures with level statistics over serial, then automatic stop. On
   November 10, 2026 the level stayed low in silent runs and rose when sound

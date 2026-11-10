@@ -18,7 +18,8 @@ Arduino ESP_I2S and board startup. No dedicated amplifier-enable control is
 implemented by the driver.
 
 - Shared I²C: SDA 27, SCL 26, codec address `0x18`.
-- I2S: BCLK 23, LRCK 10, MCU DOUT 25; no external MCLK. Recording is unused.
+- I2S: BCLK 23, LRCK 10, MCU DOUT 25; no external MCLK. This example does not
+  record; see [mic_35](../mic_35/README.md).
 - Tested format: 16 kHz, 16-bit stereo with identical left/right samples.
 - Tested PCM peak: 12000; codec volume `0xE0`; DAC register `0x04 = 0x10`.
 
@@ -34,6 +35,8 @@ are reported over serial; software success alone does not prove physical silence
 An I2S initialization failure returns before codec configuration.
 
 Host tests cover codec register handling and failure paths with mocked I²C.
-They do not validate physical wiring or analog behavior. Recording, pitch
-accuracy, fault-injected hardware shutdown, and simultaneous display/audio
-operation remain unverified. The 2.8-inch playback implementation is separate.
+They do not validate physical wiring or analog behavior. Pitch accuracy,
+fault-injected hardware shutdown, and simultaneous display/audio operation
+remain unverified. Microphone capture is covered by
+[mic_35](../mic_35/README.md), tested for level response only. The 2.8-inch
+playback implementation is separate.

@@ -52,6 +52,18 @@ the firmware deliberately continues retrying with a scheduler yield.
 These are software failure-path checks. They do not prove electrical amp state,
 I2S pin wiring, actual clocks, analog audio quality, or concurrent hardware use.
 
+## 3.5-inch audio coverage
+
+`test_audio_35` checks codec ID/short-read/configuration/lock failures, BCLK
+clock selection, the hardware-tested DAC oversampling value, volume writes and
+shutdown for playback. For capture it checks that recording is refused while
+playback is configured (and the reverse), setup write and lock failures, the
+analog-mic and ADC-volume registers, the DAC staying muted, shutdown, and that
+the playback configuration is unchanged after a recording session.
+
+These are register-level checks against mocked I²C. They do not prove I2S pin
+wiring, clocks, microphone signal, or audio quality.
+
 The `test_battery_28` suite checks 2.8-inch expander ADC decoding and nominal
 voltage conversion, initialization/lock failures, NACK/short/invalid reads,
 caller-data preservation, and read-only sampling. It does not validate physical
