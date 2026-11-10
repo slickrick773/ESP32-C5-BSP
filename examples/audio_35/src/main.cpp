@@ -18,8 +18,12 @@ namespace Audio = WsC5_35::Audio;
 static I2SClass audioI2S;
 static int16_t tonePcm[Audio::SAMPLE_RATE / 2];
 static void audioTask(void*);
-// Exact gain settings used in the clean hardware listen test.
-static constexpr float toneAmplitude = 12000.0f;
+// A 1 kHz tone at PCM peak 4500 and codec volume 0xE0: the loudest level that
+// stays inside the DAC's range at that volume, at a pitch this small speaker
+// reproduces well. The first version used 440 Hz at peak 12000, which was
+// loud only because it clipped (see docs/BOARD-WS-C5-35.md).
+static constexpr float toneHz = 1000.0f;
+static constexpr float toneAmplitude = 4500.0f;
 static constexpr uint8_t codecVolume = 0xE0;
 
 void setup() {
@@ -51,14 +55,14 @@ void setup() {
         if (i < ramp) gain = (float)i / ramp;
         if (remaining < ramp) gain = (float)remaining / ramp;
         tonePcm[i] = (int16_t)(toneAmplitude * gain *
-            sinf(2.0f * 3.14159265358979323846f * 440.0f * i / Audio::SAMPLE_RATE));
+            sinf(2.0f * 3.14159265358979323846f * toneHz * i / Audio::SAMPLE_RATE));
     }
     if (Esp32C5::createPinnedTask(audioTask, "audio_35", 4096, nullptr, 5) != pdPASS) {
         Serial.println("[audio_35] audio task creation FAILED");
         Audio35Example::shutdown(audioI2S);
         return;
     }
-    Serial.println("[audio_35] ES8311 configured; running three nominal 440 Hz beeps "
+    Serial.println("[audio_35] ES8311 configured; running three nominal 1 kHz beeps "
                    "(note any crackle)");
 }
 

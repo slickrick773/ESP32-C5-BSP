@@ -1,0 +1,30 @@
+[board_check_35] Waveshare ESP32-C5-Touch-LCD-3.5
+[board_check_35]  PASS  I/O expander           CH32V006 at 0x24
+[board_check_35]  PASS  touch controller       answered
+[board_check_35]  PASS  power management       AXP2101: USB present, LiPo connected
+[board_check_35]  PASS  real-time clock        advanced 1 s
+[board_check_35]  PASS  IMU                    1.01 g total at rest
+[board_check_35]  PASS  temperature/humidity   23.0 C, 50.9 %
+[board_check_35]  PASS  audio codec            ES8311 configured
+[board_check_35]  PASS  speaker to microphone  sent 2999, heard 1640 (quiet 0.6)
+[board_check_35]  PASS  microSD                59638 MB card, write/read-back matched
+[board_check_35]  PASS  GPS module             LC76G answers at 0x50
+[board_check_35]  ----  display                not checked: it cannot be read back
+[board_check_35] 10 passed, 0 failed, 0 skipped
+[board_check_35] result: PASS
+
+[board_check_35] Waveshare ESP32-C5-Touch-LCD-3.5
+[board_check_35]  PASS  I/O expander           CH32V006 at 0x24
+[board_check_35]  PASS  touch controller       answered
+[board_check_35]  PASS  power management       AXP2101: USB present, LiPo connected
+[board_check_35]  PASS  real-time clock        advanced 1 s
+[board_check_35]  PASS  IMU                    1.01 g total at rest
+[board_check_35]  PASS  temperature/humidity   23.0 C, 50.3 %
+[board_check_35]  PASS  audio codec            ES8311 configured
+[board_check_35]  PASS  speaker to microphone  sent 2999, heard 1644 (quiet 0.3)
+[board_check_35]  PASS  microSD                59638 MB card, write/read-back matched
+[board_check_35]  PASS  GPS module             LC76G answers at 0x50
+[board_check_35]  ----  display                not checked: it cannot be read back
+[board_check_35] 10 passed, 0 failed, 0 skipped
+[board_check_35] result: PASS
+

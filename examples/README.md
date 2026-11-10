@@ -40,7 +40,28 @@ on 3.14+.
 - **[`audio_28/`](audio_28/README.md)** — Waveshare **2.8-inch speaker playback**,
   hardware-verified by the owner hearing repeating 440 Hz beeps (2026-10-31). Uses
   Arduino ESP_I2S with no MCLK, MCU DOUT=26 / DIN=27, and EXIO3 amp enable.
-  Codec control stays driver-agnostic in the BSP; recording is not verified.
+  Codec control stays driver-agnostic in the BSP. Capture is `mic_28`.
+- **[mic_28](mic_28/README.md)** — 2.8-inch microphone level test. On November
+  10, 2026 the level read about 55–68 when quiet and 1549, clipped, with claps.
+- **[audio_selftest_28](audio_selftest_28/README.md)** — 2.8-inch audio
+  self-test: the board plays a tone and hears it on its own microphone. Passed
+  three of three runs on November 10, 2026. Needs the speaker plugged in.
+- **[onboard_28](onboard_28/README.md)** — 2.8-inch clock, IMU,
+  temperature/humidity and BOOT button readout. On November 10, 2026 the clock
+  counted, the IMU read 1.04 g at rest and the sensor read about 23 °C, 47 %.
+- **[gps_28](gps_28/README.md)** — 2.8-inch LC76G GPS over I²C, with touch read
+  alongside. On November 10, 2026: a fix with 7 satellites, no bus failures in
+  three minutes, and taps still read correctly. The driver avoids address
+  `0x58`, which the touch chip owns on this board.
+- **[sd_28](sd_28/README.md)** — 2.8-inch microSD test. Passed on November 10,
+  2026 with one 29.6 GB card at 4 MHz.
+- **[touch_audio_28](touch_audio_28/README.md)** — 2.8-inch display, touch,
+  speaker and microphone together. On November 10, 2026 the owner heard a clean
+  tone while an on-screen counter kept running.
+- **[board_check_28](board_check_28/README.md)** and
+  **[board_check_35](board_check_35/README.md)** — whole-board check: every
+  onboard device in one run, printed as a PASS/FAIL table. Useful as the first
+  thing to flash on a new or suspect board.
 - **`gps_i2c/`** — Phase 3. LC76G GNSS over I²C on the shared bus: a one-shot bus
   scan (confirms `0x50` is present), then link health, then fix + satellite
   count. Display-less (no TFT_eSPI). Wire the LC76G to SDA 27 / SCL 26 / 3V3 /
@@ -64,9 +85,9 @@ on 3.14+.
   (optionally) a battery.
 
 - **[audio_35](audio_35/README.md)** — Phase 7. 3.5-inch ES8311 speaker test. Three nominal
-  440 Hz tones, then automatic stop; clean playback confirmed by the owner on
-  November 10, 2026. No display rendering; pitch accuracy unverified. Capture is
-  a separate example, `mic_35`.
+  1 kHz tones, then automatic stop. On November 10, 2026 the owner judged them
+  clean and loud enough; a recording measured about 6% harmonics. No display
+  rendering. Capture is a separate example, `mic_35`.
 - **[mic_35](mic_35/README.md)** — Phase 7. 3.5-inch ES8311 microphone level test. Three
   1-second captures with level statistics over serial, then automatic stop. On
   November 10, 2026 the level stayed low in silent runs and rose when sound

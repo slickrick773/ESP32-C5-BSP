@@ -116,6 +116,11 @@ constexpr uint8_t  EXIO_TP_RST   = 0;       // EXIO0 -> CST3530 reset
 constexpr uint8_t  EXIO_LCD_RST  = 1;       // EXIO1 -> ST7789 reset
 // (No EXIO_POWER: the 2.8" has no EXIO5 panel rail.)
 
+// ---- BOOT button -------------------------------------------------------------
+// GPIO28 is the ESP32-C5 boot-mode strapping pin, active low with a pull-up.
+// Not yet hardware-verified as an input on this board.
+constexpr int      BOOT_BUTTON   = 28;
+
 // ---- microSD: on the display SPI bus ----------------------------------------
 constexpr int      SD_CS         = 23;      // 3.5" uses 9
 

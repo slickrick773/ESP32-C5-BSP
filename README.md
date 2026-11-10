@@ -26,15 +26,16 @@ every claim's tag.
 | 0 | Scaffold + hardware-findings doc | ✅ done |
 | 1 | Board definition, pin map, ST7796 display, FT6336 touch | ✅ hardware-verified |
 | 2 | Shared-I²C core (reopen / lock / timeout / recovery) + touch hardening | ✅ hardware-verified |
-| 3 | LC76G GPS over I²C | ✅ hardware-verified (29 sats, HDOP ~0.6) |
+| 3 | LC76G GPS over I²C | ✅ hardware-verified (29 sats, HDOP ~0.6); re-run 2026-11-10 after the driver moved to shared code: 13–15 sats, HDOP 0.84–1.01 |
 | 4 | AXP2101 battery readout | ✅ hardware-verified (89% / 4.15 V / charging) |
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
-| 7 | ES8311 audio: speaker playback, microphone capture and gain, playing and recording at once — [audio_35](examples/audio_35/README.md), [mic_35](examples/mic_35/README.md), [audio_selftest_35](examples/audio_selftest_35/README.md) | ✅ hardware-verified 2026-11-10: owner confirmed playback by ear; microphone level follows sound and one played-back capture was judged clear speech; the self-test passed three of three runs and reported FAIL with the speaker silenced. The listening level measures as clipped; noise and frequency response not measured |
+| 7 | ES8311 audio: speaker playback, microphone capture and gain, playing and recording at once — [audio_35](examples/audio_35/README.md), [mic_35](examples/mic_35/README.md), [audio_selftest_35](examples/audio_selftest_35/README.md) | ✅ hardware-verified 2026-11-10: owner judged the 1 kHz speaker test clean and loud enough (about 6% harmonics, pitch 995–999 Hz by laptop microphone); microphone level follows sound and one played-back capture was judged clear speech; the self-test passed three of three runs and reported FAIL with the speaker silenced. Microphone noise and frequency response not measured |
 | 8 | Onboard devices: PCF85063 clock, QMI8658 IMU, SHTC3 temperature/humidity, BOOT button — [onboard_35](examples/onboard_35/README.md) | ✅ hardware-verified 2026-11-10 on two boards: clock counting, IMU at rest and in three poses, SHTC3 readings, BOOT presses. The clock has no backup cell: it kept time through a USB unplug with a LiPo fitted and lost it without one. Sensor accuracy not tested |
 | 9 | microSD on the shared SPI bus (tested example; no BSP SD driver) — [sd_35](examples/sd_35/README.md) | ✅ hardware-verified 2026-11-10 with one 29.8 GB card at 4 MHz; a bench build also read and wrote it without error while the display redrew |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
+| Sample | [Whole-board check](examples/board_check_35/README.md) — every onboard device in one PASS/FAIL table (3.5-inch) | ✅ ten of ten checks passed, two consecutive runs, 2026-11-10 |
 
 Sample rows are demonstrations built on those phases and add no driver of
 their own. Phases 2 and 5 are chip-level and serve both boards.
@@ -50,11 +51,13 @@ circuit from the 3.5-inch, so each row has its own driver and evidence.
 | Board definition, pin map, CH32V006 expander, ST7789 display, CST3530 touch | [hello_board_28](examples/hello_board_28/) | ✅ hardware-verified 2026-10-31: panel renders correctly; taps and a continuous drag tracked |
 | ES8311 speaker playback | [audio_28](examples/audio_28/README.md) | ✅ hardware-verified 2026-10-31 by the owner's ear: repeating beeps without crackle; output frequency not measured |
 | Battery voltage through the expander, and running on battery alone | [battery_28](examples/battery_28/README.md) | ✅ hardware-verified: about 4.1 V estimated with USB and battery connected, and the screen kept updating after USB was unplugged. Voltage accuracy, charging state and runtime not verified |
-| GPS (LC76G over I²C) | — | ⏳ next: no driver or example yet. The module answers at `0x58`, the same address as this board's touch chip, and that has to be resolved on hardware first |
-| Microphone capture | — | ❌ not implemented for this board |
-| Clock, IMU, temperature/humidity sensor | — | ❌ seen in a bus scan at `0x51`, `0x6B`, `0x70`; the 3.5-inch drivers are not yet available for this board |
-| microSD | — | ❌ pin defined, not tested from this BSP |
-| Display, touch and audio together | — | ❌ not tested; each was verified in a separate example |
+| GPS (LC76G over I²C, sharing the bus with touch) | [gps_28](examples/gps_28/README.md) | ✅ hardware-verified 2026-11-10: fix with 7 satellites, HDOP 2.2; three minutes with no bus failures; taps still read correctly. The module's wake-after-idle step, which uses the touch chip's address, is skipped and was not exercised |
+| Microphone capture | [mic_28](examples/mic_28/README.md) | ✅ hardware-verified 2026-11-10 for level: about 55–68 when quiet, 1549 and clipped with claps. No capture from this board has been listened to |
+| Playing and recording at once | [audio_selftest_28](examples/audio_selftest_28/README.md) | ✅ hardware-verified 2026-11-10: the board heard its own tone, three of three runs |
+| Clock, IMU, temperature/humidity sensor | [onboard_28](examples/onboard_28/README.md) | ✅ hardware-verified 2026-11-10: clock counting, 1.04 g at rest, about 23 °C and 47 %. The RTC battery socket, a BOOT press and sensor accuracy not tested |
+| microSD | [sd_28](examples/sd_28/README.md) | ✅ hardware-verified 2026-11-10 with one 29.6 GB card at 4 MHz, display idle |
+| Display, touch and audio together | [touch_audio_28](examples/touch_audio_28/README.md) | ✅ hardware-verified 2026-11-10: owner heard a clean tone while an on-screen counter kept running, and the microphone reading followed a clap |
+| Whole-board check | [board_check_28](examples/board_check_28/README.md) | ✅ ten of ten checks passed, four consecutive runs, 2026-11-10 |
 
 Board-specific notes are listed below.
 
@@ -81,16 +84,16 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
   shared-bus core, GPS, battery, task helpers, the Wi-Fi capstone, ES8311
   audio in both directions, the onboard clock, IMU and temperature/humidity
   sensor, and microSD. The status table states what was and was not tested
-  for each. Three things worth knowing up front: the speaker test's listening
-  level measures as clipped although the owner accepted it by ear, the clock
-  has no backup cell and needs USB or a LiPo to keep time, and pitch accuracy
-  is unverified. See [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
+  for each. Two things worth knowing up front: the clock has no backup cell
+  and needs USB or a LiPo to keep time, and the small speaker is far louder
+  at 1 kHz and above than at 440 Hz. See
+  [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
-  touch). **Display, touch, speaker playback, battery-voltage readout, and
-  continued battery-only operation are hardware-verified** in separate BSP
-  examples. Voltage accuracy, charging state, runtime capacity, recording, and
-  GPS remain unverified. See
-  [docs/BOARD-WS-C5-28.md](docs/BOARD-WS-C5-28.md).
+  touch). Display, touch, speaker, microphone, GPS, the onboard clock, IMU and
+  temperature/humidity sensor, microSD and battery-voltage readout are all
+  hardware-verified; the status table above gives the evidence and limits for
+  each. Voltage accuracy, charging state and runtime capacity are unverified.
+  See [docs/BOARD-WS-C5-28.md](docs/BOARD-WS-C5-28.md).
 
 Other C5 boards can be added against the chip core + board-template structure —
 but none is claimed supported until someone runs it on that hardware.
@@ -120,6 +123,8 @@ See [all examples](examples/README.md), including the
 [3.5-inch microSD test](examples/sd_35/README.md),
 [3.5-inch onboard devices readout](examples/onboard_35/README.md),
 [3.5-inch touch and audio sample](examples/touch_audio/README.md),
+[whole-board check](examples/board_check_35/README.md),
+[2.8-inch GPS test](examples/gps_28/README.md),
 [2.8-inch battery test](examples/battery_28/README.md),
 [panel colour-cycle utility](examples/screen_flush/), and
 [BLE heap diagnostic](examples/ble_heap_probe/README.md).
@@ -137,21 +142,30 @@ src/
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
                        audio (ES8311 playback, mic capture) · rtc · imu · env (SHTC3) ·
-                       board begin()/name()
+                       gps · board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
-                       audio (ES8311 playback) · battery voltage ·
-                       board begin()/name() (recording/gps later)
+                       audio (ES8311 playback, mic capture) · battery voltage ·
+                       rtc · imu · env · gps · board begin()/name()
+  part/     drivers for parts fitted to both boards, used through each
+            board's headers: pcf85063_rtc · qmi8658_imu · shtc3_env · lc76g_gps
 examples/   standalone samples (PlatformIO unless noted)
             touch_redraw           touch + scrolling list, row selection, Toggle, Count (3.5")
             hello_board            display + touch (3.5", TFT_eSPI)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
-            audio_35               ES8311 three-tone test (3.5", ESP_I2S)
+            audio_35               ES8311 three-tone speaker test (3.5", ESP_I2S)
             mic_35                 ES8311 microphone level test (3.5", ESP_I2S)
             sd_35                  microSD mount + write/read-back (3.5")
             onboard_35             clock, IMU, SHTC3 and BOOT button readout (3.5")
             audio_selftest_35      speaker-to-microphone loopback check, PASS/FAIL (3.5")
             touch_audio            list + TONE and MIC controls (3.5")
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
+            mic_28                 ES8311 microphone level test (2.8")
+            audio_selftest_28      speaker-to-microphone loopback check (2.8")
+            onboard_28             clock, IMU, SHTC3 and BOOT button readout (2.8")
+            gps_28                 LC76G GPS over I²C with touch alongside (2.8")
+            sd_28                  microSD mount + write/read-back (2.8")
+            touch_audio_28         display, touch, tone and mic together (2.8", Arduino_GFX)
+            board_check_35/_28     every onboard device, one PASS/FAIL table
             gps_i2c                LC76G GPS over I²C (fix + sat count)
             battery_28             battery ADC/estimated voltage + battery-only screen test
             ble_heap_probe         BLE advertiser memory-pressure diagnostic (Arduino CLI)

@@ -49,19 +49,40 @@ evidence and claim tags.
 - CI coverage for both 2.8-inch examples, native driver tests, flasher tests,
   and isolated consumer builds.
 
+### Added (2.8-inch, 2026-11-10)
+- Microphone capture for the 2.8-inch board (`Audio::beginRecording()` and
+  friends) with host tests, and the `mic_28` and `audio_selftest_28` examples.
+- GPS on the 2.8-inch board: `gps_28`, using the shared LC76G driver with its
+  new option to never address `0x58`, which the touch controller owns there.
+  Hardware-verified with a fix and with touch working alongside.
+- Clock, IMU and temperature/humidity sensor on the 2.8-inch board through the
+  shared drivers, with the `onboard_28` example.
+- `sd_28` and `touch_audio_28` examples.
+- `board_check_35` and `board_check_28`: every onboard device in one run,
+  printed as a PASS/FAIL table.
+- `tools/bench/serial_log.py`: reset a board and print its serial output with
+  timestamps.
+- All new examples added to the CI build matrix.
+
 ### Changed
+- The PCF85063, QMI8658, SHTC3 and LC76G drivers moved to `src/part/` and are
+  shared by both boards. The `WsC5_35::Rtc`, `Imu`, `Env` and `Gps` names are
+  unchanged; `WsC5_28::` equivalents are new. `Gps::begin()` gained an optional
+  argument and keeps its previous behaviour by default.
+- The 3.5-inch speaker test and touch demo now play 1 kHz at PCM peak 4500
+  instead of 440 Hz at peak 12000. The old level was clipped; the new one is
+  undistorted and at a pitch the small speaker reproduces well.
 - README status table: audio, onboard devices and microSD are now phases 7, 8
   and 9; "Sample" is kept for the two demonstrations that add no driver.
-- README status: the 2.8-inch board now has its own table listing what is
-  verified, what is next (GPS) and what is not yet done.
+- README status: the 2.8-inch board now has its own table.
 
 ### Findings (2026-11-10, 3.5-inch)
 - The real-time clock has no backup cell. It lost its time with USB removed
   and no LiPo fitted, and kept it through a 10-second unplug on a second
   board with a LiPo.
-- The `audio_35` listening level (PCM peak 12000, codec volume `0xE0`) is
-  driven into clipping according to recordings; the configuration is unchanged
-  because the owner accepted it by ear. See the board notes.
+- The original `audio_35` listening level (440 Hz, PCM peak 12000, codec
+  volume `0xE0`) was clipped, and the small speaker barely reproduces 440 Hz.
+  The default was changed to a clean 1 kHz tone; see Changed above.
 - The microSD card worked while the display redrew on the shared SPI bus in a
   bench build.
 - The devices at I²C `0x70` and `0x6E` are identified as the SHTC3 sensor and

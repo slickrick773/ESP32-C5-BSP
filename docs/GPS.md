@@ -95,3 +95,12 @@ your build already needs a UART GPS and you can spare a strapping pin for it.
 - [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md) — the LC76G-over-I²C bring-up notes,
   the dead header UART, and the shared-bus discipline.
 - [BOARD-WS-C5-35.md](BOARD-WS-C5-35.md) — the board's I²C address map and pinout.
+
+## On the 2.8-inch board
+
+The same driver serves the 2.8-inch board (`WsC5_28::Gps`), wired through that
+board's I2C socket. There the module's `0x58` address belongs to the touch
+controller, so the driver is started with `Gps::begin(false)` and never
+addresses it. That was hardware-verified on 2026-11-10 with a fix and with
+touch working alongside; see [BOARD-WS-C5-28.md](BOARD-WS-C5-28.md).
+

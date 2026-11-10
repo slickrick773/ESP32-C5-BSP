@@ -4,9 +4,11 @@ Build with `pio run -d examples/audio_35`. For verified ROM-loader flashing,
 see [c5flash](../../tools/c5flash/README.md). Monitor USB serial at 115200.
 Flash only to the Waveshare ESP32-C5-Touch-LCD-3.5.
 
-The owner confirmed clean playback on November 10, 2026. The test plays three
-nominal 440 Hz tones (500 ms tone, 1500 ms silence), then stops automatically.
-It does not render a display, and initializes the backlight off.
+The test plays three nominal 1 kHz tones (500 ms tone, 1500 ms silence), then
+stops automatically. On November 10, 2026 the owner judged them clean and loud
+enough, and a laptop-microphone recording measured about 6% harmonics and a
+pitch of 995 to 999 Hz. It does not render a display, and initializes the
+backlight off.
 
 ## Startup and tested configuration
 
@@ -21,19 +23,28 @@ implemented by the driver.
 - I2S: BCLK 23, LRCK 10, MCU DOUT 25; no external MCLK. This example does not
   record; see [mic_35](../mic_35/README.md).
 - Tested format: 16 kHz, 16-bit stereo with identical left/right samples.
-- Tested PCM peak: 12000; codec volume `0xE0`; DAC register `0x04 = 0x10`.
+- Tested tone: 1 kHz, PCM peak 4500; codec volume `0xE0`; DAC register
+  `0x04 = 0x10`.
 
 The codec sequence derives from the existing 3.5-inch PorkChop implementation.
-These exact settings were retained for the clean listen test; no claim is made
-that this register setting was independently responsible for the result.
+No claim is made that the `0x04` register setting was independently
+responsible for the result.
 
-## Measured distortion at this level
+## Why 1 kHz at this level
 
-Recordings on November 10, 2026 show this level is driven into clipping: the
-tone's third and fifth harmonics are stronger than 440 Hz itself. The owner
-judged the sound clean by ear, so the settings are kept as tested. For an
-undistorted tone see the board notes
-([Speaker level](../../docs/BOARD-WS-C5-35.md#speaker-level-the-tested-listening-level-clips)).
+The first version of this test played 440 Hz at PCM peak 12000. The owner
+accepted it by ear, but recordings showed it was clipped: its third and fifth
+harmonics were stronger than 440 Hz itself. Two things were going on:
+
+- Codec volume `0xE0` adds about 16 dB of digital gain (measured: `0xC0` is
+  about six times quieter), so a peak above roughly 4900 overruns the DAC.
+- The small speaker barely reproduces 440 Hz. A clean 440 Hz tone at the
+  highest undistorted level was judged "very low" by the owner; the clipped
+  one only sounded loud because of its harmonics.
+
+At the same undistorted level the owner found higher pitches louder, so the
+test now plays 1 kHz at peak 4500. See the board notes
+([Speaker level](../../docs/BOARD-WS-C5-35.md#speaker-level)).
 
 ## Shutdown and limits
 

@@ -10,6 +10,7 @@
 namespace WsC5_28 {
 namespace Audio {
 static bool s_ready = false;
+static bool s_recording = false;
 static bool writeReg(uint8_t reg, uint8_t value) {
     Wire.beginTransmission(CODEC_ADDR);
     Wire.write(reg);
@@ -89,6 +90,7 @@ static bool configure(uint8_t volume) {
 }
 bool ready() { return s_ready; }
 bool begin(uint8_t volume) {
+    if (s_recording) return false;
     if (s_ready) return true;
     if (!Expander::begin() || !Expander::setOutput(PA_CTRL, false)) return false;
     if (!configure(volume)) return false;  // follows an acknowledged amp-disable write
@@ -104,6 +106,41 @@ bool end() {
     if (!Expander::setOutput(PA_CTRL, false)) return false;
     s_ready = false;
     return true;
+}
+
+// ── recording ──────────────────────────────────────────────────────────────
+// Mirrors the 3.5-inch driver: the playback register sequence (which already
+// powers the PGA/ADC), then DAC muted, analog mic selected, ADC volume set.
+// The amplifier is switched off first and stays off.
+bool recording() { return s_recording; }
+bool beginRecording(uint8_t adcVolume, uint8_t pgaStep) {
+    if (s_ready || pgaStep > MIC_PGA_MAX) return false;
+    if (s_recording) return true;
+    if (!Expander::begin() || !Expander::setOutput(PA_CTRL, false)) return false;
+    if (!configure(0x00)) return false;
+    Esp32C5::I2cBus::Guard guard(100);
+    if (!guard) return false;
+    uint8_t v = 0;
+    bool ok = readReg(0x31, v);
+    if (ok) ok = writeReg(0x31, v | 0x60);        // mute DAC while recording
+    if (ok) ok = writeReg(0x14, 0x10 | pgaStep);  // analog mic on MIC1P/N + PGA gain
+    if (ok) ok = writeReg(0x17, adcVolume);       // ADC volume
+    s_recording = ok;
+    return ok;
+}
+bool setMicGain(uint8_t pgaStep) {
+    if (!s_recording || pgaStep > MIC_PGA_MAX) return false;
+    Esp32C5::I2cBus::Guard guard(100);
+    return guard && writeReg(0x14, 0x10 | pgaStep);
+}
+bool endRecording() {
+    Esp32C5::I2cBus::Guard guard(100);
+    if (!guard) return false;
+    Esp32C5::I2cBus::reopen();
+    bool ok = writeReg(0x14, 0x00);               // analog mic input off
+    if (ok) ok = writeReg(0x17, 0x00);            // ADC volume to minimum
+    s_recording = false;
+    return ok;
 }
 }  // namespace Audio
 }  // namespace WsC5_28

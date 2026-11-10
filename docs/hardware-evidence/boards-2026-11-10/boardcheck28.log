@@ -1,0 +1,39 @@
+[board_check_28] Waveshare ESP32-C5-Touch-LCD-2.8
+[board_check_28]  PASS  I/O expander           CH32V006 at 0x24
+[board_check_28]  PASS  touch controller       answered
+[board_check_28]  PASS  battery monitor        battery input reads about 4219 mV (not a charge level)
+[board_check_28]  PASS  real-time clock        advanced 2 s; time not set since power loss
+[board_check_28]  FAIL  IMU                    0.00 g total at rest
+[board_check_28]  PASS  temperature/humidity   28.1 C, 37.1 %
+[board_check_28]  PASS  audio codec            ES8311 configured
+[board_check_28]  PASS  speaker to microphone  sent 2999, heard 562 (quiet 0.4)
+[board_check_28]  PASS  microSD                29656 MB card, write/read-back matched
+[board_check_28]  PASS  GPS module             LC76G answers at 0x50
+[board_check_28]  ----  display                not checked: it cannot be read back
+[board_check_28] 9 passed, 1 failed, 0 skipped
+[board_check_28] result: FAIL
+
+[board_check_28] Waveshare ESP32-C5-Touch-LCD-2.8
+[board_check_28]  PASS  I/O expander           CH32V006 at 0x24
+[board_check_28]  PASS  touch controller       answered
+[board_check_28]  PASS  battery monitor        battery input reads about 4210 mV (not a charge level)
+[board_check_28]  PASS  real-time clock        advanced 1 s; time not set since power loss
+[board_check_28]  PASS  IMU                    1.05 g total at rest
+[board_check_28]  PASS  temperature/humidity   27.7 C, 38.1 %
+[board_check_28]  PASS  audio codec            ES8311 configured
+[board_check_28]  PASS  speaker to microphone  sent 2999, heard 902 (quiet 0.0)
+[board_check_28]  PASS  microSD                29656 MB card, write/read-back matched
+[board_check_28]  PASS  GPS module             LC76G answers at 0x50
+[board_check_28]  ----  display                not checked: it cannot be read back
+[board_check_28] 10 passed, 0 failed, 0 skipped
+[board_check_28] result: PASS
+
+[board_check_28]  PASS  IMU                    1.05 g total at rest
+[board_check_28] 10 passed, 0 failed, 0 skipped
+[board_check_28] result: PASS
+[board_check_28]  PASS  IMU                    1.05 g total at rest
+[board_check_28] 10 passed, 0 failed, 0 skipped
+[board_check_28] result: PASS
+[board_check_28]  PASS  IMU                    1.05 g total at rest
+[board_check_28] 10 passed, 0 failed, 0 skipped
+[board_check_28] result: PASS

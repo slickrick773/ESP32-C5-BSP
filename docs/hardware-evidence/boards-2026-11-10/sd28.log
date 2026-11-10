@@ -1,0 +1,5 @@
+t=  3.25s [ws-c5-28] I/O expander 0x24 ready
+t=  3.25s [ws-c5-28] CST3530 on I2C 0x58 (OK)
+t=  3.30s [sd_28] mounted: SDHC/SDXC, 29656 MB
+t=  3.35s [sd_28] wrote and read back 47 bytes: match
+t=  3.35s [sd_28] result: PASS

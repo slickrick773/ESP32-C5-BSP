@@ -943,10 +943,19 @@ clock on the units tested.
 | BOOT button GPIO28 as input (3.5-inch) | HW-VERIFIED | BSP `onboard_35`: high idle; two owner presses reported as two press/release pairs, 2026-11-10 |
 | Display + touch + audio together (3.5-inch) | HW-VERIFIED (owner listen while scrolling) | BSP `touch_audio`: background-task tone clean while the list scrolled and redrew; bench: same level steadiness with and without continuous full redraws, 2026-11-10 |
 | ES8311 simultaneous play + record (3.5-inch) | HW-VERIFIED | BSP `audio_selftest_35`: duplex I2S, mic on left slot, DAC digital reference on right slot; 1 kHz loopback PASS 3/3 (mic 997/997/1006, ~1% harmonics); FAIL reported with the speaker silenced (mic tone 2.1), 2026-11-10 |
-| Speaker at the `audio_35` listening level (3.5-inch) | **clips** (measured; owner judged it clean by ear) | Laptop mic: 440 Hz at peak 12000 / volume 0xE0 has 3rd and 5th harmonics above the fundamental; 1 kHz clean at peak 3000, distorted at 6000; 0xE0→0xC0 cut level ~6×, consistent with ~+16 dB digital gain at 0xE0 (inferred), 2026-11-10 |
+| Speaker level and pitch (3.5-inch) | HW-VERIFIED (owner listen + laptop-mic measurement) | 440 Hz at peak 12000 / volume 0xE0 clipped (3rd and 5th harmonics above the fundamental); volume 0xE0 ≈ +16 dB digital gain (0xC0 ~6× quieter, inferred); clean 440 Hz judged "very low"; default now 1 kHz at peak 4500: owner "clean, loud enough", ~6% harmonics, pitch 995–999 Hz, 2026-11-10 |
 | Per-sample float synthesis while streaming I2S | too slow (HW-VERIFIED) | `sinf` per sample took ~24 ms per 256-frame block (16 ms budget) in `touch_audio`; I2S underran and the tone pulsed (~20% level variation vs ~3% precomputed), 2026-11-10 |
 | SHTC3 at 0x70 (3.5-inch) | HW-VERIFIED | BSP `onboard_35` / `WsC5_35::Env`: ID 0x0887, ~28–30 °C / 37 % RH, checksums valid, 2026-11-10; accuracy UNVERIFIED |
 | Camera control at 0x6E (3.5-inch, camera fitted) | identity HW-VERIFIED; not driven by the BSP | Registers 0xFC/0xFD read 39 01 (BF3901), 2026-11-10 |
+| 2.8-inch: LC76G GPS sharing the bus with CST3530 touch at 0x58 | HW-VERIFIED | BSP `gps_28`, driver told not to use 0x58: fix 7 sats / HDOP 2.2; ~97 KB in 3 min, 0 fails; taps counted correctly with the module streaming; wake-after-idle path NOT exercised, 2026-11-10 |
+| 2.8-inch: ES8311 microphone and duplex | HW-VERIFIED (level + loopback) | BSP `mic_28`: ~54–69 quiet, 1549 clipped with claps; `audio_selftest_28` PASS 3/3 (mic 777/728/516); no capture listened to, 2026-11-10 |
+| 2.8-inch: clock, IMU, SHTC3 (shared drivers) | HW-VERIFIED | BSP `onboard_28`: clock counting, 1.04 g at rest, ~23 °C / 47 %; RTC backup socket, BOOT press, accuracy UNVERIFIED, 2026-11-10 |
+| 2.8-inch: microSD, CS GPIO23 | HW-VERIFIED, one card, display idle | BSP `sd_28`: 29.6 GB SDHC at 4 MHz, 47-byte write/read-back match, 2026-11-10 |
+| 2.8-inch: display + touch + audio together | HW-VERIFIED (owner) | BSP `touch_audio_28`: clean tone with on-screen counter running; mic reading followed a clap, 2026-11-10 |
+| 2.8-inch: battery ADC with no battery fitted | reads ~4.2 V (HW-VERIFIED) | `board_check_28`: 4210–4219 mV with no battery connected, so the reading does not show presence, 2026-11-10 |
+| Whole-board check, both boards | HW-VERIFIED | `board_check_28` 10/10 ×4; `board_check_35` 10/10 ×2 on the LiPo board (59.6 GB card, GPS attached), 2026-11-10 |
+| QMI8658 first samples after enable | read zero (HW-VERIFIED) | First read within ~120 ms of `Imu::begin()` returned 0.00 g on a cold start; real data within ~0.2 s, 2026-11-10 |
+| GPS after the driver moved to shared code (3.5-inch) | HW-VERIFIED | `gps_i2c` re-run: 13–15 sats, HDOP 0.84–1.01 over 75 s, 2026-11-10 |
 | Panel black on USB→battery / post-reset | symptom HW-VERIFIED, cause UNVERIFIED | RST clears; power-dip suspected, 2026-10-26 |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on

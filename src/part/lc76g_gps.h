@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: MIT
+// LC76G GNSS over I2C (the crown jewel), shared by the Waveshare C5 boards.
+// Hardware-verified on the ESP32-C5-Touch-LCD-3.5.
+//
+// On the 3.5-inch board the J3 header UART is not bonded to the chip (see
+// docs/HARDWARE-FINDINGS.md), so GPS cannot come in over a UART by wiring alone.
+// The header's SDA/SCL DO reach the chip, and the Waveshare LC76G exposes I2C,
+// so GPS rides the SAME shared bus as touch/codec/PMU using Waveshare's official
+// LC76G_RPI_I2C protocol.
+//
+// The read is a multi-frame transaction that must not be interleaved with any
+// other slave (Quectel), so tick() takes the shared-bus lock for the whole
+// cycle; touch, which trylocks non-blocking, simply skips a frame meanwhile.
+// tick() self-throttles (~2 Hz), re-opens the bus once per cycle, keeps a short
+// inter-step settle, and restores Wire's timeout after each read so the long
+// GPS timeout never lingers on the touch reads. All verified on hardware.
+#pragma once
+
+#include <stdint.h>
+
+namespace C5Parts {
+namespace Gps {
+
+// Prepare the GPS (sizes the Wire buffer). The shared bus must already be open
+// (Board::begin() / Expander::begin() does that). Call once in setup().
+//
+// The module uses three addresses: 0x50 (commands), 0x54 (data) and 0x58,
+// which it is written to only when recovering or waking after it idles. Pass
+// useWakeAddress = false on a board where another device owns 0x58 (the
+// 2.8-inch board's CST3530 touch controller); the driver then never addresses
+// 0x58. The default is the hardware-verified 3.5-inch behaviour.
+void begin(bool useWakeAddress = true);
+
+// Run one GPS service step. Call every loop; it self-throttles to ~2 Hz, runs
+// an atomic I2C read cycle under the bus lock, feeds NMEA to the parser, and
+// handles the module's wake. `now` is millis(). Pass a non-zero `busyUntil`
+// (e.g. the UI's lastTouch + a grace) to defer the cycle while the screen is
+// being touched; 0 never defers.
+void tick(uint32_t now, uint32_t busyUntilMs = 0);
+
+// Same service step, but hand each NMEA byte to `sink(c, now)` instead of the
+// BSP's own parser — for a sketch that already has a GNSS parser and wants the
+// BSP only for the I2C transport (the shared-bus lock/reopen/timeout discipline
+// and the LC76G protocol + wake). `sink` is called in order, inside the bus
+// lock, for every byte of the cycle; the BSP's parsed getters below are NOT
+// updated in this mode (the sketch's own parser owns the state). Everything
+// else — throttle, lock, reopen, wake, busyUntil defer, link counters — is
+// identical to the parser tick() above.
+void tick(void (*sink)(char c, uint32_t now), uint32_t now, uint32_t busyUntilMs = 0);
+
+// --- Parsed state (updated as NMEA arrives) ---------------------------------
+bool     hasFix();            // a valid position fix right now
+uint8_t  satellites();        // satellites used in the current solution
+uint8_t  satellitesInView();  // satellites seen (from GSV), fix or not
+double   latitude();          // decimal degrees (valid only when hasFix())
+double   longitude();         // decimal degrees
+float    hdop();              // horizontal dilution of precision
+
+// --- Link counters (for debugging the I2C link) ------------------------------
+uint32_t bytesRead();         // total NMEA bytes pulled
+uint32_t cycles();            // read cycles run
+uint32_t fails();             // bus-fail cycles
+
+}  // namespace Gps
+}  // namespace C5Parts

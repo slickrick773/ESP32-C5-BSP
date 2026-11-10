@@ -52,6 +52,10 @@ the firmware deliberately continues retrying with a scheduler yield.
 These are software failure-path checks. They do not prove electrical amp state,
 I2S pin wiring, actual clocks, analog audio quality, or concurrent hardware use.
 
+`test_audio_28` also covers 2.8-inch recording: one mode at a time, the
+amplifier held off while recording, the microphone registers, gain limits and
+shutdown.
+
 ## 3.5-inch audio coverage
 
 `test_audio_35` checks codec ID/short-read/configuration/lock failures, BCLK

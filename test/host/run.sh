@@ -37,9 +37,9 @@ run_one test_audio_28 test_audio_28.cpp "$BOARD28/ws_c5_28_audio.cpp" "$BOARD28/
 
 run_one test_audio_35 test_audio_35.cpp "$BOARD/ws_c5_35_audio.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 
-run_one test_rtc_35 test_rtc_35.cpp "$BOARD/ws_c5_35_rtc.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
-run_one test_env_35 test_env_35.cpp "$BOARD/ws_c5_35_env.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
-run_one test_imu_35 test_imu_35.cpp "$BOARD/ws_c5_35_imu.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+run_one test_rtc_35 test_rtc_35.cpp "$SRC/part/pcf85063_rtc.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+run_one test_env_35 test_env_35.cpp "$SRC/part/shtc3_env.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+run_one test_imu_35 test_imu_35.cpp "$SRC/part/qmi8658_imu.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 
 run_one test_audio_shutdown -I"$SRC" test_audio_shutdown.cpp "$BOARD28/ws_c5_28_audio.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 

@@ -115,18 +115,21 @@ humidity sensor have first results below. See the verification ledger in HARDWAR
 
 ## Speaker playback
 
-ES8311 speaker playback is implemented in the BSP. The owner confirmed clean
-playback on November 10, 2026 with [audio_35](../examples/audio_35/README.md).
-The test plays three nominal 440 Hz tones, then stops; it renders no display.
-Initialize the board expander/shared I²C bus before starting I2S and configuring
-the codec. Adding expander initialization changed the observed result from
-silence to clean playback; the specific electrical dependency is not isolated.
-Pitch accuracy is unverified. With the display running, the
+ES8311 speaker playback is implemented in the BSP.
+[audio_35](../examples/audio_35/README.md) plays three nominal 1 kHz tones,
+then stops; it renders no display. On November 10, 2026 the owner judged them
+clean and loud enough, and a laptop-microphone recording measured about 6%
+harmonics and a pitch of 995 to 999 Hz (the recorder is not a calibrated
+reference). Initialize the board expander/shared I²C bus before starting I2S
+and configuring the codec. Adding expander initialization changed the observed
+result from silence to playback; the specific electrical dependency is not
+isolated.
+
+With the display running, the
 [touch_audio](../examples/touch_audio/README.md) sample's tone was judged clean
-by the owner on November 10, 2026. Its first version pulsed because it
+by the owner while the list scrolled. Its first version pulsed because it
 generated samples slower than real time (about 24 ms per 16 ms block);
-rendering the tone ahead of time fixed it. Audio during active redraw is
-untested.
+rendering the tone ahead of time fixed it.
 
 ## Microphone capture
 
@@ -167,22 +170,24 @@ left slot and the codec's digital copy of the DAC input on the right slot.
 the board check its own speaker and microphone; it passed three of three runs
 on November 10, 2026.
 
-### Speaker level: the tested listening level clips
+### Speaker level
 
-Laptop-microphone recordings on November 10, 2026 show that the level used by
-audio_35 (PCM peak 12000, codec volume `0xE0`) is heavily distorted: for a
-440 Hz tone the third and fifth harmonics were stronger than 440 Hz itself.
-At the same volume a 1 kHz tone was clean at peak 3000 and already distorted
-at peak 6000. The board's own microphone agreed at the quiet end: about 1 to
-2% harmonics at peak 3000.
+Two measured facts set the default tone:
 
-The likely cause is the volume register: lowering it from `0xE0` to `0xC0`
-cut the measured level by a factor of about 6, which matches 0.5 dB per step
-with `0xBF` as unity. On that reading `0xE0` adds about 16 dB, so a 12000
-peak is pushed well past full scale. That is an inference from measurements,
-not a datasheet check. The owner judged this level "clean" by ear, so the
-tested configuration is unchanged; a quieter, undistorted setting would be
-peak × gain kept under full scale (for example peak 3000 at `0xE0`).
+- **Codec volume `0xE0` adds about 16 dB of digital gain.** Lowering it to
+  `0xC0` cut the measured level by a factor of about 6, which matches 0.5 dB
+  per step with `0xBF` as unity. At `0xE0` a PCM peak above roughly 4900
+  overruns the DAC. This is inferred from measurements, not a datasheet check.
+- **The speaker barely reproduces 440 Hz.** The first speaker test played
+  440 Hz at peak 12000. Recordings showed its third and fifth harmonics
+  stronger than 440 Hz itself: it was clipped, and it sounded loud only
+  because of those harmonics. A clean 440 Hz tone at the highest undistorted
+  level was judged "very low" by the owner.
+
+At the same undistorted level the owner found 1 kHz and 2 kHz progressively
+louder than 440 Hz. The examples now play 1 kHz at peak 4500 and volume
+`0xE0`, which measured about 6% harmonics. The board's own microphone agreed
+at lower levels: about 1 to 2% harmonics for 1 kHz at peak 3000.
 
 ## microSD
 

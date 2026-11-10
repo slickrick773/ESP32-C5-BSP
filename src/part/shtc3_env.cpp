@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-// See ws_c5_35_env.h.
-#include "ws_c5_35_env.h"
-#include "../../chip/esp32c5_i2c_bus.h"
+// See shtc3_env.h.
+#include "shtc3_env.h"
+#include "../chip/esp32c5_i2c_bus.h"
 #include <Arduino.h>
 #include <Wire.h>
 
-namespace WsC5_35 {
+namespace C5Parts {
 namespace Env {
 namespace Bus = Esp32C5::I2cBus;
 
@@ -68,4 +68,4 @@ bool read(float& temperatureC, float& humidityPercent) {
     return true;
 }
 }  // namespace Env
-}  // namespace WsC5_35
+}  // namespace C5Parts

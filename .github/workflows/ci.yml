@@ -39,6 +39,14 @@ jobs:
           - battery
           - battery_28
           - audio_28
+          - mic_28
+          - onboard_28
+          - gps_28
+          - sd_28
+          - audio_selftest_28
+          - touch_audio_28
+          - board_check_28
+          - board_check_35
           - audio_35
           - mic_35
           - audio_selftest_35

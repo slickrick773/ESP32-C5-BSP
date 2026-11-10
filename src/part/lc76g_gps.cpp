@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// See ws_c5_35_gps.h. Protocol is Waveshare's LC76G_RPI_I2C demo (i2c_read.c /
+// See lc76g_gps.h. Protocol is Waveshare's LC76G_RPI_I2C demo (i2c_read.c /
 // i2c_write.c), ported onto the shared-bus core. Verified on hardware.
 //
 // Transaction (10 ms in the demo; a short settle works here because the module
@@ -9,13 +9,12 @@
 //   2. read 4 bytes from 0x54                       -> length (LE)
 //   3. write {reg 0xAA512000, len N} (LE) to 0x50   -> "send N"
 //   4. read N bytes from 0x54                       -> NMEA text
-#include "ws_c5_35_gps.h"
-#include "ws_c5_35_pins.h"
-#include "../../chip/esp32c5_i2c_bus.h"
+#include "lc76g_gps.h"
+#include "../chip/esp32c5_i2c_bus.h"
 #include <Arduino.h>
 #include <Wire.h>
 
-namespace WsC5_35 {
+namespace C5Parts {
 namespace Gps {
 
 namespace Bus = Esp32C5::I2cBus;
@@ -27,6 +26,7 @@ static const uint32_t CHUNK     = 1024;  // bytes per cycle; bounds the hitch
 static const uint32_t PERIOD_MS = 500;   // min gap between cycles (~2 Hz)
 static const uint32_t STEP_MS   = 3;     // inter-step settle (demo uses 10)
 
+static bool s_useWakeAddr = true;   // false: never address 0x58 (see begin())
 static uint32_t s_cycles = 0, s_bytes = 0, s_fails = 0, s_recov = 0, s_wakes = 0;
 
 // ---- low-level I2C (unchanged protocol) ------------------------------------
@@ -126,7 +126,7 @@ static int poll(uint32_t now) {
     do {
         delay(STEP_MS);
         if (dummy(CR_ADDR) != 0) {   // demo Recovery_I2C: nudge 0x54 then 0x58
-            if (dummy(RD_ADDR) == 0 || dummy(WR_ADDR) == 0) s_recov++;
+            if (dummy(RD_ADDR) == 0 || (s_useWakeAddr && dummy(WR_ADDR) == 0)) s_recov++;
             break;
         }
         delay(STEP_MS);
@@ -164,12 +164,14 @@ static bool wake() {
         uint32_t freeLen = fb[0] | (fb[1] << 8) | ((uint32_t)fb[2] << 16) | ((uint32_t)fb[3] << 24);
         if (freeLen < 1) break;
         delay(STEP_MS); if (writeCr(0xAA531000UL, 1) != 0) break;
+        if (!s_useWakeAddr) { ok = true; break; }   // 0x58 belongs to another device
         delay(STEP_MS); ok = (dummy(WR_ADDR) == 0);
     } while (0);
     return ok;
 }
 
-void begin() {
+void begin(bool useWakeAddress) {
+    s_useWakeAddr = useWakeAddress;
     Wire.setBufferSize(CHUNK + 16);   // persists across Wire.end()/begin()
 }
 
@@ -213,4 +215,4 @@ uint32_t cycles()           { return s_cycles; }
 uint32_t fails()            { return s_fails; }
 
 }  // namespace Gps
-}  // namespace WsC5_35
+}  // namespace C5Parts

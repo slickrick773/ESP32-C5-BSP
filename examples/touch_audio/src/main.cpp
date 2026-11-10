@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Waveshare 3.5-inch combined display + touch + audio sample. The scrolling
 // list and redraw path are the touch_redraw sample's. TONE plays a one-second
-// 440 Hz tone from a background task, so the list keeps scrolling and
+// 1 kHz tone from a background task, so the list keeps scrolling and
 // redrawing while it sounds. MIC captures one second on the loop task (touch
 // and redraw pause meanwhile) and shows the left-channel level. Playback and
 // capture are one at a time. Audio startup order and settings are those of
@@ -77,11 +77,11 @@ void renderTone() {
         if (n < ramp) gain = static_cast<float>(n) / ramp;
         if (toneFrames - n < ramp) gain = static_cast<float>(toneFrames - n) / ramp;
         tonePcm[n] = static_cast<int16_t>(
-            12000.0f * gain * sinf(2.0f * 3.14159265f * 440.0f * n / Audio::SAMPLE_RATE));
+            4500.0f * gain * sinf(2.0f * 3.14159265f * 1000.0f * n / Audio::SAMPLE_RATE));
     }
 }
 
-// One 1 s 440 Hz tone at the audio_35 settings (PCM peak 12000, codec
+// One 1 s 1 kHz tone at the audio_35 settings (PCM peak 4500, codec
 // volume 0xE0), then ~100 ms of zeros so the tail leaves the DMA buffer.
 bool playTone() {
     i2s.setPins(Audio::BCLK, Audio::LRCK, Audio::DOUT, -1, Audio::MCLK);

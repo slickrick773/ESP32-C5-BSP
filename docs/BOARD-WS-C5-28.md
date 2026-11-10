@@ -15,9 +15,11 @@ I²C bus, a different SPI pinout).
 > the owner's working umbravox 2.8" port and now **run from this library**, so the
 > display + touch phase is legitimately "supported" under the BSP's own law.
 > **Speaker playback is also hardware-verified** (the owner heard `audio_28` beeps,
-> 2026-10-31). **Battery voltage readout and continued battery-only operation are verified;
-> voltage accuracy, recording and GPS remain unverified** (see the notes
-> below). See the governing law in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md).
+> 2026-10-31). **Battery voltage readout and continued battery-only operation are verified.**
+> **On 2026-11-10 the microphone, GPS, onboard clock, IMU and temperature/humidity
+> sensor, microSD, and display, touch and audio together were hardware-verified**
+> (sections below). Voltage accuracy and charging state remain unverified. See
+> the governing law in [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md).
 
 ## Build / flash
 
@@ -40,7 +42,7 @@ platform refuses 3.14+). Flashed hands-free here with `tools/c5flash`.
 | I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset (EXIO1), touch reset (EXIO0), speaker amp enable (EXIO3), backlight PWM | **no EXIO5 panel rail** on this board |
 | Audio (ES8311) | I²C `0x18`; BCLK **24**, LRCK **25**, MCU DOUT **26**, MCU DIN **27** (recording unverified); **no MCLK**, clock from BCLK; amp enable **EXIO3** | distinct 2.8-inch pinout |
 | SD | CS **23** | 9→23 |
-| GPS (LC76G) | planned over I²C on the SDA 0 / SCL 1 bus — **address clash to resolve, see below** | same module as 3.5" |
+| GPS (LC76G) | I²C on the SDA 0 / SCL 1 bus through the board's **I2C socket**; the driver is told not to use `0x58` (see GPS below) | same module as 3.5" |
 
 ## Display: the ST7789 byte-order fix
 
@@ -109,10 +111,10 @@ found six devices:
 |---|---|
 | `0x18` | **ES8311 audio codec** — same codec as the 3.5" |
 | `0x24` | CH32V006 I/O expander *(verified)* |
-| `0x51` | RTC |
+| `0x51` | PCF85063 clock *(verified 2026-11-10)* |
 | `0x58` | CST3530 touch *(verified)* |
-| `0x6B` | IMU |
-| `0x70` | onboard sensor |
+| `0x6B` | QMI8658 IMU *(verified 2026-11-10)* |
+| `0x70` | SHTC3 temperature/humidity sensor *(verified 2026-11-10)* |
 
 What this tells the later phases, grounded in the scan rather than the 3.5"'s
 parts list:
@@ -126,14 +128,14 @@ parts list:
   See [`battery_28`](../examples/battery_28/README.md) for the pinned source,
   conversion, failure behavior, and hardware-validation limits. Voltage is
   not a battery percentage or charge-state measurement.
-- **GPS:** the LC76G is not wired in this scan. When it is, note that its `0x58`
-  "wake" address **clashes with the CST3530 touch** already at `0x58` — resolve
-  before adding GPS (confirm the LC76G's address set on this board).
-- RTC `0x51`, IMU `0x6B` and the `0x70` sensor are onboard extras not yet
-  wrapped as BSP drivers.
+- **GPS:** the LC76G was not wired in this scan. With it wired (2026-11-10)
+  the scan also shows `0x50`. Its `0x58` address is shared with the CST3530
+  touch; see GPS below for how that is handled.
+- The clock, IMU and temperature/humidity sensor now have drivers shared with
+  the 3.5-inch board; see Onboard devices below.
 
-The bus scan alone does not verify battery or GPS operation. The battery
-readout and USB-disconnect test are documented below; GPS remains unverified.
+The bus scan alone does not verify operation; each device's test is described
+in its own section.
 
 ## Verified in this BSP (on hardware)
 
@@ -190,9 +192,9 @@ cleanup was rebuilt and flashed with c5flash (verify OK). the owner confirmed
 the cleaned build still beeps without crackle on 2026-10-31. See
 [audio_28](../examples/audio_28/README.md) for build/upload steps and test history.
 
-**Not yet verified:** recording, battery-voltage accuracy, charging status and GPS. The LC76G `0x58`/touch clash
-is still unresolved. Display/touch and audio were verified in separate examples;
-simultaneous operation has not been claimed.
+**Not yet verified:** battery-voltage accuracy and charging status. Recording,
+GPS and simultaneous display, touch and audio operation were verified on
+2026-11-10; see the sections below.
 
 ### Shutdown behavior and evidence limits
 
@@ -220,4 +222,85 @@ build returned raw 425–426 (4113–4123 mV estimated) with USB and battery con
 The screen build was flashed with verification OK; the owner confirmed continued
 screen/counter updates after USB was unplugged. Voltage accuracy, cold-start on
 battery, charging state and runtime capacity remain unverified. No battery
-percentage is claimed. GPS wiring and operation remain a separate phase.
+percentage is claimed.
+
+On 2026-11-10 the same reading returned about 4.2 V with no battery fitted, so
+a plausible voltage does not show that a battery is present.
+
+## Connectors
+
+Seen on the board and used in testing:
+
+| Socket | Pins | Use |
+|---|---|---|
+| I2C (beside the USB port) | GND, 3V3, SDA, SCL | The shared bus, SDA 0 / SCL 1. The GPS was wired here |
+| UART (other side of the USB port) | GND, 3V3, TXD, RXD | Not used by the BSP |
+| Speaker | 2-pin | External speaker; needed for any audio output |
+| BAT | 2-pin | LiPo |
+| RTC | 2-pin | Backup cell for the clock. Untested |
+
+There is no GPIO pin header on this board, unlike the 3.5-inch.
+
+## Microphone capture
+
+`Audio::beginRecording()` captures from the onboard microphone through the
+ES8311 ADC to I2S DIN on GPIO 27, with the speaker amplifier held off. Tested
+on 2026-11-10 with [mic_28](../examples/mic_28/README.md): the left-channel
+level read about 54 to 69 AC RMS in a silent run and 1549, clipped, with
+claps; the right slot read zero. No capture from this board has been played
+back and listened to. The method and settings are the 3.5-inch board's.
+
+[audio_selftest_28](../examples/audio_selftest_28/README.md) plays a quiet
+1 kHz tone and hears it on the board's own microphone with I2S running in both
+directions. It passed three of three runs with the speaker plugged in.
+
+## GPS
+
+`WsC5_28::Gps` is the LC76G driver shared with the 3.5-inch board. The module
+uses `0x50` for commands, `0x54` for data and, only when recovering or waking
+after it idles, `0x58`, which on this board is the touch controller. Start it
+with `Gps::begin(false)` and the driver never addresses `0x58`.
+
+Tested on 2026-11-10 with [gps_28](../examples/gps_28/README.md) and the
+module on the I2C socket:
+
+- A fix with 7 satellites and HDOP 2.2, indoors by a window, about two and a
+  half minutes after a cold start.
+- About 97 KB of NMEA in three minutes with no bus failures.
+- Touch on the same bus: five taps counted correctly before the module was
+  fitted, and taps still counted with in-range coordinates while it streamed.
+- In an earlier run a loose SCL jumper caused 23 failed cycles; the stream
+  recovered by itself each time.
+
+Not exercised: the module idling long enough to need its wake step, which is
+skipped in this mode, and the stock behaviour that does use `0x58`.
+
+## Onboard devices
+
+`WsC5_28::Rtc`, `WsC5_28::Imu` and `WsC5_28::Env` are the PCF85063, QMI8658 and
+SHTC3 drivers shared with the 3.5-inch board. Tested on 2026-11-10 with
+[onboard_28](../examples/onboard_28/README.md): the clock was found, accepted
+a set and counted one second per second; the IMU identified itself and read
+1.04 g total at rest (about −1.03 g on Z as the board lay); the sensor read
+about 23 °C and 47 % with valid checksums. A BOOT button press, IMU movement,
+sensor accuracy and the RTC backup socket are untested on this board.
+
+## microSD
+
+[sd_28](../examples/sd_28/README.md) passed on 2026-11-10: a 29.6 GB SDHC card
+mounted at 4 MHz (SCLK 6, MOSI 7, MISO 8, CS 23) and a 47-byte file was
+written, read back identical and deleted. The display was idle.
+
+## Display, touch and audio together
+
+[touch_audio_28](../examples/touch_audio_28/README.md) draws two buttons with
+Arduino_GFX, plays a one-second tone from a background task and captures from
+the microphone. On 2026-11-10 the owner heard a clean tone, saw an on-screen
+counter keep running while it played, confirmed the layout, and read
+`mic 2500 CLIP` on screen after clapping.
+
+## Whole-board check
+
+[board_check_28](../examples/board_check_28/README.md) runs every check above
+except the display in one pass and prints a PASS/FAIL table. With the speaker,
+a card and the GPS attached it passed ten of ten, four consecutive runs.

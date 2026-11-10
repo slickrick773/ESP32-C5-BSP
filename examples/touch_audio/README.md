@@ -11,7 +11,7 @@ The scrolling list, renderer and first-frame backlight reveal are those of the
 [touch and scrolling sample](../touch_redraw/README.md). The two footer
 controls are:
 
-- **TONE** — plays a one-second, nominal 440 Hz tone from a background task
+- **TONE** — plays a one-second, nominal 1 kHz tone from a background task
   and counts it. The list keeps scrolling and redrawing while it sounds.
 - **MIC** — captures one second from the microphone and shows the level (AC
   RMS of the left I2S slot), with `CLIP` if any sample reached full scale.
@@ -33,8 +33,13 @@ which remain the hardware-tested references.
 - On the final image MIC read 22 in a quiet room and 1345 (`CLIP`) during a
   clap, and a tone played afterwards.
 
-Tested application SHA-256:
-`378c2169a58a26a2dbbb8fa6d1139da15ae8eb2d7d0d96cc1f07ce653819978e`.
+The results above were taken with the first tone (440 Hz at a clipped level).
+The tone was then changed to the clean 1 kHz of the speaker test; on that
+image one TONE tap and one MIC tap were logged as played and read (MIC 22),
+on a second board. The owner was not asked to judge that image separately.
+
+Tested application SHA-256 (final image):
+`6b8c8089c055a13843da7e501187cba3cb92f98af2b07ba52eea59c78085cacb`.
 
 ## A problem found and fixed
 
@@ -51,6 +56,4 @@ have been how the controls were tapped. In the retest every tap registered.
 ## Limits
 
 Long sessions, and audio while the
-SD card or other bus devices are busy, are untested. The tone uses the
-audio_35 listening level, which measurements show is driven into clipping;
-see the board notes.
+SD card or other bus devices are busy, are untested.

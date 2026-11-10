@@ -1,0 +1,30 @@
+[audio_selftest_28] sent to DAC (right slot): quiet 0.0, tone 2998.7 (expected 3000)
+[audio_selftest_28] microphone (left slot):   quiet 0.6, tone 776.6, peak 874
+[audio_selftest_28] microphone harmonics:     2nd 1.8%, 3rd 2.2% of the tone
+[audio_selftest_28]   digital path carries the tone (within 10%)     ok
+[audio_selftest_28]   digital path silent before the tone            ok
+[audio_selftest_28]   microphone hears the tone (level over 200)     ok
+[audio_selftest_28]   tone at least 20x the quiet level              ok
+[audio_selftest_28]   microphone not clipped                         ok
+[audio_selftest_28] result: PASS
+
+[audio_selftest_28] sent to DAC (right slot): quiet 0.0, tone 2998.7 (expected 3000)
+[audio_selftest_28] microphone (left slot):   quiet 0.7, tone 728.0, peak 804
+[audio_selftest_28] microphone harmonics:     2nd 1.6%, 3rd 1.9% of the tone
+[audio_selftest_28]   digital path carries the tone (within 10%)     ok
+[audio_selftest_28]   digital path silent before the tone            ok
+[audio_selftest_28]   microphone hears the tone (level over 200)     ok
+[audio_selftest_28]   tone at least 20x the quiet level              ok
+[audio_selftest_28]   microphone not clipped                         ok
+[audio_selftest_28] result: PASS
+
+[audio_selftest_28] sent to DAC (right slot): quiet 0.0, tone 2998.7 (expected 3000)
+[audio_selftest_28] microphone (left slot):   quiet 0.2, tone 515.7, peak 647
+[audio_selftest_28] microphone harmonics:     2nd 0.2%, 3rd 0.9% of the tone
+[audio_selftest_28]   digital path carries the tone (within 10%)     ok
+[audio_selftest_28]   digital path silent before the tone            ok
+[audio_selftest_28]   microphone hears the tone (level over 200)     ok
+[audio_selftest_28]   tone at least 20x the quiet level              ok
+[audio_selftest_28]   microphone not clipped                         ok
+[audio_selftest_28] result: PASS
+

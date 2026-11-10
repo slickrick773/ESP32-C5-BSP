@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-// See ws_c5_35_imu.h.
-#include "ws_c5_35_imu.h"
-#include "../../chip/esp32c5_i2c_bus.h"
+// See qmi8658_imu.h.
+#include "qmi8658_imu.h"
+#include "../chip/esp32c5_i2c_bus.h"
 #include <Wire.h>
 
-namespace WsC5_35 {
+namespace C5Parts {
 namespace Imu {
 namespace Bus = Esp32C5::I2cBus;
 
@@ -69,4 +69,4 @@ bool end() {
     return writeReg(0x08, 0x00);             // CTRL7: both sensors off
 }
 }  // namespace Imu
-}  // namespace WsC5_35
+}  // namespace C5Parts

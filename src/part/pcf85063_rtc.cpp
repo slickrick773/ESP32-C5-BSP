@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-// See ws_c5_35_rtc.h.
-#include "ws_c5_35_rtc.h"
-#include "../../chip/esp32c5_i2c_bus.h"
+// See pcf85063_rtc.h.
+#include "pcf85063_rtc.h"
+#include "../chip/esp32c5_i2c_bus.h"
 #include <Wire.h>
 
-namespace WsC5_35 {
+namespace C5Parts {
 namespace Rtc {
 namespace Bus = Esp32C5::I2cBus;
 
@@ -94,4 +94,4 @@ bool set(const DateTime& v) {
     return ok && restarted;
 }
 }  // namespace Rtc
-}  // namespace WsC5_35
+}  // namespace C5Parts
