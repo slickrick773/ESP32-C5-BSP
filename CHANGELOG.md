@@ -7,7 +7,14 @@ evidence and claim tags.
 
 ## Unreleased
 
-Nothing yet.
+### Documentation
+
+- **Clean startup: wait before lighting.** The 3.5-inch recipe now waits 150 ms
+  between the last draw of the first frame and turning the backlight on. One
+  firmware port to this board still showed static or the old picture for a few
+  frames without it; with it, slow-motion video of a reset and a cold boot was
+  clean there and in five further ports. See
+  [Clean startup](docs/BOARD-WS-C5-35.md#clean-startup). No code changes.
 
 ## [0.5.0] — 2026-11-10
 

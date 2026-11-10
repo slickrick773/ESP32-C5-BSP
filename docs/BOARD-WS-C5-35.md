@@ -118,6 +118,7 @@ you see until the first frame overwrites it.
 ```cpp
 WsC5_35::begin(0);                         // first action: backlight off
 // ... initialise the display library and draw the COMPLETE first frame ...
+delay(150);                                // let the glass catch up with panel memory
 WsC5_35::Expander::backlight(255);         // only now light the panel
 ```
 
@@ -125,7 +126,16 @@ With that order the video showed darkness after the first second of glow, then
 the finished picture at once: no static, no old picture, no partial drawing.
 With the backlight lit first, the same code showed all three.
 [touch_redraw](../examples/touch_redraw/README.md) and
-[touch_audio](../examples/touch_audio/README.md) follow the recipe.
+[touch_audio](../examples/touch_audio/README.md) follow that order; they light
+the panel straight after the last draw, without the extra wait.
+
+**Wait briefly before lighting.** The glass shows a new frame slightly after the
+panel's memory receives it. In one firmware port to this board, lighting the
+backlight immediately after the last draw call still showed static or the old
+picture for a few frames on slow-motion video; a 150 ms wait between the last
+draw and `backlight(255)` removed it. Five further ports used the same wait and
+were clean on video. One more was clean with only about 60 ms of other start-up
+work in between, so 150 ms is a safe value, not a measured minimum.
 
 **What is not solved.** The first second of grey glow after power-on or RST.
 An experimental bootloader that wrote the backlight off earlier did not remove
