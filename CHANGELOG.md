@@ -15,6 +15,11 @@ evidence and claim tags.
   frames without it; with it, slow-motion video of a reset and a cold boot was
   clean there and in five further ports. See
   [Clean startup](docs/BOARD-WS-C5-35.md#clean-startup). No code changes.
+- **USB-reset start-up crash documented.** On some firmware images a reset
+  sent over USB crashes PSRAM start-up once and the board then boots normally;
+  the RST button and power-on were not affected in testing. Position-dependent,
+  mechanism unknown. See
+  [HARDWARE-FINDINGS](docs/HARDWARE-FINDINGS.md#a-reset-sent-over-usb-can-crash-psram-start-up-on-some-images).
 
 ## [0.5.0] — 2026-11-10
 

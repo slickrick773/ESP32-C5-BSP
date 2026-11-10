@@ -132,6 +132,59 @@ upload` already gets this right — the PlatformIO `espidf.py` builder derives
 hand-flashing via `c5flash` / `esptool` needs the explicit offset. (Source:
 ESP-IDF C5 bootloader guide + the on-disk pio builder.)
 
+### A reset sent over USB can crash PSRAM start-up on some images
+
+**[HW-VERIFIED 2026-11-10, one rev-v1.2 3.5-inch board, one third-party firmware
+on Arduino core / IDF v5.5.4].** Some firmware images crash about one second
+after a reset sent over the native USB port (the reset a flashing tool or serial
+monitor performs, reported by the ROM as `rst:0x15 (USB_UART_HPSYS)`), restart
+themselves, and then boot normally:
+
+```
+Guru Meditation Error: Core  0 panic'ed (Illegal instruction). Exception was unhandled.
+...
+Rebooting...
+rst:0xc (SW_CPU),boot:0x3f (SPI_FAST_FLASH_BOOT)
+```
+
+What was observed:
+
+- **It is the same every time for a given image.** One image crashed on 13 of 13
+  logged USB resets, always at the same address with the same register values.
+- **Where.** In the framework's `s_psram_chip_init` (`esp_psram.c`, reached from
+  the Arduino core's `psramInit`), on the first flash-resident instruction after
+  the PSRAM enable and size calls return. This is before any application code.
+- **What the CPU ran.** The image held the correct instruction at that address;
+  the fault value reported was the two bytes one position later. The image was
+  right and the fetch was shifted by one byte.
+- **It depends on where that function lands.** Padding the firmware in two-byte
+  steps moved the function across fourteen positions. Two adjacent positions
+  crashed on every boot; the other twelve never did, including the positions 32
+  and 64 bytes further on. A few bytes of unrelated code change is enough to
+  make it appear or disappear.
+- **Not after the RST button or a power-on.** Timed on 240 fps video, the
+  interval from reset to the firmware's first write to the display expander was
+  the same for the crashing image (four button resets, three power-ons) as for
+  non-crashing ones (five and four). A crash cycle would have added about a
+  second.
+
+What this means in practice: a board can look as if it crashes on boot when the
+only thing wrong is that a flashing tool or serial monitor reset it. If a panic
+at about one second shows `s_psram_chip_init` and the firmware then comes up,
+press RST or re-plug before concluding the firmware is broken. A code change
+that makes it go away has moved the function, not fixed anything.
+
+**[UNVERIFIED]** The mechanism is not known. A cache-line-alignment explanation
+was tested against other firmware built the same day and did not hold. It was
+not tested on other C5 boards, other cores, `esp_restart()`, or wake from sleep,
+and it is not known whether the brief restart loop some boards show right after
+flashing is related. It is a separate thing from the `MSPI Timing: Failed to
+allocate dummy cacheline` line traced below, which is not on this code path.
+
+Method limit: on macOS, opening the board's USB serial port resets it even with
+DTR and RTS deasserted, so the reset reason after a button press or a re-plug
+cannot be read over USB. Those two cases rest on the video timing above.
+
 ### Legacy BLE advertising under internal-RAM pressure (3.3.10)
 
 **[HW-VERIFIED 2026-11-04, failure reproduced over USB serial]** On the
