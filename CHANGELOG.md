@@ -51,7 +51,7 @@ flashed and verified (`[dark-start] result=0 attempts=1`, normal display and tou
 and eliminated **neither** symptom. See
 [its limits and recovery plan](tools/startup_probe/README.md).
 
-## [0.4.0] — 2026-10-29 (proposed; not yet tagged)
+## [0.4.0] — 2026-10-29
 
 A reliability + tooling release. **No function-signature or pin changes**; there
 is a **notable return-value compatibility change** — `recover()`'s semantics (see

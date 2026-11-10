@@ -107,6 +107,16 @@ bus. Note `0x51` is the RTC, not the GPS.
 
 Display (ST7796) · touch (FT6336) · I/O expander (CH32V006) · GPS (LC76G over
 I²C) · single-core task pinning · USB-JTAG console · battery (AXP2101, read via
-XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz), BLE, SD and audio
+XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz), BLE and SD
 are proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
 wrapped as BSP code here. See the verification ledger in HARDWARE-FINDINGS.md.
+
+## Speaker playback
+
+ES8311 speaker playback is implemented in the BSP. The owner confirmed clean
+playback on November 10, 2026 with [audio_35](../examples/audio_35/README.md).
+The test plays three nominal 440 Hz tones, then stops; it renders no display.
+Initialize the board expander/shared I²C bus before starting I2S and configuring
+the codec. Adding expander initialization changed the observed result from
+silence to clean playback; the specific electrical dependency is not isolated.
+Recording, pitch accuracy, and simultaneous display/audio operation are unverified.

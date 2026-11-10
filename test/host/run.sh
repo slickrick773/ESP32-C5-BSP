@@ -35,6 +35,8 @@ run_one test_battery_28 test_battery_28.cpp "$BOARD28/ws_c5_28_battery.cpp" "$SR
 
 run_one test_audio_28 test_audio_28.cpp "$BOARD28/ws_c5_28_audio.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 
+run_one test_audio_35 test_audio_35.cpp "$BOARD/ws_c5_35_audio.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+
 run_one test_audio_shutdown -I"$SRC" test_audio_shutdown.cpp "$BOARD28/ws_c5_28_audio.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 
 run_one test_startup test_startup.cpp "$BOARD/ws_c5_35_board.cpp" "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"

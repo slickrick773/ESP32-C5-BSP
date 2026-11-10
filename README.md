@@ -30,13 +30,18 @@ every claim's tag.
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 
-Published (`v0.3.x`) and adopted across the C5 fleet (Marauder, PorkChop, Bruce,
+Phases 1–6 describe the **3.5-inch** board. Board-specific support is listed below.
+
+The latest Git tag is `v0.4.0`. Main contains additional changes; no GitHub
+Releases have been published.
+
+Adopted across the C5 fleet (Marauder, PorkChop, Bruce,
 Picoware, Launcher) — each port self-contained, no BSP dependency upstream. Three
 more are in review upstream: GhostESP, AWOKxDAG, SquachWatch.
 
 Chip-level findings that are **hardware-verified on the fleet and documented
 here, but not yet wrapped as BSP code**: the dual-band `set_band_mode()`-after-
-`start()` ordering, 5 GHz channel enumeration, and ES8311 audio bring-up. They
+`start()` ordering and 5 GHz channel enumeration. They
 live in the findings doc until a verified helper lands.
 
 Board-level traps are documented there too: the NeoPixel pin that is really the
@@ -46,7 +51,10 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 
 ## Supported boards
 
-- **Waveshare ESP32-C5-Touch-LCD-3.5** — the one fully-proven board. See
+- **Waveshare ESP32-C5-Touch-LCD-3.5** — phases 1–6 above, plus ES8311 speaker
+  playback. The owner confirmed clean playback on November 10, 2026, using
+  the standalone [audio_35 example](examples/audio_35/README.md). Recording,
+  pitch accuracy, and simultaneous display/audio operation are unverified. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
   touch). **Display, touch, speaker playback, battery-voltage readout, and
@@ -76,7 +84,11 @@ Waveshare C5 3.5-inch example with a scrolling list, tap-to-select rows, Toggle,
 and Count controls. The backlight turns on after the first complete frame.
 Cold boot and physical reset passed the user check for the documented test image.
 
-See [all examples](examples/README.md) for the other runnable samples.
+See [all examples](examples/README.md), including the
+[3.5-inch speaker test](examples/audio_35/README.md),
+[2.8-inch battery test](examples/battery_28/README.md),
+[panel colour-cycle utility](examples/screen_flush/), and
+[BLE heap diagnostic](examples/ble_heap_probe/README.md).
 
 ## Architecture
 
@@ -90,16 +102,19 @@ src/
   board/    board-specific drivers; two hardware-proven boards
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
-                       board begin()/name()
+                       audio (ES8311 playback) · board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
                        audio (ES8311 playback) · battery voltage ·
                        board begin()/name() (recording/gps later)
-examples/   one standalone PlatformIO project per capability
+examples/   standalone samples (PlatformIO unless noted)
             touch_redraw           touch + scrolling list, row selection, Toggle, Count (3.5")
             hello_board            display + touch (3.5", TFT_eSPI)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
+            audio_35               ES8311 three-tone test (3.5", ESP_I2S)
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
             gps_i2c                LC76G GPS over I²C (fix + sat count)
+            battery_28             battery ADC/estimated voltage + battery-only screen test
+            ble_heap_probe         BLE advertiser memory-pressure diagnostic (Arduino CLI)
             battery                AXP2101 readout (%, voltage, charge state)
             touch_int              INT-gated touch (skips reads when no finger)
             single_core            single-core task pinning

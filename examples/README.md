@@ -1,8 +1,8 @@
 # Examples
 
-One runnable sketch per phase, each a standalone PlatformIO project pinned to
-the `pioarduino` platform the C5 needs. An example is committed only once its
-board capability has been observed working on a real board.
+Standalone capability examples and diagnostic utilities. Most use PlatformIO;
+`ble_heap_probe` uses Arduino CLI. Each example documents its verification
+limits; inclusion alone is not a hardware-support claim.
 
 Build and flash any example from its own directory:
 
@@ -62,3 +62,10 @@ on 3.14+.
   live on the shared bus at once, with a status screen and a touch scribble area
   that stays smooth under load. Needs the display, the LC76G on I²C, and
   (optionally) a battery.
+
+- **[audio_35](audio_35/README.md)** — 3.5-inch ES8311 speaker test. Three nominal
+  440 Hz tones, then automatic stop; clean playback confirmed by the owner on
+  November 10, 2026. No display rendering; recording and pitch accuracy unverified.
+- **[screen_flush](screen_flush/)** — 3.5-inch panel colour-cycle utility.
+- **[ble_heap_probe](ble_heap_probe/README.md)** — Arduino CLI diagnostic for BLE
+  advertising under memory pressure, not a supported application feature.
