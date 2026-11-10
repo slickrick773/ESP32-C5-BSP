@@ -1,6 +1,6 @@
 {
   "name": "ESP32-C5-BSP",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Board-support package for the Waveshare ESP32-C5-Touch-LCD-3.5 and 2.8: shared-I2C discipline, display and touch bring-up, CH32V006 expander, LC76G GPS over I2C, ES8311 speaker and microphone, PCF85063 clock, QMI8658 IMU, SHTC3 sensor, battery readout, plus reusable C5 chip-level helpers. Each capability is hardware-tested and documented with its limits.",
   "keywords": "esp32-c5, bsp, waveshare, st7796, st7789, ft6336, cst3530, axp2101, lc76g, es8311, pcf85063, qmi8658, shtc3, i2c",
   "repository": {

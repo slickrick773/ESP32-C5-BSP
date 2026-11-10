@@ -7,6 +7,14 @@ evidence and claim tags.
 
 ## Unreleased
 
+Nothing yet.
+
+## [0.5.0] — 2026-11-10
+
+The 2.8-inch board reaches parity with the 3.5-inch, both boards gain audio in
+both directions, a clock, an IMU, a temperature/humidity sensor and a
+whole-board check, and every earlier hardware result was re-run before release.
+
 ### Added
 - 3.5-inch ES8311 speaker playback: `Audio::begin()` / `setVolume()` / `end()`
   and the `audio_35` three-tone example. Clean playback confirmed by the owner
@@ -110,11 +118,11 @@ evidence and claim tags.
   textual mismatch, even if the transport subprocess itself returned zero.
 - Overview documentation now matches the verified 2.8-inch battery evidence.
 
-Current local validation passed 13 flasher tests, the expanded host driver suite,
-bounded bootloader-I2C fault tests, all ten example builds, and two clean
-file-based consumer builds of the uncommitted library snapshot. Arduino builds
-used Python 3.13 and an isolated PlatformIO core. The git-based consumer CI job
-has not been run against this candidate.
+Release validation: the host driver suite (including the bootloader-I2C fault
+tests), 13 flasher tests, CI builds of all 26 examples and the two clean
+consumer builds. Hardware results are listed entry by entry above and in
+[docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md); what was not exercised
+is listed under Known limitations in the README.
 
 Full dark-boot acceptance **FAILED**: cold boot still briefly shows uninitialized
 panel memory, and reset still shows the retained previous frame. The behaviour was

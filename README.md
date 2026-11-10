@@ -61,8 +61,7 @@ circuit from the 3.5-inch, so each row has its own driver and evidence.
 
 Board-specific notes are listed below.
 
-The latest Git tag is `v0.4.0`. Main contains additional changes; no GitHub
-Releases have been published.
+The latest release is `v0.5.0`. See the [changelog](CHANGELOG.md).
 
 Adopted across the C5 fleet (Marauder, PorkChop, Bruce,
 Picoware, Launcher) — each port self-contained, no BSP dependency upstream. Three
