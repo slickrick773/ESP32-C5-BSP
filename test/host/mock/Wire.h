@@ -44,6 +44,7 @@ void mockWireSetResponse(int reqRet, const uint8_t* bytes, int n);
 extern bool g_wireRegisterMode;
 extern uint8_t g_wireRegisters[128][256];
 extern int g_wireFailReg;  // NACK writes to this register; -1 disables
+extern bool g_wireCommandDevice; // register mode: two-byte writes are commands, not register writes
 extern int g_wireShortRead; // register mode: multi-byte reads return one byte short
 
 struct MockWireWrite { uint8_t addr, reg, value; };

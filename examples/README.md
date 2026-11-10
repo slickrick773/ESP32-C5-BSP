@@ -72,19 +72,24 @@ on 3.14+.
   November 10, 2026 the level stayed low in silent runs and rose when sound
   was made, and the owner judged one played-back 3-second capture clear
   speech. Loud nearby sound clipped at the default gain.
+- **[audio_selftest_35](audio_selftest_35/README.md)** — 3.5-inch audio
+  self-test. The board plays a short tone and checks it on its own microphone,
+  then prints PASS or FAIL; no listener needed. On November 10, 2026 it passed
+  three of three runs and reported FAIL when the speaker was silenced.
 - **[sd_35](sd_35/README.md)** — 3.5-inch microSD test. Mounts the card, writes
   a small file, reads it back, compares and deletes it. Passed on November 10,
-  2026 with one 29.8 GB card at 4 MHz while the display was idle. Use alongside
-  a running display is unverified.
-- **[onboard_35](onboard_35/README.md)** — 3.5-inch clock, IMU and BOOT button
-  readout over serial. On November 10, 2026 the clock counted and the IMU read
-  1.00 g at rest and followed the board being turned over, and two BOOT
-  presses were reported. Clock retention without power is untested.
+  2026 with one 29.8 GB card at 4 MHz. A bench build also used the card without
+  error while the display was redrawing.
+- **[onboard_35](onboard_35/README.md)** — 3.5-inch clock, IMU,
+  temperature/humidity and BOOT button readout over serial. On November 10,
+  2026 the clock counted, the IMU read 1.00 g at rest and followed three poses,
+  the SHTC3 read about 28 °C and 37 %, and BOOT presses were reported. The
+  clock has no backup cell: it kept time through a USB unplug on a board with
+  a LiPo and lost it on a board without one.
 - **[touch_audio](touch_audio/README.md)** — 3.5-inch scrolling list with TONE
-  and MIC controls, combining display, touch, speaker and microphone. On
-  November 10, 2026 the owner heard a clean tone with the display running and
-  both controls responded. The tone is rendered once at startup; generating it
-  while playing was too slow on this chip and made it pulse.
+  and MIC controls, combining display, touch, speaker and microphone. The tone
+  plays from a background task; on November 10, 2026 the owner heard it clean
+  while scrolling the list, and MIC followed a clap.
 - **[screen_flush](screen_flush/)** — 3.5-inch panel colour-cycle utility.
 - **[ble_heap_probe](ble_heap_probe/README.md)** — Arduino CLI diagnostic for BLE
   advertising under memory pressure, not a supported application feature.

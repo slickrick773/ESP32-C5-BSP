@@ -96,8 +96,8 @@ All on the shared bus (SDA 27 / SCL 26):
 | `0x38` | FT6336 touch |
 | `0x51` | RTC |
 | `0x6B` | IMU |
-| `0x6E` | (unidentified; answered a bus scan on 2026-11-10) |
-| `0x70` | (onboard sensor) |
+| `0x6E` | BF3901 camera control (on boards fitted with the camera) |
+| `0x70` | SHTC3 temperature/humidity sensor |
 | `0x50` / `0x54` / `0x58` | LC76G GPS — **only when an I²C GPS is wired** |
 
 A boot scan that shows the onboard set but no `0x50` means the GPS is the
@@ -110,8 +110,8 @@ Display (ST7796) · touch (FT6336) · I/O expander (CH32V006) · GPS (LC76G over
 I²C) · single-core task pinning · USB-JTAG console · battery (AXP2101, read via
 XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz) and BLE are
 proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
-wrapped as BSP code here. microSD, the clock and the IMU have first results
-below. See the verification ledger in HARDWARE-FINDINGS.md.
+wrapped as BSP code here. microSD, the clock, the IMU and the temperature/
+humidity sensor have first results below. See the verification ledger in HARDWARE-FINDINGS.md.
 
 ## Speaker playback
 
@@ -158,33 +158,83 @@ firmware.
 November 10, 2026 in a quiet room rose at every step, from an AC RMS of about
 2 at step 0 to about 26 at step 10. The speech capture above used step 10.
 
+### Playing and recording at once
+
+With the codec in its playback configuration (`Audio::begin()`), the ADC stays
+enabled. Running I2S in both directions then returns the microphone on the
+left slot and the codec's digital copy of the DAC input on the right slot.
+[audio_selftest_35](../examples/audio_selftest_35/README.md) uses this to let
+the board check its own speaker and microphone; it passed three of three runs
+on November 10, 2026.
+
+### Speaker level: the tested listening level clips
+
+Laptop-microphone recordings on November 10, 2026 show that the level used by
+audio_35 (PCM peak 12000, codec volume `0xE0`) is heavily distorted: for a
+440 Hz tone the third and fifth harmonics were stronger than 440 Hz itself.
+At the same volume a 1 kHz tone was clean at peak 3000 and already distorted
+at peak 6000. The board's own microphone agreed at the quiet end: about 1 to
+2% harmonics at peak 3000.
+
+The likely cause is the volume register: lowering it from `0xE0` to `0xC0`
+cut the measured level by a factor of about 6, which matches 0.5 dB per step
+with `0xBF` as unity. On that reading `0xE0` adds about 16 dB, so a 12000
+peak is pushed well past full scale. That is an inference from measurements,
+not a datasheet check. The owner judged this level "clean" by ear, so the
+tested configuration is unchanged; a quieter, undistorted setting would be
+peak × gain kept under full scale (for example peak 3000 at `0xE0`).
+
 ## microSD
 
 The card is on the display's SPI bus (SCLK 6, MOSI 7, MISO 2) with chip select
 GPIO 9. [sd_35](../examples/sd_35/README.md) passed on November 10, 2026:
 a 29.8 GB SDHC card mounted at 4 MHz and a 47-byte file was written, read back
-identical, and deleted. The display was idle. Card use while the display is
-drawing, higher clocks and other cards are unverified in this BSP. There is no
-BSP SD driver; the example uses the Arduino `SD` library with the BSP's pins
-and shared-SPI startup.
+identical, and deleted. A bench build then used the card through the display
+library's SPI object while the display redrew: 12 files of 4 KB written
+between 480 display strips all read back identical. Higher clocks and other
+cards are unverified. There is no BSP SD driver; the example uses the Arduino
+`SD` library with the BSP's pins and shared-SPI startup.
 
 ## Real-time clock
 
 `WsC5_35::Rtc` (`begin`, `read`, `set`) drives the clock at `0x51`. Its
 registers behave like a PCF85063; the part marking has not been read. With
-[onboard_35](../examples/onboard_35/README.md) on November 10, 2026 it reported
-lost power, accepted a set, counted one second per second for 15 seconds, and
-kept counting across a reset. Keeping time with power removed and accuracy are
-untested.
+[onboard_35](../examples/onboard_35/README.md) on November 10, 2026 it accepted
+a set, counted one second per second, and held a steady offset from the host
+clock (within 1 s) over 40 minutes of resets and reflashes.
+
+**The clock has no backup cell.** The vendor schematic powers it from the
+PMU's RTC regulator, and the PMU's backup pin carries only a 2.2 µF capacitor.
+With USB unplugged for 7 to 9 seconds and no LiPo fitted, the clock came back
+reporting lost power, twice; switching on the PMU's backup charger for three
+minutes first made no difference. On a second board with a LiPo fitted, the
+clock kept its time through a 10-second unplug, with its offset from the host
+clock unchanged within a second. Applications
+should check the `integrityLost` result of `Rtc::read()`.
+`Battery::setBackupCharge()` exists for boards modified with a rechargeable
+backup cell.
+
+## Temperature and humidity
+
+`WsC5_35::Env` (`begin`, `read`) drives the SHTC3 at `0x70`. On November 10,
+2026 it returned identity `0x0887`, which matches that part, and read about
+28 to 30 °C and 37 % with both checksums valid. It measures the board, which
+runs warmer than the room; accuracy is untested.
 
 ## IMU
 
 `WsC5_35::Imu` (`begin`, `read`, `end`) drives the 6-axis IMU at `0x6B`, which
 identifies as a QMI8658 (`WHO_AM_I` `0x05`). Configured for ±4 g and ±512 dps.
-On November 10, 2026, lying flat and still, it read 1.00 g total with about
-+1.00 g on Z and the gyro within ±0.6 dps. Turned over by hand, Z went to
-about −1.17 g and the gyro peaked near 221 dps. Axis orientation on the board
-is not characterised.
+Readings on November 10, 2026, each pose held by hand:
+
+| Pose | Reading |
+|---|---|
+| Flat, screen up | Z +1.00 g, gyro within ±0.6 dps |
+| On edge, USB connector pointing down | X −0.93 g |
+| Screen facing the viewer, USB connector to the right | Y −0.97 g |
+| Turned over | Z about −1.17 g, gyro peak near 221 dps |
+
+Accuracy and calibration are untested.
 
 ## BOOT button
 
@@ -193,3 +243,9 @@ With [onboard_35](../examples/onboard_35/README.md) on November 10, 2026, two
 presses and releases were reported when the owner pressed it twice. GPIO 28 is
 also a boot-mode strapping pin, so holding the
 button through a reset enters download mode.
+
+## Camera
+
+Boards fitted with the camera answer at `0x6E`. Its identity registers
+`0xFC`/`0xFD` read `39 01`, matching a BF3901. The BSP does not drive the
+camera. A bus scan on such a board reads `18 24 34 38 51 6B 6E 70`.

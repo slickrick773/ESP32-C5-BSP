@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Waveshare 3.5-inch combined display + touch + audio sample. The scrolling
-// list and redraw path are the touch_redraw sample's. TONE plays one short
-// 440 Hz tone; MIC captures one second and shows the left-channel level.
-// Each audio action starts I2S, runs to completion on the loop task (touch
-// and redraw pause meanwhile), then stops I2S again. Audio startup order and
-// settings are those of the standalone audio_35 and mic_35 examples.
+// list and redraw path are the touch_redraw sample's. TONE plays a one-second
+// 440 Hz tone from a background task, so the list keeps scrolling and
+// redrawing while it sounds. MIC captures one second on the loop task (touch
+// and redraw pause meanwhile) and shows the left-channel level. Playback and
+// capture are one at a time. Audio startup order and settings are those of
+// the standalone audio_35 and mic_35 examples.
 #include <Arduino.h>
 #include <ESP_I2S.h>
 #include <TFT_eSPI.h>
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <board/ws_c5_35/ws_c5_35_audio.h>
+#include <chip/esp32c5_tasks.h>
 #include "boards/ws_c5_35.h"
 #include "graphics/tft_espi_display.h"
 #include "sample_ui/presentation.h"
@@ -47,7 +50,10 @@ ListModel model{"TOUCH AND AUDIO", rows, rowCount, 0, 0,
                 {{{toneLabel, Tone}, {micLabel, Mic}}}, 0};
 I2SClass i2s;
 int16_t pcm[256 * 2];
-constexpr uint32_t toneFrames = Audio::SAMPLE_RATE * 2 / 5;   // 400 ms
+constexpr uint32_t toneFrames = Audio::SAMPLE_RATE;   // one second
+enum : int { ToneIdle, TonePlaying, ToneDone, ToneFailed };
+std::atomic<int> toneState{ToneIdle};
+TaskHandle_t toneTask = nullptr;
 int16_t tonePcm[toneFrames];
 uint32_t tones = 0;
 ListScreen screen(model);
@@ -75,7 +81,7 @@ void renderTone() {
     }
 }
 
-// One 400 ms 440 Hz tone at the audio_35 settings (PCM peak 12000, codec
+// One 1 s 440 Hz tone at the audio_35 settings (PCM peak 12000, codec
 // volume 0xE0), then ~100 ms of zeros so the tail leaves the DMA buffer.
 bool playTone() {
     i2s.setPins(Audio::BCLK, Audio::LRCK, Audio::DOUT, -1, Audio::MCLK);
@@ -129,15 +135,23 @@ bool captureLevel(uint32_t& rms, bool& clipped) {
     return ok && n;
 }
 
+// Plays each requested tone off the loop task so the display keeps running.
+void toneTaskMain(void*) {
+    for (;;) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        toneState.store(playTone() ? ToneDone : ToneFailed);
+    }
+}
+
 void apply(Action action) {
     if (action == Tone) {
-        const bool ok = playTone();
-        if (ok) ++tones;
-        if (ok) std::snprintf(toneLabel, sizeof(toneLabel), "TONE %lu",
-                              static_cast<unsigned long>(tones));
-        else std::snprintf(toneLabel, sizeof(toneLabel), "TONE FAIL");
-        Serial.printf("[touch_audio] tone %s\n", ok ? "played" : "FAILED");
+        // Hand the tone to the audio task; the result is picked up in loop().
+        if (toneState.load() != ToneIdle || !toneTask) return;
+        toneState.store(TonePlaying);
+        std::snprintf(toneLabel, sizeof(toneLabel), "PLAYING");
+        xTaskNotifyGive(toneTask);
     } else if (action == Mic) {
+        if (toneState.load() != ToneIdle) return;   // I2S is busy with the tone
         uint32_t rms = 0;
         bool clipped = false;
         const bool ok = captureLevel(rms, clipped);
@@ -160,6 +174,8 @@ void setup() {
     }
     display.begin(board.rotation, board.inverted);
     renderTone();
+    if (Esp32C5::createPinnedTask(toneTaskMain, "tone", 4096, nullptr, 5, &toneTask) != pdPASS)
+        Serial.println("[touch_audio] tone task creation FAILED; TONE disabled");
     repaint();
 }
 
@@ -184,6 +200,20 @@ void loop() {
             const bool footer = result.action == Tone || result.action == Mic;
             repaint(interrupted ? Rect{} : footer ? layout.frame.footer : layout.viewport);
         }
+    }
+
+    const int state = toneState.load();
+    if (state == ToneDone || state == ToneFailed) {
+        if (state == ToneDone)
+            std::snprintf(toneLabel, sizeof(toneLabel), "TONE %lu",
+                          static_cast<unsigned long>(++tones));
+        else
+            std::snprintf(toneLabel, sizeof(toneLabel), "TONE FAIL");
+        Serial.printf("[touch_audio] tone %s\n", state == ToneDone ? "played" : "FAILED");
+        toneState.store(ToneIdle);
+        const bool interrupted = renderer.busy();
+        renderer.cancel();
+        repaint(interrupted ? Rect{} : layout.frame.footer);
     }
 
     if (ready && renderer.busy() && renderer.step(display) == Step::Complete && !revealed) {

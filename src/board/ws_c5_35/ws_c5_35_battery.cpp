@@ -65,6 +65,23 @@ void refresh() {
     s_vbmv = s_pmu.getVbusVoltage();
 }
 
+bool setBackupCharge(bool enabled) {
+    if (!s_present) return false;
+    Bus::Guard g(100);
+    if (!g) return false;
+    Bus::reopen();
+    return enabled ? s_pmu.enableButtonBatteryCharge() : s_pmu.disableButtonBatteryCharge();
+}
+
+bool backupCharge(bool& enabled) {
+    if (!s_present) return false;
+    Bus::Guard g(100);
+    if (!g) return false;
+    Bus::reopen();
+    enabled = s_pmu.isEnableButtonBatteryCharge();
+    return true;
+}
+
 bool     batteryConnected() { return s_batt; }
 int      percent()          { return s_pct;  }
 uint16_t voltageMv()        { return s_vmv;  }

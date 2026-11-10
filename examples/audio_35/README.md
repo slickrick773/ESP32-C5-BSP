@@ -27,6 +27,14 @@ The codec sequence derives from the existing 3.5-inch PorkChop implementation.
 These exact settings were retained for the clean listen test; no claim is made
 that this register setting was independently responsible for the result.
 
+## Measured distortion at this level
+
+Recordings on November 10, 2026 show this level is driven into clipping: the
+tone's third and fifth harmonics are stronger than 440 Hz itself. The owner
+judged the sound clean by ear, so the settings are kept as tested. For an
+undistorted tone see the board notes
+([Speaker level](../../docs/BOARD-WS-C5-35.md#speaker-level-the-tested-listening-level-clips)).
+
 ## Shutdown and limits
 
 After the test, codec setup failure, task creation failure, or a short I2S

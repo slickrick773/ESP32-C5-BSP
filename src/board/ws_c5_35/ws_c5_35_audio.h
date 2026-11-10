@@ -30,6 +30,11 @@ constexpr uint8_t MIC_PGA_MAX = 10;   // ES8311 reg 0x14 PGA field maximum
 // Pitch accuracy is unverified. Use one control task.
 // Start I2S first: 16 kHz, signed 16-bit stereo, clock source BCLK, no MCLK.
 // The DAC volume is a raw register value (0..255; higher is louder).
+// Measured on hardware: 0xC0 is about 6x quieter than 0xE0, and PCM peak 12000
+// at 0xE0 clips. Keep peak x gain under full scale for an undistorted tone.
+// The ADC stays enabled in this mode: with I2S running in both directions the
+// microphone arrives on the left slot and the codec's digital copy of the DAC
+// input on the right slot (see the audio_selftest_35 example).
 bool begin(uint8_t volume = 0xC0);
 bool ready();
 bool setVolume(uint8_t volume);

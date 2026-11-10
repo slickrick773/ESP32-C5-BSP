@@ -27,8 +27,17 @@ The card shares the display's SPI bus: SCLK 6, MOSI 7, MISO 2, with its own
 chip select on GPIO 9. `WsC5_35::begin(0)` resets the SPI peripheral and drives
 both the display and SD chip selects inactive before the card is used.
 
+## With the display running
+
+A bench build (not this example) mounted the card through the display
+library's SPI object and, across 12 full-screen redraws, wrote a 4 KB file in
+pieces between the 480 strips sent to the panel, then read it back each time.
+All 12 files matched. The owner reported the screen looked normal afterwards.
+With TFT_eSPI, pass `tft.getSPIinstance()` to `SD.begin()` so both devices
+use one SPI object.
+
 ## Limits
 
-The display was not running during the test. Using the card while the display
-is drawing on the same bus, clocks above 4 MHz, other card types and sizes,
-large files, and hot insertion are unverified in this BSP.
+Clocks above 4 MHz, other card types and sizes, large files, and hot
+insertion are unverified in this BSP. Card and display traffic were
+interleaved from one task; use from two tasks at once is untested.

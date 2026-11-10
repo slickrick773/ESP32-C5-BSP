@@ -10,6 +10,9 @@
 
 extern int g_pmuBeginResult;   // value begin() returns (nonzero = present)
 extern int g_pmuReadCalls;     // count of read-method calls
+extern bool g_pmuBackupCharge;   // backup-cell charge enable bit
+extern bool g_pmuBackupWriteOk;  // result of the enable/disable write
+extern int g_pmuBackupWrites;    // count of enable/disable writes
 
 struct XPowersPMU {
     bool begin(MockWire&, uint8_t, int, int) { return g_pmuBeginResult != 0; }
@@ -23,4 +26,7 @@ struct XPowersPMU {
     bool     isCharging()       { g_pmuReadCalls++; return true;  }
     bool     isVbusIn()         { g_pmuReadCalls++; return true;  }
     uint16_t getVbusVoltage()   { g_pmuReadCalls++; return 5000;  }
+    bool enableButtonBatteryCharge()   { g_pmuBackupWrites++; g_pmuBackupCharge = true;  return g_pmuBackupWriteOk; }
+    bool disableButtonBatteryCharge()  { g_pmuBackupWrites++; g_pmuBackupCharge = false; return g_pmuBackupWriteOk; }
+    bool isEnableButtonBatteryCharge() { g_pmuReadCalls++; return g_pmuBackupCharge; }
 };

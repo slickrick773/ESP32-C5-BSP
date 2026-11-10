@@ -37,6 +37,20 @@ int main() {
     CHECK(g_pmuReadCalls == 6, "refresh() reads the PMU when the lock is acquired");
     CHECK(g_wireBeginCount >= 1, "refresh() reopens the bus when the lock is acquired");
 
+    // ---- Battery backup-cell charge control ----
+    std::printf("Battery backup charge honours the bus lock:\n");
+    bool on = false;
+    g_takeResult = pdFALSE; g_pmuBackupWrites = 0; g_pmuReadCalls = 0;
+    CHECK(!WsC5_35::Battery::setBackupCharge(true) && g_pmuBackupWrites == 0, "setBackupCharge() writes nothing when the lock fails");
+    CHECK(!WsC5_35::Battery::backupCharge(on) && g_pmuReadCalls == 0 && !on, "backupCharge() reads nothing when the lock fails");
+    g_takeResult = pdTRUE;
+    CHECK(WsC5_35::Battery::setBackupCharge(true) && g_pmuBackupCharge, "setBackupCharge(true) sets the enable bit");
+    CHECK(WsC5_35::Battery::backupCharge(on) && on, "backupCharge() reads the bit back");
+    CHECK(WsC5_35::Battery::setBackupCharge(false) && !g_pmuBackupCharge, "setBackupCharge(false) clears the enable bit");
+    g_pmuBackupWriteOk = false;
+    CHECK(!WsC5_35::Battery::setBackupCharge(true), "setBackupCharge() reports a failed PMU write");
+    g_pmuBackupWriteOk = true;
+
     // ---- Expander::backlight() ----
     std::printf("Expander::backlight() honours the bus lock:\n");
     g_wireEndTransStatus = 0;                 // every init write ACKs

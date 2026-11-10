@@ -32,5 +32,17 @@ bool     charging();          // actively charging
 bool     vbusPresent();       // USB power present
 uint16_t vbusMv();            // VBUS voltage, mV
 
+// --- clock backup cell --------------------------------------------------------
+// The PMU has a trickle charger on its backup pin, off at power-up. As shipped,
+// this board has NO cell on that pin (the vendor schematic shows only a 2.2 uF
+// capacitor), so the clock stops when USB and LiPo are both removed, and
+// enabling this did not change that in testing. These calls exist for boards
+// modified with a rechargeable backup cell. Never enable charging into a
+// non-rechargeable cell. Only the enable bit is changed; the charge voltage is
+// left at the PMU's power-up setting. Returns false on a lock or bus failure.
+bool setBackupCharge(bool enabled);
+// Reads the enable bit back from the PMU. `enabled` is unchanged on failure.
+bool backupCharge(bool& enabled);
+
 }  // namespace Battery
 }  // namespace WsC5_35

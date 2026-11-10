@@ -24,12 +24,21 @@ evidence and claim tags.
   and turned over. `BOOT_BUTTON` pin constant added; presses confirmed.
 - `sd_35` microSD example: mount, write, read back, delete. Passed on
   2026-11-10 with one card at 4 MHz while the display was idle.
-- `touch_audio` combined display, touch, speaker and microphone sample. On
-  2026-11-10 the owner heard a clean tone with the display running and both
-  controls responded. The tone is rendered at startup: generating it while
+- `touch_audio` combined display, touch, speaker and microphone sample. The
+  tone plays from a background task. On 2026-11-10 the owner heard it clean
+  while scrolling the list. It is rendered at startup: generating it while
   playing was slower than real time on this chip and made it pulse.
-- `audio_35`, `mic_35`, `sd_35`, `onboard_35` and `touch_audio` added to the CI
-  example build matrix.
+- `audio_selftest_35`: the board plays a tone and checks it on its own
+  microphone using I2S in both directions, then prints PASS or FAIL. On
+  2026-11-10 it passed three of three hardware runs and reported FAIL with the
+  speaker silenced.
+- 3.5-inch temperature/humidity driver (`WsC5_35::Env`, SHTC3 at `0x70`) with
+  host tests, read out by `onboard_35`. Hardware readings on 2026-11-10 were
+  plausible with valid checksums; accuracy is untested.
+- `Battery::setBackupCharge()` / `backupCharge()` for the PMU's backup-pin
+  charger, for boards modified with a rechargeable clock cell.
+- `audio_35`, `mic_35`, `audio_selftest_35`, `sd_35`, `onboard_35` and
+  `touch_audio` added to the CI example build matrix.
 - Optional dark startup via `Board::begin(0)` / `Expander::begin(0)`, preserving
   the full-brightness default and existing reset timing.
 - Reusable ESP32-C5 SPI2 reset plus one-time per-board `prepareSharedSpi()`,
@@ -39,6 +48,18 @@ evidence and claim tags.
   `Error`) while preserving `read()` and `poll()`.
 - CI coverage for both 2.8-inch examples, native driver tests, flasher tests,
   and isolated consumer builds.
+
+### Findings (2026-11-10, 3.5-inch)
+- The real-time clock has no backup cell. It lost its time with USB removed
+  and no LiPo fitted, and kept it through a 10-second unplug on a second
+  board with a LiPo.
+- The `audio_35` listening level (PCM peak 12000, codec volume `0xE0`) is
+  driven into clipping according to recordings; the configuration is unchanged
+  because the owner accepted it by ear. See the board notes.
+- The microSD card worked while the display redrew on the shared SPI bus in a
+  bench build.
+- The devices at I²C `0x70` and `0x6E` are identified as the SHTC3 sensor and
+  the BF3901 camera's control port.
 
 ### Fixed
 - `c5flash write` now exits unsuccessfully whenever verification reports a

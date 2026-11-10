@@ -41,6 +41,7 @@ jobs:
           - audio_28
           - audio_35
           - mic_35
+          - audio_selftest_35
           - sd_35
           - onboard_35
           - gps_i2c

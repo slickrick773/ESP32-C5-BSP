@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Waveshare 3.5-inch onboard devices readout: real-time clock, 6-axis IMU and
-// the BOOT button, printed over serial once per second. Button presses and
-// releases are printed as they happen. No display is rendered (backlight off).
+// Waveshare 3.5-inch onboard devices readout: real-time clock, 6-axis IMU,
+// temperature/humidity sensor and the BOOT button, printed over serial once
+// per second. Button presses and releases are printed as they happen. No
+// display is rendered (backlight off).
 //
 // If the clock reports that it lost power, it is set to this firmware's build
 // time so that it can be seen counting; that is not the real time.
+//
+// The clock is powered through the PMU and this board has no backup cell for
+// it, so it keeps time only while USB or a LiPo is supplying the board.
 #include <Arduino.h>
 #include <math.h>
 #include <stdio.h>
@@ -14,9 +18,13 @@
 #include <board/ws_c5_35/ws_c5_35_expander.h>
 #include <board/ws_c5_35/ws_c5_35_rtc.h>
 #include <board/ws_c5_35/ws_c5_35_imu.h>
+#include <board/ws_c5_35/ws_c5_35_env.h>
+#include <board/ws_c5_35/ws_c5_35_battery.h>
 
 namespace Rtc = WsC5_35::Rtc;
 namespace Imu = WsC5_35::Imu;
+namespace Env = WsC5_35::Env;
+namespace Battery = WsC5_35::Battery;
 
 static Rtc::DateTime buildTime() {
     static const char months[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
@@ -44,10 +52,22 @@ void setup() {
     Serial.printf("[onboard_35] RTC 0x51 %s\n", Rtc::begin() ? "found" : "NOT FOUND");
     Rtc::DateTime now{};
     bool lost = false;
-    if (Rtc::present() && Rtc::read(now, lost) && lost) {
-        const bool set = Rtc::set(buildTime());
-        Serial.printf("[onboard_35] RTC had lost power; set to build time: %s\n", set ? "ok" : "FAILED");
+    if (Rtc::present() && Rtc::read(now, lost)) {
+        if (lost) {
+            const bool set = Rtc::set(buildTime());
+            Serial.printf("[onboard_35] RTC had lost power; set to build time: %s\n", set ? "ok" : "FAILED");
+        } else {
+            Serial.printf("[onboard_35] RTC kept its time: %04u-%02u-%02u %02u:%02u:%02u\n", now.year,
+                          now.month, now.day, now.hour, now.minute, now.second);
+        }
     }
+    if (Battery::begin()) {
+        Battery::refresh();
+        Serial.printf("[onboard_35] power: USB %s, LiPo %s\n", Battery::vbusPresent() ? "present" : "absent",
+                      Battery::batteryConnected() ? "connected (clock keeps running on it)"
+                                                  : "not connected (clock stops when USB is removed)");
+    }
+    Serial.printf("[onboard_35] temperature/humidity sensor 0x70 %s\n", Env::begin() ? "found" : "NOT FOUND");
     Serial.printf("[onboard_35] IMU 0x6B %s\n", Imu::begin() ? "found, enabled" : "NOT FOUND");
 }
 
@@ -76,6 +96,11 @@ void loop() {
                           s.gx, s.gy, s.gz);
         else
             Serial.println("[onboard_35] imu read failed");
+        float tempC = 0, humidity = 0;
+        if (Env::read(tempC, humidity))
+            Serial.printf("[onboard_35] board temperature %.1f C, humidity %.1f %%\n", tempC, humidity);
+        else
+            Serial.println("[onboard_35] temperature/humidity read failed");
     }
     delay(10);
 }

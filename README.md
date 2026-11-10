@@ -31,9 +31,10 @@ every claim's tag.
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Speaker test](examples/audio_35/README.md) — three 440 Hz tones through the ES8311 (3.5-inch) | ✅ hardware-tested; clean playback confirmed by the owner, 2026-11-10 |
 | Sample | [Microphone level test](examples/mic_35/README.md) — ES8311 capture level over serial (3.5-inch) | ✅ hardware-tested 2026-11-10: level follows sound, and the owner judged one played-back 3-second capture clear speech; noise and frequency response not measured |
-| Sample | [microSD test](examples/sd_35/README.md) — mount, write, read back, delete (3.5-inch) | ✅ hardware-tested with one 29.8 GB card at 4 MHz, display idle, 2026-11-10 |
-| Sample | [Onboard devices readout](examples/onboard_35/README.md) — clock, IMU, BOOT button (3.5-inch) | ✅ hardware-tested 2026-11-10: clock counting, IMU at rest and turned over, BOOT presses; clock retention without power and IMU axis orientation not tested |
-| Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone with the display running and both controls responded; scrolling after audio and long-run use not tested |
+| Sample | [microSD test](examples/sd_35/README.md) — mount, write, read back, delete (3.5-inch) | ✅ hardware-tested with one 29.8 GB card at 4 MHz, 2026-11-10; a bench build also read and wrote it without error while the display redrew |
+| Sample | [Onboard devices readout](examples/onboard_35/README.md) — clock, IMU, temperature/humidity, BOOT button (3.5-inch) | ✅ hardware-tested 2026-11-10 on two boards: clock counting, IMU at rest and in three poses, SHTC3 readings, BOOT presses. The clock has no backup cell: it kept time through a USB unplug with a LiPo fitted and lost it without one |
+| Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
+| Sample | [Audio self-test](examples/audio_selftest_35/README.md) — board plays a tone and hears it on its own microphone (3.5-inch) | ✅ hardware-tested 2026-11-10: passed three of three runs, and reported FAIL when the speaker was silenced |
 
 Phases 1–6 describe the **3.5-inch** board. Board-specific support is listed below.
 
@@ -99,6 +100,7 @@ Cold boot and physical reset passed the user check for the documented test image
 See [all examples](examples/README.md), including the
 [3.5-inch speaker test](examples/audio_35/README.md),
 [3.5-inch microphone level test](examples/mic_35/README.md),
+[3.5-inch audio self-test](examples/audio_selftest_35/README.md),
 [3.5-inch microSD test](examples/sd_35/README.md),
 [3.5-inch onboard devices readout](examples/onboard_35/README.md),
 [3.5-inch touch and audio sample](examples/touch_audio/README.md),
@@ -118,7 +120,7 @@ src/
   board/    board-specific drivers; two hardware-proven boards
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
-                       audio (ES8311 playback, mic capture) · rtc · imu ·
+                       audio (ES8311 playback, mic capture) · rtc · imu · env (SHTC3) ·
                        board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
                        audio (ES8311 playback) · battery voltage ·
@@ -130,7 +132,8 @@ examples/   standalone samples (PlatformIO unless noted)
             audio_35               ES8311 three-tone test (3.5", ESP_I2S)
             mic_35                 ES8311 microphone level test (3.5", ESP_I2S)
             sd_35                  microSD mount + write/read-back (3.5")
-            onboard_35             clock, IMU and BOOT button readout (3.5")
+            onboard_35             clock, IMU, SHTC3 and BOOT button readout (3.5")
+            audio_selftest_35      speaker-to-microphone loopback check, PASS/FAIL (3.5")
             touch_audio            list + TONE and MIC controls (3.5")
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
             gps_i2c                LC76G GPS over I²C (fix + sat count)

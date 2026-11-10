@@ -79,12 +79,13 @@ uint8_t MockWire::endTransmission(bool) {
     if (wireBytes > 1 && g_wireWritesLen < 256)
         g_wireWrites[g_wireWritesLen++] = {wireAddr, wireReg, wireValue};
     if (g_wireRegisterMode && wireBytes > 1 && wireReg == g_wireFailReg) return 2;
-    if (g_wireRegisterMode && wireBytes > 1 && !g_wireEndTransStatus)
+    if (g_wireRegisterMode && wireBytes > 1 && !g_wireEndTransStatus && !g_wireCommandDevice)
         g_wireRegisters[wireAddr][wireReg] = wireValue;
     return g_wireEndTransStatus;
 }
 unsigned g_wireRequestCount = 0;
 int g_wireShortRead = 0;
+bool g_wireCommandDevice = false;
 int MockWire::requestFrom(int addr, int qty) {
     ++g_wireRequestCount;
     g_wireReadPos = 0;
@@ -124,4 +125,7 @@ void xSemaphoreGive(SemaphoreHandle_t)                 { g_giveCount++; }
 
 // ---- XPowersLib stub state ----
 int g_pmuBeginResult = 1;
+bool g_pmuBackupCharge = false;
+bool g_pmuBackupWriteOk = true;
+int g_pmuBackupWrites = 0;
 int g_pmuReadCalls   = 0;
