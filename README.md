@@ -30,7 +30,10 @@ every claim's tag.
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Speaker test](examples/audio_35/README.md) — three 440 Hz tones through the ES8311 (3.5-inch) | ✅ hardware-tested; clean playback confirmed by the owner, 2026-11-10 |
-| Sample | [Microphone level test](examples/mic_35/README.md) — ES8311 capture level over serial (3.5-inch) | ⚠️ hardware-tested for level response only, 2026-11-10; no captured audio listened to, recording quality unverified |
+| Sample | [Microphone level test](examples/mic_35/README.md) — ES8311 capture level over serial (3.5-inch) | ✅ hardware-tested 2026-11-10: level follows sound, and the owner judged one played-back 3-second capture clear speech; noise and frequency response not measured |
+| Sample | [microSD test](examples/sd_35/README.md) — mount, write, read back, delete (3.5-inch) | ✅ hardware-tested with one 29.8 GB card at 4 MHz, display idle, 2026-11-10 |
+| Sample | [Onboard devices readout](examples/onboard_35/README.md) — clock, IMU, BOOT button (3.5-inch) | ✅ hardware-tested 2026-11-10: clock counting, IMU at rest and turned over, BOOT presses; clock retention without power and IMU axis orientation not tested |
+| Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone with the display running and both controls responded; scrolling after audio and long-run use not tested |
 
 Phases 1–6 describe the **3.5-inch** board. Board-specific support is listed below.
 
@@ -58,9 +61,12 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
   the standalone [audio_35 example](examples/audio_35/README.md). Microphone
   capture is implemented: on the same date the
   [mic_35 example](examples/mic_35/README.md) showed the level staying low in
-  a silent run and rising when sound was made. No captured audio has been
-  listened to. Recording quality, pitch accuracy, and simultaneous
-  display/audio operation are unverified. See
+  a silent run and rising when sound was made, and the owner judged one
+  played-back 3-second capture clear speech. Pitch accuracy is unverified.
+  With the display running, the [touch_audio sample](examples/touch_audio/README.md)
+  played a tone the owner judged clean. The microSD card, real-time clock
+  and IMU each have a driver or example with a first hardware result; see the
+  status table above for exactly what was and was not tested. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
   touch). **Display, touch, speaker playback, battery-voltage readout, and
@@ -93,6 +99,9 @@ Cold boot and physical reset passed the user check for the documented test image
 See [all examples](examples/README.md), including the
 [3.5-inch speaker test](examples/audio_35/README.md),
 [3.5-inch microphone level test](examples/mic_35/README.md),
+[3.5-inch microSD test](examples/sd_35/README.md),
+[3.5-inch onboard devices readout](examples/onboard_35/README.md),
+[3.5-inch touch and audio sample](examples/touch_audio/README.md),
 [2.8-inch battery test](examples/battery_28/README.md),
 [panel colour-cycle utility](examples/screen_flush/), and
 [BLE heap diagnostic](examples/ble_heap_probe/README.md).
@@ -109,7 +118,8 @@ src/
   board/    board-specific drivers; two hardware-proven boards
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
-                       audio (ES8311 playback, mic capture) · board begin()/name()
+                       audio (ES8311 playback, mic capture) · rtc · imu ·
+                       board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
                        audio (ES8311 playback) · battery voltage ·
                        board begin()/name() (recording/gps later)
@@ -119,6 +129,9 @@ examples/   standalone samples (PlatformIO unless noted)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
             audio_35               ES8311 three-tone test (3.5", ESP_I2S)
             mic_35                 ES8311 microphone level test (3.5", ESP_I2S)
+            sd_35                  microSD mount + write/read-back (3.5")
+            onboard_35             clock, IMU and BOOT button readout (3.5")
+            touch_audio            list + TONE and MIC controls (3.5")
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
             gps_i2c                LC76G GPS over I²C (fix + sat count)
             battery_28             battery ADC/estimated voltage + battery-only screen test

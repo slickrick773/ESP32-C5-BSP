@@ -54,7 +54,15 @@ constexpr uint8_t  EXIO_POWER    = 5;       // vendor BOARD_POWER_EXIO; actual r
 constexpr uint8_t  ES8311_ADDR   = 0x18;    // audio codec (Phase later)
 // AXP2101 PMU is also on this bus (Phase 4, via XPowersLib).
 
+constexpr uint8_t  RTC_ADDR      = 0x51;    // real-time clock (see ws_c5_35_rtc.h)
+constexpr uint8_t  IMU_ADDR      = 0x6B;    // 6-axis IMU (see ws_c5_35_imu.h)
+
 // ---- microSD: on the display SPI bus ---------------------------------------
 constexpr int      SD_CS         = 9;
+
+// ---- BOOT button -----------------------------------------------------------
+// Active low with a pull-up. GPIO28 is also a boot-mode strapping pin: holding
+// the button through a reset enters download mode instead of running the app.
+constexpr int      BOOT_BUTTON   = 28;
 
 }  // namespace WsC5_35

@@ -39,6 +39,10 @@ jobs:
           - battery
           - battery_28
           - audio_28
+          - audio_35
+          - mic_35
+          - sd_35
+          - onboard_35
           - gps_i2c
           - hello_board
           - hello_board_28
@@ -47,6 +51,7 @@ jobs:
           - single_core
           - touch_int
           - touch_redraw
+          - touch_audio
 
     steps:
       - uses: actions/checkout@v4

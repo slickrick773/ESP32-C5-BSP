@@ -36,7 +36,7 @@ An I2S initialization failure returns before codec configuration.
 
 Host tests cover codec register handling and failure paths with mocked I²C.
 They do not validate physical wiring or analog behavior. Pitch accuracy,
-fault-injected hardware shutdown, and simultaneous display/audio operation
-remain unverified. Microphone capture is covered by
+and fault-injected hardware shutdown remain unverified. Audio with
+the display running is covered by [touch_audio](../touch_audio/README.md). Microphone capture is covered by
 [mic_35](../mic_35/README.md), tested for level response only. The 2.8-inch
 playback implementation is separate.

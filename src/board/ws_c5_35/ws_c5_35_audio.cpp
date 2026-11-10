@@ -123,8 +123,8 @@ bool end() {
 // sets a 16-bit I2S output port), then applies the ADC settings from the
 // 3.5-inch Bruce port and mutes the DAC. See the header for test evidence.
 bool recording() { return s_recording; }
-bool beginRecording(uint8_t adcVolume) {
-    if (s_ready) return false;
+bool beginRecording(uint8_t adcVolume, uint8_t pgaStep) {
+    if (s_ready || pgaStep > MIC_PGA_MAX) return false;
     if (s_recording) return true;
     if (!configure(0x00)) return false;
     Esp32C5::I2cBus::Guard guard(100);
@@ -132,10 +132,15 @@ bool beginRecording(uint8_t adcVolume) {
     uint8_t v = 0;
     bool ok = readReg(0x31, v);
     if (ok) ok = writeReg(0x31, v | 0x60);   // mute DAC while recording
-    if (ok) ok = writeReg(0x14, 0x1A);       // analog mic on MIC1P/N, PGA gain
+    if (ok) ok = writeReg(0x14, 0x10 | pgaStep);  // analog mic on MIC1P/N + PGA gain
     if (ok) ok = writeReg(0x17, adcVolume);  // ADC volume
     s_recording = ok;
     return ok;
+}
+bool setMicGain(uint8_t pgaStep) {
+    if (!s_recording || pgaStep > MIC_PGA_MAX) return false;
+    Esp32C5::I2cBus::Guard guard(100);
+    return guard && writeReg(0x14, 0x10 | pgaStep);
 }
 bool endRecording() {
     Esp32C5::I2cBus::Guard guard(100);

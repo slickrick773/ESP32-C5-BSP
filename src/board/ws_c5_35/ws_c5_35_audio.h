@@ -18,6 +18,7 @@ constexpr int DOUT = 25;       // MCU -> codec DSDIN
 constexpr int DIN = 24;        // codec ADC -> MCU; see beginRecording()
 constexpr int MCLK = -1;       // no MCLK net; codec derives its clock from BCLK
 constexpr uint32_t SAMPLE_RATE = 16000;
+constexpr uint8_t MIC_PGA_MAX = 10;   // ES8311 reg 0x14 PGA field maximum
 
 // Codec control only: the caller owns I2S and board startup. Initialize the
 // board expander/shared bus before starting I2S, then call begin(). The example
@@ -40,13 +41,17 @@ bool end();
 // Microphone capture: onboard mic -> ES8311 ADC -> I2S DIN (GPIO 24).
 // Hardware-tested 2026-11-10 with mic_35 for level response only (low when
 // silent, rising with sound, clipping on loud nearby sound; data on the left
-// I2S slot). Recording quality is unverified. The ADC settings follow the
+// I2S slot), and one 3-second speech capture judged clear by the owner.
+// Noise and frequency response are unmeasured. The ADC settings follow the
 // 3.5-inch Bruce port (analog mic input 0x14 = 0x1A, ADC volume 0xC8, DAC muted).
 // Same startup contract as begin(): board expander and shared bus first, then
 // an I2S master with BCLK running (16 kHz, 16-bit, RX on DIN), then this call.
 // One mode at a time: returns false while playback is configured.
-bool beginRecording(uint8_t adcVolume = 0xC8);
+bool beginRecording(uint8_t adcVolume = 0xC8, uint8_t pgaStep = MIC_PGA_MAX);
 bool recording();
+// Analog microphone preamp gain, 0..MIC_PGA_MAX (nominally 3 dB per step per
+// the ES8311 datasheet). Only valid while recording. Out-of-range is rejected.
+bool setMicGain(uint8_t pgaStep);
 // Analog mic input off and ADC volume to minimum. Same result contract as
 // end(). The caller separately stops I2S.
 bool endRecording();

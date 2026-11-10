@@ -70,8 +70,21 @@ on 3.14+.
 - **[mic_35](mic_35/README.md)** — 3.5-inch ES8311 microphone level test. Three
   1-second captures with level statistics over serial, then automatic stop. On
   November 10, 2026 the level stayed low in silent runs and rose when sound
-  was made. No captured audio has been listened to; recording quality is
-  unverified and loud nearby sound clipped at the default gain.
+  was made, and the owner judged one played-back 3-second capture clear
+  speech. Loud nearby sound clipped at the default gain.
+- **[sd_35](sd_35/README.md)** — 3.5-inch microSD test. Mounts the card, writes
+  a small file, reads it back, compares and deletes it. Passed on November 10,
+  2026 with one 29.8 GB card at 4 MHz while the display was idle. Use alongside
+  a running display is unverified.
+- **[onboard_35](onboard_35/README.md)** — 3.5-inch clock, IMU and BOOT button
+  readout over serial. On November 10, 2026 the clock counted and the IMU read
+  1.00 g at rest and followed the board being turned over, and two BOOT
+  presses were reported. Clock retention without power is untested.
+- **[touch_audio](touch_audio/README.md)** — 3.5-inch scrolling list with TONE
+  and MIC controls, combining display, touch, speaker and microphone. On
+  November 10, 2026 the owner heard a clean tone with the display running and
+  both controls responded. The tone is rendered once at startup; generating it
+  while playing was too slow on this chip and made it pulse.
 - **[screen_flush](screen_flush/)** — 3.5-inch panel colour-cycle utility.
 - **[ble_heap_probe](ble_heap_probe/README.md)** — Arduino CLI diagnostic for BLE
   advertising under memory pressure, not a supported application feature.

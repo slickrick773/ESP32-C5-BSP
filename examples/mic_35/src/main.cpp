@@ -5,8 +5,8 @@
 // no display is rendered (backlight off).
 //
 // Hardware-tested 2026-11-10 for level response only: the left-channel level
-// stayed low in silent runs and rose when sound was made. No captured audio
-// has been listened to, so intelligibility and quality are unverified.
+// stayed low in silent runs and rose when sound was made. One separate
+// 3-second speech capture at these settings was judged clear by the owner.
 // Startup order matches audio_35: board expander/shared bus, I2S, then codec.
 #include <Arduino.h>
 #include <ESP_I2S.h>

@@ -84,13 +84,19 @@ uint8_t MockWire::endTransmission(bool) {
     return g_wireEndTransStatus;
 }
 unsigned g_wireRequestCount = 0;
-int MockWire::requestFrom(int addr, int) {
+int g_wireShortRead = 0;
+int MockWire::requestFrom(int addr, int qty) {
     ++g_wireRequestCount;
     g_wireReadPos = 0;
     if (g_wireRegisterMode) {
-        g_wireReadBuf[0] = g_wireRegisters[addr][wireReg];
-        g_wireReadLen = 1;
-        return 1;
+        // Serve consecutive registers; a 1-byte request behaves as before.
+        if (qty < 1) qty = 1;
+        if (qty > (int)sizeof(g_wireReadBuf)) qty = (int)sizeof(g_wireReadBuf);
+        if (g_wireShortRead && qty > 1) --qty;
+        for (int i = 0; i < qty; ++i)
+            g_wireReadBuf[i] = g_wireRegisters[addr][(uint8_t)(wireReg + i)];
+        g_wireReadLen = qty;
+        return qty;
     }
     return g_wireReqReturn;
 }

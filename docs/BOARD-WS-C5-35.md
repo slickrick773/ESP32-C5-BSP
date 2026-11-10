@@ -96,6 +96,7 @@ All on the shared bus (SDA 27 / SCL 26):
 | `0x38` | FT6336 touch |
 | `0x51` | RTC |
 | `0x6B` | IMU |
+| `0x6E` | (unidentified; answered a bus scan on 2026-11-10) |
 | `0x70` | (onboard sensor) |
 | `0x50` / `0x54` / `0x58` | LC76G GPS — **only when an I²C GPS is wired** |
 
@@ -107,9 +108,10 @@ bus. Note `0x51` is the RTC, not the GPS.
 
 Display (ST7796) · touch (FT6336) · I/O expander (CH32V006) · GPS (LC76G over
 I²C) · single-core task pinning · USB-JTAG console · battery (AXP2101, read via
-XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz), BLE and SD
-are proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
-wrapped as BSP code here. See the verification ledger in HARDWARE-FINDINGS.md.
+XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz) and BLE are
+proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
+wrapped as BSP code here. microSD, the clock and the IMU have first results
+below. See the verification ledger in HARDWARE-FINDINGS.md.
 
 ## Speaker playback
 
@@ -119,7 +121,12 @@ The test plays three nominal 440 Hz tones, then stops; it renders no display.
 Initialize the board expander/shared I²C bus before starting I2S and configuring
 the codec. Adding expander initialization changed the observed result from
 silence to clean playback; the specific electrical dependency is not isolated.
-Pitch accuracy and simultaneous display/audio operation are unverified.
+Pitch accuracy is unverified. With the display running, the
+[touch_audio](../examples/touch_audio/README.md) sample's tone was judged clean
+by the owner on November 10, 2026. Its first version pulsed because it
+generated samples slower than real time (about 24 ms per 16 ms block);
+rendering the tone ahead of time fixed it. Audio during active redraw is
+untested.
 
 ## Microphone capture
 
@@ -139,6 +146,50 @@ level response only:
 - Clap windows reached full scale in every run, so the default gain clips
   nearby claps.
 
-No captured audio has been stored or listened to. Intelligibility, noise,
-gain suitability, and capture alongside the display are unverified. The ADC
-settings follow an existing 3.5-inch port of another firmware.
+A bench tool using the same driver and settings then saved one 3-second
+capture of the owner counting aloud. Played back, the owner judged it clear
+speech; it peaked at 6552 and did not clip. Noise floor and frequency response
+are unmeasured. The ADC settings follow an existing 3.5-inch port of another
+firmware.
+
+### Microphone gain
+
+`Audio::setMicGain(step)` sets the analog preamp, 0 to 10. A sweep on
+November 10, 2026 in a quiet room rose at every step, from an AC RMS of about
+2 at step 0 to about 26 at step 10. The speech capture above used step 10.
+
+## microSD
+
+The card is on the display's SPI bus (SCLK 6, MOSI 7, MISO 2) with chip select
+GPIO 9. [sd_35](../examples/sd_35/README.md) passed on November 10, 2026:
+a 29.8 GB SDHC card mounted at 4 MHz and a 47-byte file was written, read back
+identical, and deleted. The display was idle. Card use while the display is
+drawing, higher clocks and other cards are unverified in this BSP. There is no
+BSP SD driver; the example uses the Arduino `SD` library with the BSP's pins
+and shared-SPI startup.
+
+## Real-time clock
+
+`WsC5_35::Rtc` (`begin`, `read`, `set`) drives the clock at `0x51`. Its
+registers behave like a PCF85063; the part marking has not been read. With
+[onboard_35](../examples/onboard_35/README.md) on November 10, 2026 it reported
+lost power, accepted a set, counted one second per second for 15 seconds, and
+kept counting across a reset. Keeping time with power removed and accuracy are
+untested.
+
+## IMU
+
+`WsC5_35::Imu` (`begin`, `read`, `end`) drives the 6-axis IMU at `0x6B`, which
+identifies as a QMI8658 (`WHO_AM_I` `0x05`). Configured for ±4 g and ±512 dps.
+On November 10, 2026, lying flat and still, it read 1.00 g total with about
++1.00 g on Z and the gyro within ±0.6 dps. Turned over by hand, Z went to
+about −1.17 g and the gyro peaked near 221 dps. Axis orientation on the board
+is not characterised.
+
+## BOOT button
+
+GPIO 28, active low (`WsC5_35::BOOT_BUTTON`). It reads released when untouched.
+With [onboard_35](../examples/onboard_35/README.md) on November 10, 2026, two
+presses and releases were reported when the owner pressed it twice. GPIO 28 is
+also a boot-mode strapping pin, so holding the
+button through a reset enters download mode.

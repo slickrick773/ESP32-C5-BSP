@@ -935,7 +935,15 @@ clock on the units tested.
 | Backlight dimming via expander PWM | HW-VERIFIED | live dimming; `TFT_BL = -1`, driven on the CH32V006, 2026-10-26 |
 | USB stalls on large transfers | HW-VERIFIED | chunk (~512 KB/4 KB) to work around, 2026-10-26 |
 | ES8311 speaker playback (3.5-inch) | HW-VERIFIED (owner listen) | BSP `audio_35`: three 440 Hz tones heard clean, 2026-11-10; pitch accuracy and display+audio UNVERIFIED |
-| ES8311 microphone capture (3.5-inch) | level response HW-VERIFIED, recording quality UNVERIFIED | BSP `mic_35`: left-slot AC RMS ~23 silent, ~2059 with claps (clipped at default gain), right slot zero, 2026-11-10; no captured audio listened to |
+| ES8311 microphone capture (3.5-inch) | HW-VERIFIED (level + one owner-judged speech capture) | BSP `mic_35`: left-slot AC RMS ~23 silent, ~2059 with claps (clipped at default gain), right slot zero; one 3 s speech capture via bench tool judged clear speech by owner, peak 6552; noise/frequency response unmeasured, 2026-11-10 |
+| ES8311 mic preamp gain control (3.5-inch) | HW-VERIFIED | `setMicGain` sweep 0..10: quiet-room AC RMS rose every step, ~2 → ~26, 2026-11-10 |
+| microSD on shared SPI, CS GPIO9 (3.5-inch) | HW-VERIFIED, one card, display idle | BSP `sd_35`: 29.8 GB SDHC mounted at 4 MHz, 47-byte write/read-back match, 2026-11-10; with display active UNVERIFIED |
+| RTC at 0x51 (3.5-inch) | counting HW-VERIFIED; power-off retention UNVERIFIED | BSP `onboard_35`: set accepted, 1 s/s for 15 s, continued across reset, 2026-11-10; part inferred as PCF85063 from register behaviour |
+| IMU at 0x6B (3.5-inch) | HW-VERIFIED; axis orientation UNVERIFIED | BSP `onboard_35`: WHO_AM_I 0x05 (QMI8658), 1.00 g total / +1.00 g Z at rest, gyro within ±0.6 dps; turned over: Z ~−1.17 g, gyro peak ~221 dps, 2026-11-10 |
+| BOOT button GPIO28 as input (3.5-inch) | HW-VERIFIED | BSP `onboard_35`: high idle; two owner presses reported as two press/release pairs, 2026-11-10 |
+| Display + touch + audio together (3.5-inch) | HW-VERIFIED (owner listen, display idle during audio) | BSP `touch_audio`: clean tone and working TONE/MIC controls with display on, 2026-11-10; audio during active redraw UNVERIFIED |
+| Per-sample float synthesis while streaming I2S | too slow (HW-VERIFIED) | `sinf` per sample took ~24 ms per 256-frame block (16 ms budget) in `touch_audio`; I2S underran and the tone pulsed (~20% level variation vs ~3% precomputed), 2026-11-10 |
+| Device at I²C 0x6E (3.5-inch) | present, UNIDENTIFIED | Answered bus scan 18 24 34 38 51 6B 6E 70, 2026-11-10 |
 | Panel black on USB→battery / post-reset | symptom HW-VERIFIED, cause UNVERIFIED | RST clears; power-dip suspected, 2026-10-26 |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on

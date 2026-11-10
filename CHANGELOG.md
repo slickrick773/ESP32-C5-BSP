@@ -8,12 +8,28 @@ evidence and claim tags.
 ## Unreleased
 
 ### Added
+- 3.5-inch ES8311 speaker playback: `Audio::begin()` / `setVolume()` / `end()`
+  and the `audio_35` three-tone example. Clean playback confirmed by the owner
+  on 2026-11-10. Pitch accuracy is unverified.
 - 3.5-inch microphone capture: `Audio::beginRecording()` / `endRecording()` and
-  the `mic_35` level-test example. Hardware-tested on 2026-11-10 for level
-  response only (low when silent, rising with sound, clipping on loud nearby
-  sound). No captured audio has been listened to; recording quality is
-  unverified. Playback configuration is unchanged; playback and capture are
-  one at a time.
+  the `mic_35` level-test example. Hardware-tested on 2026-11-10: the level is low
+  when silent, rises with sound and clips on loud nearby sound, and the owner
+  judged one 3-second speech capture clear. Playback configuration is
+  unchanged; playback and capture are one at a time.
+- Microphone preamp gain: `Audio::setMicGain()` and a gain argument to
+  `beginRecording()`. A hardware sweep on 2026-11-10 rose at every step.
+- 3.5-inch real-time clock driver (`WsC5_35::Rtc`) and IMU driver
+  (`WsC5_35::Imu`), with host tests and the `onboard_35` readout example.
+  Hardware-tested on 2026-11-10 for the clock counting and the IMU at rest
+  and turned over. `BOOT_BUTTON` pin constant added; presses confirmed.
+- `sd_35` microSD example: mount, write, read back, delete. Passed on
+  2026-11-10 with one card at 4 MHz while the display was idle.
+- `touch_audio` combined display, touch, speaker and microphone sample. On
+  2026-11-10 the owner heard a clean tone with the display running and both
+  controls responded. The tone is rendered at startup: generating it while
+  playing was slower than real time on this chip and made it pulse.
+- `audio_35`, `mic_35`, `sd_35`, `onboard_35` and `touch_audio` added to the CI
+  example build matrix.
 - Optional dark startup via `Board::begin(0)` / `Expander::begin(0)`, preserving
   the full-brightness default and existing reset timing.
 - Reusable ESP32-C5 SPI2 reset plus one-time per-board `prepareSharedSpi()`,

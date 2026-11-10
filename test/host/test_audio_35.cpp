@@ -91,6 +91,8 @@ int main() {
     CHECK((g_wireRegisters[0x18][0x31] & 0x60) == 0x60, "DAC muted while recording");
     CHECK(g_wireRegisters[0x18][0x32] == 0x00, "DAC volume zero while recording");
     CHECK(!A::begin(), "playback refused while recording");
+    CHECK(A::setMicGain(4) && g_wireRegisters[0x18][0x14] == 0x14, "mic gain step reaches codec");
+    CHECK(!A::setMicGain(A::MIC_PGA_MAX + 1) && g_wireRegisters[0x18][0x14] == 0x14, "out-of-range mic gain rejected");
 
     // Recording shutdown.
     g_takeResult = pdFALSE;
@@ -99,6 +101,8 @@ int main() {
     CHECK(A::endRecording() && !A::recording(), "endRecording clears recording");
     CHECK(g_wireRegisters[0x18][0x14] == 0x00, "mic input off after endRecording");
     CHECK(g_wireRegisters[0x18][0x17] == 0x00, "ADC volume minimum after endRecording");
+    CHECK(!A::setMicGain(4), "mic gain rejected when not recording");
+    CHECK(!A::beginRecording(0xC8, A::MIC_PGA_MAX + 1) && !A::recording(), "out-of-range gain rejected at setup");
     CHECK(A::begin() && g_wireRegisters[0x18][0x04] == 0x10 && g_wireRegisters[0x18][0x32] == 0xC0,
           "playback configuration unchanged after a recording session");
     CHECK(A::end(), "final shutdown");
