@@ -28,15 +28,15 @@ every claim's tag.
 | 4 | AXP2101 battery readout | ✅ hardware-verified (89% / 4.15 V / charging) |
 | 5 | Single-core task-pinning helper + chip utilities | ✅ hardware-verified |
 | 6 | Wi-Fi + GPS + touch capstone (`reliability_reference`) | ✅ hardware-verified |
+| 7 | ES8311 audio: speaker playback, microphone capture and gain, playing and recording at once — [audio_35](examples/audio_35/README.md), [mic_35](examples/mic_35/README.md), [audio_selftest_35](examples/audio_selftest_35/README.md) | ✅ hardware-verified 2026-11-10: owner confirmed playback by ear; microphone level follows sound and one played-back capture was judged clear speech; the self-test passed three of three runs and reported FAIL with the speaker silenced. The listening level measures as clipped; noise and frequency response not measured |
+| 8 | Onboard devices: PCF85063 clock, QMI8658 IMU, SHTC3 temperature/humidity, BOOT button — [onboard_35](examples/onboard_35/README.md) | ✅ hardware-verified 2026-11-10 on two boards: clock counting, IMU at rest and in three poses, SHTC3 readings, BOOT presses. The clock has no backup cell: it kept time through a USB unplug with a LiPo fitted and lost it without one. Sensor accuracy not tested |
+| 9 | microSD on the shared SPI bus (tested example; no BSP SD driver) — [sd_35](examples/sd_35/README.md) | ✅ hardware-verified 2026-11-10 with one 29.8 GB card at 4 MHz; a bench build also read and wrote it without error while the display redrew |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
-| Sample | [Speaker test](examples/audio_35/README.md) — three 440 Hz tones through the ES8311 (3.5-inch) | ✅ hardware-tested; clean playback confirmed by the owner, 2026-11-10 |
-| Sample | [Microphone level test](examples/mic_35/README.md) — ES8311 capture level over serial (3.5-inch) | ✅ hardware-tested 2026-11-10: level follows sound, and the owner judged one played-back 3-second capture clear speech; noise and frequency response not measured |
-| Sample | [microSD test](examples/sd_35/README.md) — mount, write, read back, delete (3.5-inch) | ✅ hardware-tested with one 29.8 GB card at 4 MHz, 2026-11-10; a bench build also read and wrote it without error while the display redrew |
-| Sample | [Onboard devices readout](examples/onboard_35/README.md) — clock, IMU, temperature/humidity, BOOT button (3.5-inch) | ✅ hardware-tested 2026-11-10 on two boards: clock counting, IMU at rest and in three poses, SHTC3 readings, BOOT presses. The clock has no backup cell: it kept time through a USB unplug with a LiPo fitted and lost it without one |
 | Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
-| Sample | [Audio self-test](examples/audio_selftest_35/README.md) — board plays a tone and hears it on its own microphone (3.5-inch) | ✅ hardware-tested 2026-11-10: passed three of three runs, and reported FAIL when the speaker was silenced |
 
-Phases 1–6 describe the **3.5-inch** board. Board-specific support is listed below.
+Phases 1–9 describe the **3.5-inch** board. Sample rows are demonstrations
+built on those phases and add no driver of their own. Board-specific support
+is listed below.
 
 The latest Git tag is `v0.4.0`. Main contains additional changes; no GitHub
 Releases have been published.
@@ -57,18 +57,14 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 
 ## Supported boards
 
-- **Waveshare ESP32-C5-Touch-LCD-3.5** — phases 1–6 above, plus ES8311 speaker
-  playback. The owner confirmed clean playback on November 10, 2026, using
-  the standalone [audio_35 example](examples/audio_35/README.md). Microphone
-  capture is implemented: on the same date the
-  [mic_35 example](examples/mic_35/README.md) showed the level staying low in
-  a silent run and rising when sound was made, and the owner judged one
-  played-back 3-second capture clear speech. Pitch accuracy is unverified.
-  With the display running, the [touch_audio sample](examples/touch_audio/README.md)
-  played a tone the owner judged clean. The microSD card, real-time clock
-  and IMU each have a driver or example with a first hardware result; see the
-  status table above for exactly what was and was not tested. See
-  [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
+- **Waveshare ESP32-C5-Touch-LCD-3.5** — phases 1–9 above: display, touch,
+  shared-bus core, GPS, battery, task helpers, the Wi-Fi capstone, ES8311
+  audio in both directions, the onboard clock, IMU and temperature/humidity
+  sensor, and microSD. The status table states what was and was not tested
+  for each. Three things worth knowing up front: the speaker test's listening
+  level measures as clipped although the owner accepted it by ear, the clock
+  has no backup cell and needs USB or a LiPo to keep time, and pitch accuracy
+  is unverified. See [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
   touch). **Display, touch, speaker playback, battery-voltage readout, and
   continued battery-only operation are hardware-verified** in separate BSP

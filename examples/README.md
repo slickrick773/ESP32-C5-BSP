@@ -63,30 +63,30 @@ on 3.14+.
   that stays smooth under load. Needs the display, the LC76G on I²C, and
   (optionally) a battery.
 
-- **[audio_35](audio_35/README.md)** — 3.5-inch ES8311 speaker test. Three nominal
+- **[audio_35](audio_35/README.md)** — Phase 7. 3.5-inch ES8311 speaker test. Three nominal
   440 Hz tones, then automatic stop; clean playback confirmed by the owner on
   November 10, 2026. No display rendering; pitch accuracy unverified. Capture is
   a separate example, `mic_35`.
-- **[mic_35](mic_35/README.md)** — 3.5-inch ES8311 microphone level test. Three
+- **[mic_35](mic_35/README.md)** — Phase 7. 3.5-inch ES8311 microphone level test. Three
   1-second captures with level statistics over serial, then automatic stop. On
   November 10, 2026 the level stayed low in silent runs and rose when sound
   was made, and the owner judged one played-back 3-second capture clear
   speech. Loud nearby sound clipped at the default gain.
-- **[audio_selftest_35](audio_selftest_35/README.md)** — 3.5-inch audio
+- **[audio_selftest_35](audio_selftest_35/README.md)** — Phase 7. 3.5-inch audio
   self-test. The board plays a short tone and checks it on its own microphone,
   then prints PASS or FAIL; no listener needed. On November 10, 2026 it passed
   three of three runs and reported FAIL when the speaker was silenced.
-- **[sd_35](sd_35/README.md)** — 3.5-inch microSD test. Mounts the card, writes
+- **[sd_35](sd_35/README.md)** — Phase 9. 3.5-inch microSD test. Mounts the card, writes
   a small file, reads it back, compares and deletes it. Passed on November 10,
   2026 with one 29.8 GB card at 4 MHz. A bench build also used the card without
   error while the display was redrawing.
-- **[onboard_35](onboard_35/README.md)** — 3.5-inch clock, IMU,
+- **[onboard_35](onboard_35/README.md)** — Phase 8. 3.5-inch clock, IMU,
   temperature/humidity and BOOT button readout over serial. On November 10,
   2026 the clock counted, the IMU read 1.00 g at rest and followed three poses,
   the SHTC3 read about 28 °C and 37 %, and BOOT presses were reported. The
   clock has no backup cell: it kept time through a USB unplug on a board with
   a LiPo and lost it on a board without one.
-- **[touch_audio](touch_audio/README.md)** — 3.5-inch scrolling list with TONE
+- **[touch_audio](touch_audio/README.md)** — Sample. 3.5-inch scrolling list with TONE
   and MIC controls, combining display, touch, speaker and microphone. The tone
   plays from a background task; on November 10, 2026 the owner heard it clean
   while scrolling the list, and MIC followed a clap.

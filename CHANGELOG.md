@@ -49,6 +49,10 @@ evidence and claim tags.
 - CI coverage for both 2.8-inch examples, native driver tests, flasher tests,
   and isolated consumer builds.
 
+### Changed
+- README status table: audio, onboard devices and microSD are now phases 7, 8
+  and 9; "Sample" is kept for the two demonstrations that add no driver.
+
 ### Findings (2026-11-10, 3.5-inch)
 - The real-time clock has no backup cell. It lost its time with USB removed
   and no LiPo fitted, and kept it through a 10-second unplug on a second
