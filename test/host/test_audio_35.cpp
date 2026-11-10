@@ -69,5 +69,39 @@ int main() {
     CHECK(!A::setVolume(0xFF), "volume rejected after failed shutdown");
     g_wireFailReg = -1;
 
+    // Recording: refused while playback is configured (one mode at a time).
+    CHECK(A::begin(), "playback configured before recording checks");
+    CHECK(!A::beginRecording(), "recording refused while playback is configured");
+    CHECK(A::end(), "playback shut down before recording");
+
+    // Recording setup: DAC muted, analog mic on, ADC volume applied.
+    g_wireFailReg = 0x17;
+    CHECK(!A::beginRecording(), "recording setup write failure rejected");
+    CHECK(!A::recording(), "failed recording setup does not mark recording");
+    g_wireFailReg = -1;
+    g_takeResult = pdFALSE;
+    CHECK(!A::beginRecording(), "beginRecording reports lock failure");
+    g_takeResult = pdTRUE;
+    CHECK(A::beginRecording(), "recording setup succeeds");
+    CHECK(A::recording() && !A::ready(), "recording mode set, playback not ready");
+    CHECK(g_wireRegisters[0x18][0x01] == 0xBF, "recording clocks from BCLK (no MCLK)");
+    CHECK(g_wireRegisters[0x18][0x0A] == 0x0C, "serial output is 16-bit I2S");
+    CHECK(g_wireRegisters[0x18][0x14] == 0x1A, "analog mic input selected");
+    CHECK(g_wireRegisters[0x18][0x17] == 0xC8, "default ADC volume reaches codec");
+    CHECK((g_wireRegisters[0x18][0x31] & 0x60) == 0x60, "DAC muted while recording");
+    CHECK(g_wireRegisters[0x18][0x32] == 0x00, "DAC volume zero while recording");
+    CHECK(!A::begin(), "playback refused while recording");
+
+    // Recording shutdown.
+    g_takeResult = pdFALSE;
+    CHECK(!A::endRecording() && A::recording(), "endRecording lock failure leaves state");
+    g_takeResult = pdTRUE;
+    CHECK(A::endRecording() && !A::recording(), "endRecording clears recording");
+    CHECK(g_wireRegisters[0x18][0x14] == 0x00, "mic input off after endRecording");
+    CHECK(g_wireRegisters[0x18][0x17] == 0x00, "ADC volume minimum after endRecording");
+    CHECK(A::begin() && g_wireRegisters[0x18][0x04] == 0x10 && g_wireRegisters[0x18][0x32] == 0xC0,
+          "playback configuration unchanged after a recording session");
+    CHECK(A::end(), "final shutdown");
+
     return g_failures ? 1 : 0;
 }

@@ -53,8 +53,12 @@ GPIO13/14 = native-USB trap, and the USB link stalling on large transfers.
 
 - **Waveshare ESP32-C5-Touch-LCD-3.5** — phases 1–6 above, plus ES8311 speaker
   playback. The owner confirmed clean playback on November 10, 2026, using
-  the standalone [audio_35 example](examples/audio_35/README.md). Recording,
-  pitch accuracy, and simultaneous display/audio operation are unverified. See
+  the standalone [audio_35 example](examples/audio_35/README.md). Microphone
+  capture is implemented: on the same date the
+  [mic_35 example](examples/mic_35/README.md) showed the level staying low in
+  a silent run and rising when sound was made. No captured audio has been
+  listened to. Recording quality, pitch accuracy, and simultaneous
+  display/audio operation are unverified. See
   [docs/BOARD-WS-C5-35.md](docs/BOARD-WS-C5-35.md).
 - **Waveshare ESP32-C5-Touch-LCD-2.8** — the 2.8" twin (ST7789 240×320, CST3530
   touch). **Display, touch, speaker playback, battery-voltage readout, and
@@ -86,6 +90,7 @@ Cold boot and physical reset passed the user check for the documented test image
 
 See [all examples](examples/README.md), including the
 [3.5-inch speaker test](examples/audio_35/README.md),
+[3.5-inch microphone level test](examples/mic_35/README.md),
 [2.8-inch battery test](examples/battery_28/README.md),
 [panel colour-cycle utility](examples/screen_flush/), and
 [BLE heap diagnostic](examples/ble_heap_probe/README.md).
@@ -102,7 +107,7 @@ src/
   board/    board-specific drivers; two hardware-proven boards
             ws_c5_35/  pins · expander (CH32V006) · touch (FT6336) ·
                        gps (LC76G over I²C) · battery (AXP2101) ·
-                       audio (ES8311 playback) · board begin()/name()
+                       audio (ES8311 playback, mic capture) · board begin()/name()
             ws_c5_28/  pins · expander (CH32V006) · touch (CST3530) ·
                        audio (ES8311 playback) · battery voltage ·
                        board begin()/name() (recording/gps later)
@@ -111,6 +116,7 @@ examples/   standalone samples (PlatformIO unless noted)
             hello_board            display + touch (3.5", TFT_eSPI)
             hello_board_28         display + touch (2.8", ST7789 Arduino_GFX)
             audio_35               ES8311 three-tone test (3.5", ESP_I2S)
+            mic_35                 ES8311 microphone level test (3.5", ESP_I2S)
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
             gps_i2c                LC76G GPS over I²C (fix + sat count)
             battery_28             battery ADC/estimated voltage + battery-only screen test

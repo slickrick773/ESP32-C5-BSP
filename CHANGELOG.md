@@ -8,6 +8,12 @@ evidence and claim tags.
 ## Unreleased
 
 ### Added
+- 3.5-inch microphone capture: `Audio::beginRecording()` / `endRecording()` and
+  the `mic_35` level-test example. Hardware-tested on 2026-11-10 for level
+  response only (low when silent, rising with sound, clipping on loud nearby
+  sound). No captured audio has been listened to; recording quality is
+  unverified. Playback configuration is unchanged; playback and capture are
+  one at a time.
 - Optional dark startup via `Board::begin(0)` / `Expander::begin(0)`, preserving
   the full-brightness default and existing reset timing.
 - Reusable ESP32-C5 SPI2 reset plus one-time per-board `prepareSharedSpi()`,

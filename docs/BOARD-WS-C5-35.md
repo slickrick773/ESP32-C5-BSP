@@ -119,4 +119,26 @@ The test plays three nominal 440 Hz tones, then stops; it renders no display.
 Initialize the board expander/shared I²C bus before starting I2S and configuring
 the codec. Adding expander initialization changed the observed result from
 silence to clean playback; the specific electrical dependency is not isolated.
-Recording, pitch accuracy, and simultaneous display/audio operation are unverified.
+Pitch accuracy and simultaneous display/audio operation are unverified.
+
+## Microphone capture
+
+ES8311 microphone capture is implemented in the BSP (`Audio::beginRecording()`):
+onboard mic → codec ADC → I2S DIN on GPIO 24, sharing BCLK 23 / LRCK 10 with
+playback, 16 kHz 16-bit. Playback and capture are one at a time.
+
+Tested on November 10, 2026 with [mic_35](../examples/mic_35/README.md), for
+level response only:
+
+- Silent run in a quiet room: left-channel AC RMS about 23 in all three
+  1-second windows.
+- Clap run: about 23 while silent, then 190 and 2059 once clapping started.
+- Earlier runs with background noise in the room gave silent readings up to
+  about 118 and clap readings between about 775 and 2348.
+- The right I2S slot read zero throughout; the data arrived on the left slot.
+- Clap windows reached full scale in every run, so the default gain clips
+  nearby claps.
+
+No captured audio has been stored or listened to. Intelligibility, noise,
+gain suitability, and capture alongside the display are unverified. The ADC
+settings follow an existing 3.5-inch port of another firmware.

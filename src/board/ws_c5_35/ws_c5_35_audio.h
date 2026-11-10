@@ -15,7 +15,7 @@ constexpr uint8_t CODEC_ADDR = 0x18;
 constexpr int BCLK = 23;
 constexpr int LRCK = 10;
 constexpr int DOUT = 25;       // MCU -> codec DSDIN
-constexpr int DIN = 24;        // codec ADC -> MCU; recording not implemented
+constexpr int DIN = 24;        // codec ADC -> MCU; see beginRecording()
 constexpr int MCLK = -1;       // no MCLK net; codec derives its clock from BCLK
 constexpr uint32_t SAMPLE_RATE = 16000;
 
@@ -26,7 +26,7 @@ constexpr uint32_t SAMPLE_RATE = 16000;
 // No dedicated amplifier-enable control is implemented here.
 //
 // Clean speaker playback confirmed by the owner on 2026-11-10 using audio_35.
-// Recording and pitch accuracy are unverified. Use one control task.
+// Pitch accuracy is unverified. Use one control task.
 // Start I2S first: 16 kHz, signed 16-bit stereo, clock source BCLK, no MCLK.
 // The DAC volume is a raw register value (0..255; higher is louder).
 bool begin(uint8_t volume = 0xC0);
@@ -36,5 +36,19 @@ bool setVolume(uint8_t volume);
 // ready(); after an attempted transaction, clears ready() even on I2C failure.
 // The caller must separately stop I2S and handle a failed shutdown result.
 bool end();
+
+// Microphone capture: onboard mic -> ES8311 ADC -> I2S DIN (GPIO 24).
+// Hardware-tested 2026-11-10 with mic_35 for level response only (low when
+// silent, rising with sound, clipping on loud nearby sound; data on the left
+// I2S slot). Recording quality is unverified. The ADC settings follow the
+// 3.5-inch Bruce port (analog mic input 0x14 = 0x1A, ADC volume 0xC8, DAC muted).
+// Same startup contract as begin(): board expander and shared bus first, then
+// an I2S master with BCLK running (16 kHz, 16-bit, RX on DIN), then this call.
+// One mode at a time: returns false while playback is configured.
+bool beginRecording(uint8_t adcVolume = 0xC8);
+bool recording();
+// Analog mic input off and ADC volume to minimum. Same result contract as
+// end(). The caller separately stops I2S.
+bool endRecording();
 }  // namespace Audio
 }  // namespace WsC5_35

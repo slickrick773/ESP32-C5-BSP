@@ -13,6 +13,7 @@
 namespace WsC5_35 {
 namespace Audio {
 static bool s_ready = false;
+static bool s_recording = false;
 static bool writeReg(uint8_t reg, uint8_t value) {
     Wire.beginTransmission(CODEC_ADDR);
     Wire.write(reg);
@@ -92,6 +93,7 @@ static bool configure(uint8_t volume) {
 }
 bool ready() { return s_ready; }
 bool begin(uint8_t volume) {
+    if (s_recording) return false;
     if (s_ready) return true;
     // The caller must initialize board power/reset and the shared I2C bus.
     // The I2S master must already be running (codec clocks off BCLK).
@@ -113,6 +115,35 @@ bool end() {
     if (ok) { v |= 0x60; ok = writeReg(0x31, v); }  // mute DAC (L+R)
     if (ok) ok = writeReg(0x32, 0x00);              // DAC volume to zero
     s_ready = false;
+    return ok;
+}
+
+// ── recording ──────────────────────────────────────────────────────────────
+// Reuses the playback register sequence (it already powers the PGA/ADC and
+// sets a 16-bit I2S output port), then applies the ADC settings from the
+// 3.5-inch Bruce port and mutes the DAC. See the header for test evidence.
+bool recording() { return s_recording; }
+bool beginRecording(uint8_t adcVolume) {
+    if (s_ready) return false;
+    if (s_recording) return true;
+    if (!configure(0x00)) return false;
+    Esp32C5::I2cBus::Guard guard(100);
+    if (!guard) return false;
+    uint8_t v = 0;
+    bool ok = readReg(0x31, v);
+    if (ok) ok = writeReg(0x31, v | 0x60);   // mute DAC while recording
+    if (ok) ok = writeReg(0x14, 0x1A);       // analog mic on MIC1P/N, PGA gain
+    if (ok) ok = writeReg(0x17, adcVolume);  // ADC volume
+    s_recording = ok;
+    return ok;
+}
+bool endRecording() {
+    Esp32C5::I2cBus::Guard guard(100);
+    if (!guard) return false;
+    Esp32C5::I2cBus::reopen();
+    bool ok = writeReg(0x14, 0x00);          // analog mic input off
+    if (ok) ok = writeReg(0x17, 0x00);       // ADC volume to minimum
+    s_recording = false;
     return ok;
 }
 }  // namespace Audio
