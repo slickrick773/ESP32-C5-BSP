@@ -7,6 +7,12 @@ evidence and claim tags.
 
 ## Unreleased
 
+Nothing yet.
+
+## [0.5.1] — 2026-11-10
+
+Documentation and repository housekeeping. No code changes.
+
 ### Documentation
 
 - **Clean startup: wait before lighting.** The 3.5-inch recipe now waits 150 ms
@@ -20,6 +26,14 @@ evidence and claim tags.
   the RST button and power-on were not affected in testing. Position-dependent,
   mechanism unknown. See
   [HARDWARE-FINDINGS](docs/HARDWARE-FINDINGS.md#a-reset-sent-over-usb-can-crash-psram-start-up-on-some-images).
+
+### Repository
+
+- **Contributing guide and issue forms.** [CONTRIBUTING](CONTRIBUTING.md) sets
+  out the evidence rule for hardware claims; issue forms for bug reports and
+  hardware results ask for the board, the reset type and a boot log.
+- **PlatformIO package manifest** now lists exactly what ships (`export` in
+  `library.json`), so the library can be published to the PlatformIO registry.
 
 ## [0.5.0] — 2026-11-10
 

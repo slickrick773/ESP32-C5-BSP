@@ -1,0 +1,57 @@
+name: Something does not work
+description: A BSP function, an example or the flasher misbehaves on your board.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: board
+    attributes:
+      label: Board
+      options:
+        - Waveshare ESP32-C5-Touch-LCD-3.5
+        - Waveshare ESP32-C5-Touch-LCD-2.8
+        - Another ESP32-C5 board
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: BSP version or commit
+      placeholder: v0.5.1, or a commit hash
+    validations:
+      required: true
+  - type: input
+    id: what
+    attributes:
+      label: Example or firmware you ran
+      placeholder: examples/hello_board, or your own project
+    validations:
+      required: true
+  - type: dropdown
+    id: reset
+    attributes:
+      label: How was the board reset when it happened?
+      description: A reset sent over USB can behave differently from the RST button or a power-on.
+      options:
+        - RST button
+        - Power-on (plugged in)
+        - Over USB by a flashing tool or serial monitor
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Serial log from boot
+      description: Paste as text. Remove GPS positions, network names, MAC addresses and paths from your own machine first.
+      render: text
+  - type: textarea
+    id: fitted
+    attributes:
+      label: Anything fitted to the board
+      description: Battery, GPS module, speaker, microSD card, and how it is powered.

@@ -1,0 +1,37 @@
+name: Hardware result
+description: You ran something on a real board and want to report what you saw, whether it worked or not.
+labels: ["hardware-report"]
+body:
+  - type: markdown
+    attributes:
+      value: Results from other boards and revisions are the most valuable thing you can add here. A result that contradicts the docs is especially welcome.
+  - type: input
+    id: board
+    attributes:
+      label: Board and chip revision
+      description: The flashing tool prints the chip revision, for example "ESP32-C5 (revision v1.2)".
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: BSP version or commit, and the example you ran
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What you observed
+      description: What you did, what you saw, and how many times you tried it.
+    validations:
+      required: true
+  - type: textarea
+    id: nottested
+    attributes:
+      label: What you did not test
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt or measurements
+      description: Paste as text. Remove GPS positions, network names, MAC addresses and paths from your own machine first.
+      render: text

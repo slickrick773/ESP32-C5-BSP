@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Hardware findings
+    url: https://github.com/slickrick773/ESP32-C5-BSP/blob/main/docs/HARDWARE-FINDINGS.md
+    about: Known board and chip behaviour, with the evidence for each. Worth a search before opening an issue.
