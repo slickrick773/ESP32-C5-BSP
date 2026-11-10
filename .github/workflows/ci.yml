@@ -61,6 +61,7 @@ jobs:
           - touch_int
           - touch_redraw
           - touch_audio
+          - exio_probe
 
     steps:
       - uses: actions/checkout@v4

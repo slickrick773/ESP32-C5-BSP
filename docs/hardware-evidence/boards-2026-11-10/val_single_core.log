@@ -1,0 +1,15 @@
+t=  1.29s [chip] ESP32-C5, 1 core(s), 240 MHz, heap 299312 free / 8257524 largest
+t=  1.29s [core] coreCount=1  isSingleCore=1  workerCore=0
+t=  1.29s [worker] running on core 0
+t=  1.29s [core] createPinnedTask -> pdPASS (pinned to core 0)
+t=  1.94s [loop] core 0 of 1 (workerCore=0)
+t=  2.26s [worker] running on core 0
+t=  2.95s [loop] core 0 of 1 (workerCore=0)
+t=  3.27s [worker] running on core 0
+t=  3.96s [loop] core 0 of 1 (workerCore=0)
+t=  4.28s [worker] running on core 0
+t=  4.93s [loop] core 0 of 1 (workerCore=0)
+t=  5.25s [worker] running on core 0
+t=  5.93s [loop] core 0 of 1 (workerCore=0)
+t=  6.25s [worker] running on core 0
+t=  6.94s [loop] core 0 of 1 (workerCore=0)

@@ -76,6 +76,23 @@ evidence and claim tags.
   and 9; "Sample" is kept for the two demonstrations that add no driver.
 - README status: the 2.8-inch board now has its own table.
 
+### Validation (2026-11-10)
+- Earlier results were re-run rather than carried forward: battery readout,
+  the single-core helper, interrupt-gated touch, and Wi-Fi, GPS and touch
+  running together all held on hardware.
+- Startup behaviour was measured from video. Static on cold boot and the
+  previous frame reappearing after RST are both the panel's memory showing
+  before the first frame is written, and starting dark removes both. About one
+  second of grey glow before any application code runs remains and cannot be
+  removed in firmware. The board notes gain a "Clean startup" section.
+
+- The PSRAM error line printed at every boot was traced to its source: a
+  pre-v1.2 chip workaround in the pinned core that runs before PSRAM is set up.
+  Expected to be harmless on the v1.2 boards tested; not something the BSP can
+  change.
+- The startup probes are now tracked as labelled diagnostics, with their host
+  test in the suite and `exio_probe` in the CI build matrix.
+
 ### Findings (2026-11-10, 3.5-inch)
 - The real-time clock has no backup cell. It lost its time with USB removed
   and no LiPo fitted, and kept it through a 10-second unplug on a second
@@ -119,7 +136,9 @@ did not persist to the final image on a true cold boot. An experimental IDF 5.5.
 after-init bootloader PWM=0 probe was built, host-tested, explicitly authorized,
 flashed and verified (`[dark-start] result=0 attempts=1`, normal display and touch),
 and eliminated **neither** symptom. See
-[its limits and recovery plan](tools/startup_probe/README.md).
+[its limits and recovery plan](tools/startup_probe/README.md). Re-measured from
+video on 2026-11-10: see Validation above and the board notes' Clean startup
+section for what starting dark does remove.
 
 ## [0.4.0] — 2026-10-29
 

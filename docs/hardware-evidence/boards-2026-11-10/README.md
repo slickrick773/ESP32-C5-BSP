@@ -17,6 +17,14 @@ was reset (`tools/bench/serial_log.py`). GPS positions are replaced with
 | `boardcheck35.log` | 3.5-inch (LiPo board) | Whole-board check, two runs |
 | `gps35_regress.log` | 3.5-inch (LiPo board) | GPS re-run after the driver moved to shared code |
 | `ta35_final.log` | 3.5-inch (LiPo board) | Touch demo with the 1 kHz tone: one tone, one microphone reading |
+| `val_battery.log` | 3.5-inch (LiPo board) | Re-run of the battery readout: percent, voltage, charging |
+| `val_single_core.log` | 3.5-inch (LiPo board) | Re-run of the single-core task helper |
+| `val_touch_int.log` | 3.5-inch (LiPo board) | Re-run of interrupt-gated touch: untouched, then taps |
+| `val_capstone_gps.log` | 3.5-inch (LiPo board) | Wi-Fi, GPS, battery and touch together. Taken with a bench copy of `reliability_reference` that also prints its on-screen status over serial; the published example draws that status on the display only |
+
+The startup measurements were made from phone video, which is not published
+because it shows the owner's desk; the frame-by-frame findings are written up
+in HARDWARE-FINDINGS.
 
 What the logs do not contain: anything a person heard or saw. Those
 judgements (a clean tone, a counter that kept running, a correct layout) are

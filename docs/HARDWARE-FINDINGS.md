@@ -252,8 +252,34 @@ over-air discovery or a working application-level transfer**. The full
 application's exact heap layout/GATT workload still needs the same instrumentation.
 
 The probe also logged `Failed to allocate dummy cacheline for PSRAM memory
-barrier!` at boot while reporting 8 MB PSRAM. Its cause was not investigated;
-these runs do not validate a custom PSRAM-host build.
+barrier!` at boot while reporting 8 MB PSRAM. These runs do not validate a
+custom PSRAM-host build.
+
+**The PSRAM boot line, traced (2026-11-10; source reading, not a hardware
+experiment).** Every example prints
+`E (…) MSPI Timing: Failed to allocate dummy cacheline for PSRAM memory barrier!`
+on these boards. From the ESP-IDF 5.5 source and the configuration compiled
+into the pinned Arduino core:
+
+- The line comes from `esp_psram_mspi_mb_init()`, which tries to allocate one
+  cache line from the PSRAM heap during system start-up.
+- That code is compiled in only when the build's minimum chip revision is
+  below v1.2 (`ESP_PSRAM_MSPI_MB_WORKAROUND`). The pinned core is built for
+  minimum revision v1.0, so it is included.
+- The Arduino core does not initialise PSRAM at that point in start-up
+  (`CONFIG_SPIRAM_BOOT_INIT` is not set); it does so later. So when the
+  allocation is attempted there is no PSRAM heap yet, and it fails.
+- The failure is not fatal in the source: the function returns success, the
+  barrier is skipped, and start-up continues. PSRAM is then initialised and
+  reports 8 MB as usual.
+
+The boards tested here are revision v1.2, which is the revision at which the
+workaround is no longer compiled in at all. On that basis the line is expected
+to be harmless on these boards. That is an inference from the guard condition:
+what the barrier protects against is not documented in the source read, and no
+PSRAM fault was provoked or looked for. It is not something the BSP can
+change; it would need a core built for minimum revision v1.2, or a change in
+the Arduino core's start-up order.
 
 Evidence: [raw enable trials](hardware-evidence/ble-2026-11-04/enable-trials.log),
 [boundary repeats](hardware-evidence/ble-2026-11-04/repeat-trials.log),
@@ -855,6 +881,46 @@ that build has no corresponding hardware acceptance. The earlier ROM-download
 mode glow and Hello Board observations remain open evidence, not proof of an
 electrical cause or measured optical timing.
 
+**[VIDEO-MEASURED 2026-11-10 — phone video, frame-by-frame.]**
+Five clips of one 3.5-inch board (no LiPo) were analysed frame by frame at
+30 fps. Two bench builds were compared that differ only in backlight order:
+"naive" (`begin(255)`, pause, initialise, draw) and "dark start" (`begin(0)`,
+same pause, draw the whole frame, then backlight on). The clips stay with the
+owner; they are not published because they show the owner's desk.
+
+- **Grey glow before any application code: confirmed, about one second.** After
+  both a physical RST and a power cycle, both builds showed a uniform blank grey
+  glow for roughly 1.0 to 1.2 s before either could act. Its pixel-to-pixel
+  variation matched an ordinary lit or dark screen, so this glow is not static.
+- **Static on cold boot: confirmed, and caused by backlight order.** The naive
+  build showed speckled noise across part of the screen in one frame while its
+  first fill swept over it. With the display held on for 0.7 s before drawing,
+  the whole screen showed bright speckle for that time. The dark-start build
+  showed none.
+- **Retained previous frame after RST: confirmed, and caused by backlight
+  order.** A build that changes its picture a few seconds after boot was reset
+  with RST; when the display was switched on again, the *later* picture
+  reappeared before the boot picture was drawn. It can only have come from the
+  panel's memory. In an ordinary naive build this lasts less than one video
+  frame and one clip missed it; holding the display on for 0.7 s made it
+  unmistakable. The dark-start build showed none.
+- **At the instant of RST** the old picture fades over one to two frames (up to
+  about 0.2 s) in both builds. This precedes any application code.
+- **Software restart:** with the dark-start build, `esp_restart()` darkened the
+  screen within about 0.1 s, with no grey glow. Turning the backlight off before
+  restarting made no measurable difference (the two darkenings were 8.94 s apart
+  on video against 9.0 s between the commands), so no such helper was added.
+
+**Reading of the earlier record in the light of this.** The earlier "full
+dark-boot acceptance FAILED" stands in one respect only: the first second of
+glow cannot be removed by application or after-init bootloader code. The other
+two symptoms recorded above as persisting, static and the retained frame, are
+removed by dark start in this measurement. The earlier reports of them
+persisting with `begin(0)` were eyewitness observations; the brief fade at the
+instant of RST and the grey glow, which do remain, may be what was seen. That
+is an interpretation, not a measurement of those earlier runs.
+
+
 **[USER-OBSERVED 2026-11-07 — published-source sample recheck.]**
 A clean build of the scrolling sample from published source commit
 `367e8f5a85016556f563f0836b1f364f2b8e127e` was installed application-only with
@@ -956,6 +1022,11 @@ clock on the units tested.
 | Whole-board check, both boards | HW-VERIFIED | `board_check_28` 10/10 ×4; `board_check_35` 10/10 ×2 on the LiPo board (59.6 GB card, GPS attached), 2026-11-10 |
 | QMI8658 first samples after enable | read zero (HW-VERIFIED) | First read within ~120 ms of `Imu::begin()` returned 0.00 g on a cold start; real data within ~0.2 s, 2026-11-10 |
 | GPS after the driver moved to shared code (3.5-inch) | HW-VERIFIED | `gps_i2c` re-run: 13–15 sats, HDOP 0.84–1.01 over 75 s, 2026-11-10 |
+| Startup: grey glow before application code (3.5-inch) | HW-VERIFIED by video; not removable in firmware | ~1.0–1.2 s blank grey glow after RST and power-on in both a naive and a dark-start build, 2026-11-10 |
+| Startup: static (cold boot) and retained frame (RST) | HW-VERIFIED by video; **removed by dark start** | Naive order shows panel memory when the display turns on before the first frame; `begin(0)` → draw → `backlight(255)` showed neither, 2026-11-10 |
+| Startup after `esp_restart()` | HW-VERIFIED by video | Dark within ~0.1 s, no glow; backlight-off-before-restart made no measurable difference, 2026-11-10 |
+| Phases 4, 5, 6 and interrupt touch, re-run | HW-VERIFIED | LiPo board: 62–66 %, 3.96–4.00 V, charging; one core, pinned task on core 0; INT-gated touch 11 s with zero phantom reads then taps tracked; Wi-Fi 57–70 APs + GPS fix 13–16 sats (70 KB, 0 fails) + 12 strokes together, 2026-11-10 |
+| PSRAM "memory barrier" boot error line | cause TRACED (source); harmlessness INFERRED | Pre-v1.2 workaround compiled into the pinned core tries to allocate from PSRAM before the Arduino core has initialised it; non-fatal in source; boards here are rev v1.2, 2026-11-10 |
 | Panel black on USB→battery / post-reset | symptom HW-VERIFIED, cause UNVERIFIED | RST clears; power-dip suspected, 2026-10-26 |
 
 **BSP re-verification (this repo).** The `hello_board` example confirmed, on

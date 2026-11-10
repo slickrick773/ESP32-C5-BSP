@@ -49,6 +49,14 @@ for name in test_startup test_startup_28; do
     if [[ -x "$BIN/$name" ]]; then "$BIN/$name" default || fail=1; fi
 done
 
+# Startup probe: the bit-banged early I2C write used by the experimental
+# bootloader hook (tools/startup_probe). Self-contained; no mocks.
+echo "== test_early_i2c =="
+if $CXX -std=c++17 -I ../../tools/startup_probe/bootloader_components/dark_start \
+        ../../tools/startup_probe/test/test_early_i2c.cpp -o "$BIN/test_early_i2c" 2> "$BIN/tei.log" \
+        && "$BIN/test_early_i2c"; then :; else cat "$BIN/tei.log"; fail=1; fi
+echo
+
 rm -rf "$BIN"
 if [ "$fail" -ne 0 ]; then
     echo "RESULT: SOME HOST TESTS FAILED"

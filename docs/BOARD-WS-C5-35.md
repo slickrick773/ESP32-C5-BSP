@@ -31,31 +31,11 @@ does not carry the C5). Each example's `platformio.ini` pins it.
 
 ## Board-specific notes
 
-- **Application backlight suppression (dark-boot acceptance failed).** `begin(0)` preserves panel power/reset timing,
-  resets SPI2, deselects both display and SD, and leaves the expander backlight
-  at zero. Initialize graphics, draw the complete first frame, then call
-  `Expander::backlight(255)`. Call `begin(0)` before console waits or other
-  startup delays. Tests distinguish reset types: PWM-zero response persisted
-  through esp_restart, while physical RST brought the glow back and changed
-  that response to FF. Do not assume the reset button preserves PWM state. Plain `begin()` remains backward-compatible and starts at
-  full brightness.
-  **Observed failure (2026-11-05):** cold power-up still briefly shows
-  uninitialized panel memory; reset still shows the previous frame. Earlier
-  PWM writes, an `initVariant()` hook, and an experimental after-init bootloader
-  PWM=0 (ACKed on hardware) each failed to eliminate either symptom, with normal
-  display and touch preserved. The backlight is on at power-up and the expander's
-  PWM output controls it (a PWM=0 write darkens the panel; physical RST restores the
-  glow, esp_restart does not). The glow appears in ROM download mode with neither the
-  second-stage bootloader nor the application running, so it does not require
-  user-flashed ESP firmware. The tested writes and hooks (`begin(0)`,
-  `initVariant()`, after-init bootloader PWM=0) did not eliminate the observed flash;
-  whether an earlier ROM-level action could pre-empt it is unresolved (first-illumination
-  timing against ROM startup was not measured). Candidate fixes — a change to the CH32's
-  power-up state or a hardware gate — are plausible, not established requirements. Not
-  established: driven-vs-undriven at power-up, and the optical duration (not
-  instrumented). The retained frame is seen on reset and did not persist to the final
-  image on a true cold boot. See
-  [the evidence record](HARDWARE-FINDINGS.md#hide-panel-memory-until-the-first-frame).
+- **Start dark, reveal after the first frame.** Call `begin(0)` first, draw the
+  complete first frame, then `Expander::backlight(255)`. This hides the panel's
+  leftover memory during startup; see [Clean startup](#clean-startup) for what
+  it does and does not remove. Plain `begin()` remains backward-compatible and
+  starts at full brightness.
 - **One shared SPI owner.** Display and SD share SPI2. Keep one live SPI object,
   bracket each device with its own transaction and chip select, and never tear
   down the bus merely because SD initialization failed. `prepareSharedSpi()` is
@@ -112,6 +92,50 @@ XPowersLib with a cell on the MX1.25 header). Wi-Fi (2.4 + 5 GHz) and BLE are
 proven on the fleet and documented in HARDWARE-FINDINGS.md, but are not yet
 wrapped as BSP code here. microSD, the clock, the IMU and the temperature/
 humidity sensor have first results below. See the verification ledger in HARDWARE-FINDINGS.md.
+
+## Clean startup
+
+Measured from phone video on November 10, 2026, comparing two builds that
+differ only in when the backlight turns on.
+
+**What you see at startup, and why**
+
+| What | When | Avoidable in firmware? |
+|---|---|---|
+| A blank grey glow for about one second | After power-on or the RST button, before any application code runs | **No.** The backlight is already on at that point |
+| The old picture fading out over about 0.2 s | At the instant RST is pressed | No |
+| "TV static": bright speckled noise | Cold boot, when the display is switched on before the first frame is written | **Yes** |
+| The previous picture reappearing | After RST, when the display is switched on before the first frame is written | **Yes** |
+| The picture visibly being drawn in pieces | While the first frame is written | **Yes** |
+
+The three avoidable effects are one thing: the panel has its own memory. After
+power-on it holds random data; after a reset it still holds the last picture.
+If the backlight is lit when the display is switched on, that memory is what
+you see until the first frame overwrites it.
+
+**The recipe**
+
+```cpp
+WsC5_35::begin(0);                         // first action: backlight off
+// ... initialise the display library and draw the COMPLETE first frame ...
+WsC5_35::Expander::backlight(255);         // only now light the panel
+```
+
+With that order the video showed darkness after the first second of glow, then
+the finished picture at once: no static, no old picture, no partial drawing.
+With the backlight lit first, the same code showed all three.
+[touch_redraw](../examples/touch_redraw/README.md) and
+[touch_audio](../examples/touch_audio/README.md) follow the recipe.
+
+**What is not solved.** The first second of grey glow after power-on or RST.
+An experimental bootloader that wrote the backlight off earlier did not remove
+it (see [the evidence record](HARDWARE-FINDINGS.md#hide-panel-memory-until-the-first-frame)
+and [the startup probe](../tools/startup_probe/README.md)). Removing it would
+take a change to the expander chip's own firmware or to the hardware.
+
+**Software restart is different.** After `esp_restart()` the screen went dark
+within about a tenth of a second and there was no grey glow: the application
+starts almost at once and the expander keeps its state.
 
 ## Speaker playback
 

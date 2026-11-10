@@ -1,0 +1,10 @@
+t=  1.29s [batt] AXP2101 readout on the shared bus (0x34)
+t=  1.29s [scan] I2C: 0x18 0x24 0x34 0x51 0x6B 0x70  (expect 0x34 = AXP2101)
+t=  1.99s [batt] cell 62%, 3956 mV, charging | USB in 5157 mV
+t=  2.95s [batt] cell 62%, 3957 mV, charging | USB in 5157 mV
+t=  3.97s [batt] cell 62%, 3958 mV, charging | USB in 5156 mV
+t=  4.93s [batt] cell 62%, 3958 mV, charging | USB in 5156 mV
+t=  5.95s [batt] cell 62%, 3959 mV, charging | USB in 5157 mV
+t=  6.97s [batt] cell 62%, 3958 mV, charging | USB in 5156 mV
+t=  7.95s [batt] cell 62%, 3959 mV, charging | USB in 5155 mV
+t=  8.97s [batt] cell 62%, 3959 mV, charging | USB in 5156 mV

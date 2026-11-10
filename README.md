@@ -109,6 +109,52 @@ GPS on this board runs over I²C — the LC76G on the shared bus — which needs
 extra GPIO and leaves the BOOT button free. The I²C and UART options, and the
 trade-offs between them, are in [docs/GPS.md](docs/GPS.md).
 
+## Known limitations
+
+Things that are true of the hardware or deliberately not covered, so "done"
+has a definite meaning. Each links to its evidence.
+
+**Hardware behaviour the BSP cannot change**
+- **About one second of grey backlight glow** after power-on or the RST button,
+  before any application code runs (3.5-inch; measured from video). Starting
+  dark removes the static and leftover-picture effects that can follow it, but
+  not this first second. See
+  [Clean startup](docs/BOARD-WS-C5-35.md#clean-startup).
+- **The 3.5-inch clock has no backup cell.** It keeps time on USB or a LiPo and
+  loses it when both are gone. The 2.8-inch has a socket for a backup cell,
+  which is untested.
+- **The 3.5-inch speaker is weak below about 1 kHz**, and codec volume `0xE0`
+  adds about 16 dB of digital gain, so a tone that is both low and loud clips.
+  The examples play 1 kHz for that reason.
+- **The microphone clips on loud nearby sound** at the default gain. Speech was
+  clear at that gain; `setMicGain()` lowers it.
+- **On the 2.8-inch, the battery reading does not show whether a battery is
+  fitted**: it read about 4.2 V with none connected.
+- **A boot-time PSRAM error line** (`MSPI Timing: Failed to allocate dummy
+  cacheline for PSRAM memory barrier!`) appears with every example. It comes
+  from a workaround for chips older than revision v1.2 that the pinned Arduino
+  core attempts before it has set PSRAM up. The boards tested are v1.2, so it
+  is expected to be harmless here; that is traced from source, not tested. See
+  [HARDWARE-FINDINGS](docs/HARDWARE-FINDINGS.md).
+
+**Not exercised**
+- 2.8-inch GPS waking after a long idle. The step that would use the touch
+  controller's address is skipped; a three-minute run needed no wake.
+- Sensor, IMU and battery-voltage accuracy on either board, and the 2.8-inch
+  charging state.
+- The 2.8-inch BOOT button as an input, and a listened-to recording from the
+  2.8-inch microphone.
+- microSD cards other than the two tested, clocks above 4 MHz, and card use
+  while the 2.8-inch display is drawing.
+- Long-running sessions of any example.
+
+**By design**
+- There is no BSP SD driver; the examples use the Arduino `SD` library with the
+  BSP's pins and shared-bus startup.
+- The camera on camera-fitted boards is identified but not driven.
+- The display library is the application's choice; the BSP owns bring-up, not
+  drawing.
+
 ## Touch and scrolling sample
 
 **[Open the touch and scrolling sample](examples/touch_redraw/README.md)** —

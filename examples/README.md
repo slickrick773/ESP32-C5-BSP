@@ -112,5 +112,11 @@ on 3.14+.
   plays from a background task; on November 10, 2026 the owner heard it clean
   while scrolling the list, and MIC followed a clap.
 - **[screen_flush](screen_flush/)** — 3.5-inch panel colour-cycle utility.
+- **[exio_probe](exio_probe/README.md)** — diagnostic, not a supported example.
+  Reads the 3.5-inch expander's registers as early as possible after startup;
+  used in the startup investigation recorded in HARDWARE-FINDINGS. Its companion
+  [startup probe](../tools/startup_probe/README.md) is an experimental
+  bootloader hook that did not remove the startup glow and must not be flashed
+  as an application.
 - **[ble_heap_probe](ble_heap_probe/README.md)** — Arduino CLI diagnostic for BLE
   advertising under memory pressure, not a supported application feature.
