@@ -19,6 +19,8 @@ has run on a real board.** See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDING
 for the three levels of proof (silicon ≠ IDF-exposed ≠ works-on-hardware) and
 every claim's tag.
 
+### Waveshare ESP32-C5-Touch-LCD-3.5
+
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Scaffold + hardware-findings doc | ✅ done |
@@ -34,9 +36,27 @@ every claim's tag.
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
 
-Phases 1–9 describe the **3.5-inch** board. Sample rows are demonstrations
-built on those phases and add no driver of their own. Board-specific support
-is listed below.
+Sample rows are demonstrations built on those phases and add no driver of
+their own. Phases 2 and 5 are chip-level and serve both boards.
+
+### Waveshare ESP32-C5-Touch-LCD-2.8
+
+The 2.8-inch board was brought up by capability rather than in numbered
+phases. It uses a different display, touch controller, pinout and battery
+circuit from the 3.5-inch, so each row has its own driver and evidence.
+
+| Capability | Evidence | Status |
+|---|---|---|
+| Board definition, pin map, CH32V006 expander, ST7789 display, CST3530 touch | [hello_board_28](examples/hello_board_28/) | ✅ hardware-verified 2026-10-31: panel renders correctly; taps and a continuous drag tracked |
+| ES8311 speaker playback | [audio_28](examples/audio_28/README.md) | ✅ hardware-verified 2026-10-31 by the owner's ear: repeating beeps without crackle; output frequency not measured |
+| Battery voltage through the expander, and running on battery alone | [battery_28](examples/battery_28/README.md) | ✅ hardware-verified: about 4.1 V estimated with USB and battery connected, and the screen kept updating after USB was unplugged. Voltage accuracy, charging state and runtime not verified |
+| GPS (LC76G over I²C) | — | ⏳ next: no driver or example yet. The module answers at `0x58`, the same address as this board's touch chip, and that has to be resolved on hardware first |
+| Microphone capture | — | ❌ not implemented for this board |
+| Clock, IMU, temperature/humidity sensor | — | ❌ seen in a bus scan at `0x51`, `0x6B`, `0x70`; the 3.5-inch drivers are not yet available for this board |
+| microSD | — | ❌ pin defined, not tested from this BSP |
+| Display, touch and audio together | — | ❌ not tested; each was verified in a separate example |
+
+Board-specific notes are listed below.
 
 The latest Git tag is `v0.4.0`. Main contains additional changes; no GitHub
 Releases have been published.

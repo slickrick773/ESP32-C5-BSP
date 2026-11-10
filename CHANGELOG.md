@@ -52,6 +52,8 @@ evidence and claim tags.
 ### Changed
 - README status table: audio, onboard devices and microSD are now phases 7, 8
   and 9; "Sample" is kept for the two demonstrations that add no driver.
+- README status: the 2.8-inch board now has its own table listing what is
+  verified, what is next (GPS) and what is not yet done.
 
 ### Findings (2026-11-10, 3.5-inch)
 - The real-time clock has no backup cell. It lost its time with USB removed
