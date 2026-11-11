@@ -82,6 +82,41 @@ bool backupCharge(bool& enabled) {
     return true;
 }
 
+// Chip codes: 0..8 are 25 mA steps (0..200 mA), 9..16 are 300..1000 mA.
+static bool codeFromMa(uint16_t mA, uint8_t& code) {
+    if (mA == 0)                                        { code = 0; return true; }
+    if (mA >= 100 && mA <= 200 && mA % 25 == 0)         { code = (uint8_t)(mA / 25); return true; }
+    if (mA >= 300 && mA <= 1000 && mA % 100 == 0)       { code = (uint8_t)(8 + (mA - 200) / 100); return true; }
+    return false;
+}
+static bool maFromCode(uint8_t code, uint16_t& mA) {
+    if (code <= 8)  { mA = (uint16_t)(code * 25); return true; }
+    if (code <= 16) { mA = (uint16_t)(200 + (code - 8) * 100); return true; }
+    return false;
+}
+
+bool setChargeCurrentMa(uint16_t mA) {
+    uint8_t code = 0;
+    if (!s_present || !codeFromMa(mA, code)) return false;
+    Bus::Guard g(100);
+    if (!g) return false;
+    Bus::reopen();
+    if (!s_pmu.setChargerConstantCurr(code)) return false;
+    Bus::reopen();
+    return s_pmu.getChargerConstantCurr() == code;
+}
+
+bool chargeCurrentMa(uint16_t& mA) {
+    if (!s_present) return false;
+    Bus::Guard g(100);
+    if (!g) return false;
+    Bus::reopen();
+    uint16_t value = 0;
+    if (!maFromCode(s_pmu.getChargerConstantCurr(), value)) return false;
+    mA = value;
+    return true;
+}
+
 bool     batteryConnected() { return s_batt; }
 int      percent()          { return s_pct;  }
 uint16_t voltageMv()        { return s_vmv;  }

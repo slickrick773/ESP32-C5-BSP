@@ -25,7 +25,7 @@ constexpr uint8_t MIC_PGA_MAX = 10;   // ES8311 reg 0x14 PGA field maximum
 // uses Expander::begin(0), keeping the display backlight off. Board startup is
 // what turns the speaker amplifier on (expander line EXIO5, high = on), which
 // is why omitting it produced silence. This driver does not switch the
-// amplifier itself; it stays on after board startup.
+// amplifier; Expander::setSpeakerAmp() does.
 //
 // Clean speaker playback confirmed by the owner on 2026-11-10 using audio_35.
 // Pitch accuracy is unverified. Use one control task.

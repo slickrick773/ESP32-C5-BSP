@@ -283,6 +283,28 @@ presses and releases were reported when the owner pressed it twice. GPIO 28 is
 also a boot-mode strapping pin, so holding the
 button through a reset enters download mode.
 
+## Speaker switch, PWR button, header lines, charge current
+
+Four small controls, all checked on one board on November 10, 2026 with
+[extras_35](../examples/extras_35/README.md). The evidence behind the pin
+assignments is in the
+[hardware findings](HARDWARE-FINDINGS.md#exio5-is-the-speaker-amplifier-enable-exio6-reads-the-pwr-button).
+
+- **Speaker amplifier:** `Expander::setSpeakerAmp(bool)`. On after board
+  start-up. Off silences the speaker without touching the codec.
+- **PWR button:** `Expander::powerButton(pressed)`. True while held. A long
+  press switches the board off (vendor documentation; not tested here).
+- **Header lines E8 to E15:** `Expander::headerMode`, `headerWrite`,
+  `headerRead`. Inputs until set otherwise; an undriven input reads high.
+  E8 and E9 passed a jumper-wire test. Output voltage and drive strength were
+  not measured, and E10 to E15 were not tested through the header.
+- **Charge current:** `Battery::setChargeCurrentMa(mA)` and
+  `Battery::chargeCurrentMa(mA)`. The power chip starts at 200 mA on the board
+  tested. The setting was read back, and on a board with a LiPo the battery
+  voltage stepped with it, so the charging follows the setting; the current
+  was not measured in milliamps. Never set more than the cell's rated charge
+  current.
+
 ## Camera
 
 Boards fitted with the camera answer at `0x6E`. Its identity registers

@@ -84,6 +84,10 @@ on 3.14+.
   that stays smooth under load. Needs the display, the LC76G on I²C, and
   (optionally) a battery.
 
+- **[extras_35](extras_35/README.md)** — 3.5-inch self-checking test of the
+  speaker amplifier switch, PWR button, header lines E8/E9 (one jumper wire)
+  and the charge-current setting. All four checked on one board on November
+  10, 2026, with no battery fitted.
 - **[audio_35](audio_35/README.md)** — Phase 7. 3.5-inch ES8311 speaker test. Three nominal
   1 kHz tones, then automatic stop. On November 10, 2026 the owner judged them
   clean and loud enough; a recording measured about 6% harmonics. No display

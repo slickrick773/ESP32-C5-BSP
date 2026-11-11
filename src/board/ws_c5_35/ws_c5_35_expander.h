@@ -26,5 +26,26 @@ bool present();
 // Backlight duty, 0..255 (expander PWM register). No-op until begin() succeeds.
 void backlight(uint8_t duty);
 
+// Every call below needs begin() to have succeeded, takes the shared-bus lock
+// for up to 100 ms, and returns false (changing nothing) on a lock timeout, a
+// bus failure or a bad argument.
+
+// Speaker amplifier enable (EXIO5). begin() leaves it on. Off silences the
+// speaker without touching the codec or I2S.
+bool setSpeakerAmp(bool on);
+
+// PWR button (EXIO6). `pressed` is true while the button is held. The power
+// chip switches the board off on a long press; this call does not change that.
+bool powerButton(bool& pressed);
+
+// Header lines E8..E15 (EXIO8..EXIO15). They start as inputs, and an undriven
+// input reads high. Logic levels only: output voltage and drive strength have
+// not been measured, so do not power a load from them.
+constexpr uint8_t HEADER_FIRST = 8;
+constexpr uint8_t HEADER_LAST  = 15;
+bool headerMode(uint8_t line, bool output);
+bool headerWrite(uint8_t line, bool level);   // line must already be an output
+bool headerRead(uint8_t line, bool& level);
+
 }  // namespace Expander
 }  // namespace WsC5_35

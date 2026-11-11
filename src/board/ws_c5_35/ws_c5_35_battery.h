@@ -32,6 +32,18 @@ bool     charging();          // actively charging
 bool     vbusPresent();       // USB power present
 uint16_t vbusMv();            // VBUS voltage, mV
 
+// --- charge current ---------------------------------------------------------
+// The power chip starts at 200 mA on the board tested. Accepted values are the
+// chip's own steps: 0, 100 to 200 in steps of 25, and 300 to 1000 in steps of
+// 100 (mA). Anything else is rejected. The setting is lost when the board is
+// fully unpowered, so set it on every start.
+// WARNING: never set more than the cell's rated charge current. The stock cell
+// is 500 mAh; a current that suits a large cell can overheat a small one.
+// Returns true only if the chip reads back the requested value.
+bool setChargeCurrentMa(uint16_t mA);
+// Reads the setting back from the chip. `mA` is unchanged on failure.
+bool chargeCurrentMa(uint16_t& mA);
+
 // --- clock backup cell --------------------------------------------------------
 // The PMU has a trickle charger on its backup pin, off at power-up. As shipped,
 // this board has NO cell on that pin (the vendor schematic shows only a 2.2 uF

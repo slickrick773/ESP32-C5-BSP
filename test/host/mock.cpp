@@ -64,12 +64,13 @@ uint8_t g_wireRegisters[128][256] = {};
 int g_wireFailReg = -1;
 MockWireWrite g_wireWrites[256];
 unsigned g_wireWritesLen = 0;
-static uint8_t wireAddr, wireReg, wireValue;
+static uint8_t wireAddr, wireReg, wireValue, wireValue2;
 static int wireBytes;
 void MockWire::beginTransmission(uint8_t addr) { wireAddr = addr; wireBytes = 0; }
 size_t MockWire::write(uint8_t b) {
     if (wireBytes == 0) wireReg = b;
-    else if (wireBytes == 1) wireValue = b;
+    else if (wireBytes == 1) { wireValue = b; wireValue2 = 0; }
+    else if (wireBytes == 2) wireValue2 = b;
     ++wireBytes;
     ++g_wireWriteCount;
     return 1;
@@ -77,7 +78,7 @@ size_t MockWire::write(uint8_t b) {
 size_t   MockWire::write(const uint8_t*, size_t n) { g_wireWriteCount += (int)n; return n; }
 uint8_t MockWire::endTransmission(bool) {
     if (wireBytes > 1 && g_wireWritesLen < 256)
-        g_wireWrites[g_wireWritesLen++] = {wireAddr, wireReg, wireValue};
+        g_wireWrites[g_wireWritesLen++] = {wireAddr, wireReg, wireValue, wireValue2, (uint8_t)wireBytes};
     if (g_wireRegisterMode && wireBytes > 1 && wireReg == g_wireFailReg) return 2;
     if (g_wireRegisterMode && wireBytes > 1 && !g_wireEndTransStatus && !g_wireCommandDevice)
         g_wireRegisters[wireAddr][wireReg] = wireValue;
@@ -128,4 +129,6 @@ int g_pmuBeginResult = 1;
 bool g_pmuBackupCharge = false;
 bool g_pmuBackupWriteOk = true;
 int g_pmuBackupWrites = 0;
+uint8_t g_pmuChargeCode = 8;
+bool g_pmuChargeWriteOk = true;
 int g_pmuReadCalls   = 0;

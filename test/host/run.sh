@@ -28,6 +28,7 @@ run_one() {
 
 run_one test_bus     test_bus.cpp     "$SRC/chip/esp32c5_i2c_bus.cpp"
 run_one test_clients test_clients.cpp "$BOARD/ws_c5_35_battery.cpp" "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
+run_one test_extras_35 test_extras_35.cpp "$BOARD/ws_c5_35_battery.cpp" "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 run_one test_touch   test_touch.cpp   "$BOARD/ws_c5_35_touch.cpp"   "$BOARD/ws_c5_35_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 run_one test_touch_28 test_touch_28.cpp "$BOARD28/ws_c5_28_touch.cpp" "$BOARD28/ws_c5_28_expander.cpp" "$SRC/chip/esp32c5_i2c_bus.cpp"
 

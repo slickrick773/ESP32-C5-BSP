@@ -13,6 +13,8 @@ extern int g_pmuReadCalls;     // count of read-method calls
 extern bool g_pmuBackupCharge;   // backup-cell charge enable bit
 extern bool g_pmuBackupWriteOk;  // result of the enable/disable write
 extern int g_pmuBackupWrites;    // count of enable/disable writes
+extern uint8_t g_pmuChargeCode;  // charge-current register code
+extern bool g_pmuChargeWriteOk;  // result of the charge-current write
 
 struct XPowersPMU {
     bool begin(MockWire&, uint8_t, int, int) { return g_pmuBeginResult != 0; }
@@ -29,4 +31,6 @@ struct XPowersPMU {
     bool enableButtonBatteryCharge()   { g_pmuBackupWrites++; g_pmuBackupCharge = true;  return g_pmuBackupWriteOk; }
     bool disableButtonBatteryCharge()  { g_pmuBackupWrites++; g_pmuBackupCharge = false; return g_pmuBackupWriteOk; }
     bool isEnableButtonBatteryCharge() { g_pmuReadCalls++; return g_pmuBackupCharge; }
+    bool setChargerConstantCurr(uint8_t c) { if (g_pmuChargeWriteOk) g_pmuChargeCode = c; return g_pmuChargeWriteOk; }
+    uint8_t getChargerConstantCurr() { g_pmuReadCalls++; return g_pmuChargeCode; }
 };

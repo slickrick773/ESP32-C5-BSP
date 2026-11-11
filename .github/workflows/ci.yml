@@ -52,6 +52,7 @@ jobs:
           - audio_selftest_35
           - sd_35
           - onboard_35
+          - extras_35
           - gps_i2c
           - hello_board
           - hello_board_28

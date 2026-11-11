@@ -36,6 +36,7 @@ every claim's tag.
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
 | Sample | [Whole-board check](examples/board_check_35/README.md) — every onboard device in one PASS/FAIL table (3.5-inch) | ✅ ten of ten checks passed, two consecutive runs, 2026-11-10 |
+| Sample | [Speaker switch, PWR button, header lines, charge current](examples/extras_35/README.md) — self-checking test (3.5-inch) | ✅ hardware-tested 2026-11-10, one board: charge-current setting read back, header lines E8 and E9 passed with a jumper wire, speaker silenced and restored (laptop-microphone recording), PWR press read. On a second board with a LiPo, battery voltage stepped with the charge setting, six rounds of six. Charge current not measured in mA; header voltage and E10–E15 not measured |
 
 Sample rows are demonstrations built on those phases and add no driver of
 their own. Phases 2 and 5 are chip-level and serve both boards.
@@ -174,6 +175,7 @@ See [all examples](examples/README.md), including the
 [3.5-inch onboard devices readout](examples/onboard_35/README.md),
 [3.5-inch touch and audio sample](examples/touch_audio/README.md),
 [whole-board check](examples/board_check_35/README.md),
+[3.5-inch speaker switch, PWR button, header and charge-current check](examples/extras_35/README.md),
 [2.8-inch GPS test](examples/gps_28/README.md),
 [2.8-inch battery test](examples/battery_28/README.md),
 [panel colour-cycle utility](examples/screen_flush/), and
@@ -208,6 +210,7 @@ examples/   standalone samples (PlatformIO unless noted)
             onboard_35             clock, IMU, SHTC3 and BOOT button readout (3.5")
             audio_selftest_35      speaker-to-microphone loopback check, PASS/FAIL (3.5")
             touch_audio            list + TONE and MIC controls (3.5")
+            extras_35              speaker switch, PWR button, header lines, charge current, PASS/FAIL (3.5")
             audio_28               ES8311 440 Hz beep (2.8", ESP_I2S)
             mic_28                 ES8311 microphone level test (2.8")
             audio_selftest_28      speaker-to-microphone loopback check (2.8")

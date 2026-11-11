@@ -24,6 +24,13 @@ evidence and claim tags.
 
 ### Added
 
+- **3.5-inch speaker switch, PWR button, header lines and charge current.**
+  `Expander::setSpeakerAmp`, `Expander::powerButton`,
+  `Expander::headerMode` / `headerWrite` / `headerRead` (E8 to E15) and
+  `Battery::setChargeCurrentMa` / `chargeCurrentMa`, with host tests and a
+  self-checking example, [extras_35](examples/extras_35/README.md). Checked
+  on hardware, including charging on a board with a LiPo; see the example
+  for the limits.
 - Pin-map constants for the expander input register (`EXIO_IN_REG`) and the
   PWR button line (`EXIO_PWR_KEY`, EXIO6, high while pressed), with the
   bench evidence in the hardware findings. No reader function yet.

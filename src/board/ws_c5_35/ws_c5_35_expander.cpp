@@ -9,8 +9,10 @@
 namespace WsC5_35 {
 namespace Expander {
 
-static uint8_t s_output = 0;
-static bool    s_ready  = false;
+static uint16_t s_output = 0;      // output latch; the high byte is E8..E15
+static uint16_t s_mode   = 0;      // 1 = output
+static bool     s_wide   = false;  // header lines in use: send both bytes
+static bool     s_ready  = false;
 
 static bool exioWrite(uint8_t reg, uint8_t value) {
     Wire.beginTransmission(EXIO_ADDR);
@@ -20,10 +22,40 @@ static bool exioWrite(uint8_t reg, uint8_t value) {
 }
 
 static bool exioSet(uint8_t pin, bool level) {
-    if (level) s_output |= (uint8_t)(1U << pin);
-    else       s_output &= (uint8_t)~(1U << pin);
-    return exioWrite(EXIO_OUT_REG, s_output);
+    if (level) s_output |= (uint16_t)(1U << pin);
+    else       s_output &= (uint16_t)~(1U << pin);
+    return exioWrite(EXIO_OUT_REG, (uint8_t)s_output);
 }
+
+// Both bytes, low byte first. Used only once a header line is in use, so
+// start-up and boards that never touch the header keep the one-byte writes.
+static bool exioWrite16(uint8_t reg, uint16_t value) {
+    Wire.beginTransmission(EXIO_ADDR);
+    Wire.write(reg);
+    Wire.write((uint8_t)(value & 0xFF));
+    Wire.write((uint8_t)(value >> 8));
+    return Wire.endTransmission() == 0;
+}
+
+static bool pushOutput() {
+    return s_wide ? exioWrite16(EXIO_OUT_REG, s_output)
+                  : exioWrite(EXIO_OUT_REG, (uint8_t)s_output);
+}
+
+// Caller holds the bus lock.
+static bool readInputs(uint16_t& value) {
+    Esp32C5::I2cBus::reopen();
+    Wire.beginTransmission(EXIO_ADDR);
+    Wire.write(EXIO_IN_REG);
+    if (Wire.endTransmission(true) != 0) return false;
+    if (Wire.requestFrom((int)EXIO_ADDR, 2) != 2) return false;
+    const uint8_t lo = (uint8_t)Wire.read();
+    const uint8_t hi = (uint8_t)Wire.read();
+    value = (uint16_t)(lo | (hi << 8));
+    return true;
+}
+
+static bool headerLine(uint8_t line) { return line >= HEADER_FIRST && line <= HEADER_LAST; }
 
 bool present() { return s_ready; }
 
@@ -51,11 +83,13 @@ bool begin(uint8_t initialBacklight) {
               exioWrite(EXIO_MODE_REG, ctrl);
 
     s_output = (uint8_t)((1U << EXIO_TP_RST) | (1U << EXIO_LCD_RST));
-    ok = ok && exioWrite(EXIO_OUT_REG, s_output); delay(50);
+    ok = ok && exioWrite(EXIO_OUT_REG, (uint8_t)s_output); delay(50);
     s_output = 0x00;
-    ok = ok && exioWrite(EXIO_OUT_REG, s_output); delay(50);
+    ok = ok && exioWrite(EXIO_OUT_REG, (uint8_t)s_output); delay(50);
     s_output = ctrl;
-    ok = ok && exioWrite(EXIO_OUT_REG, s_output); delay(50);
+    ok = ok && exioWrite(EXIO_OUT_REG, (uint8_t)s_output); delay(50);
+    s_mode = ctrl;
+    s_wide = false;
 
     // Pulse each reset (active-low).
     ok = ok && exioSet(EXIO_LCD_RST, false); delay(20);
@@ -78,6 +112,65 @@ void backlight(uint8_t duty) {
     Esp32C5::I2cBus::Guard g(100);
     if (!g) return;
     exioWrite(EXIO_PWM_REG, duty);
+}
+
+bool setSpeakerAmp(bool on) {
+    if (!s_ready) return false;
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return false;
+    const uint16_t before = s_output;
+    if (on) s_output |= (uint16_t)(1U << EXIO_AMP_EN);
+    else    s_output &= (uint16_t)~(1U << EXIO_AMP_EN);
+    if (pushOutput()) return true;
+    s_output = before;
+    return false;
+}
+
+bool powerButton(bool& pressed) {
+    if (!s_ready) return false;
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return false;
+    uint16_t in = 0;
+    if (!readInputs(in)) return false;
+    pressed = (in >> EXIO_PWR_KEY) & 1U;
+    return true;
+}
+
+bool headerMode(uint8_t line, bool output) {
+    if (!s_ready || !headerLine(line)) return false;
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return false;
+    const uint16_t modeBefore = s_mode, outBefore = s_output;
+    const bool wideBefore = s_wide;
+    s_wide = true;
+    s_output &= (uint16_t)~(1U << line);          // a new output starts low
+    if (output) s_mode |= (uint16_t)(1U << line);
+    else        s_mode &= (uint16_t)~(1U << line);
+    if (exioWrite16(EXIO_OUT_REG, s_output) && exioWrite16(EXIO_MODE_REG, s_mode)) return true;
+    s_mode = modeBefore; s_output = outBefore; s_wide = wideBefore;
+    return false;
+}
+
+bool headerWrite(uint8_t line, bool level) {
+    if (!s_ready || !headerLine(line) || !(s_mode & (1U << line))) return false;
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return false;
+    const uint16_t before = s_output;
+    if (level) s_output |= (uint16_t)(1U << line);
+    else       s_output &= (uint16_t)~(1U << line);
+    if (pushOutput()) return true;
+    s_output = before;
+    return false;
+}
+
+bool headerRead(uint8_t line, bool& level) {
+    if (!s_ready || !headerLine(line)) return false;
+    Esp32C5::I2cBus::Guard g(100);
+    if (!g) return false;
+    uint16_t in = 0;
+    if (!readInputs(in)) return false;
+    level = (in >> line) & 1U;
+    return true;
 }
 
 }  // namespace Expander

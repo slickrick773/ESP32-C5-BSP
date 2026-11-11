@@ -47,7 +47,7 @@ extern int g_wireFailReg;  // NACK writes to this register; -1 disables
 extern bool g_wireCommandDevice; // register mode: two-byte writes are commands, not register writes
 extern int g_wireShortRead; // register mode: multi-byte reads return one byte short
 
-struct MockWireWrite { uint8_t addr, reg, value; };
+struct MockWireWrite { uint8_t addr, reg, value; uint8_t value2 = 0; uint8_t bytes = 0; };  // bytes counts reg + data
 extern MockWireWrite g_wireWrites[256];
 extern unsigned g_wireWritesLen;
 extern unsigned g_wireRequestCount;

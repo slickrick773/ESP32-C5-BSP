@@ -727,8 +727,8 @@ This agrees with the vendor schematic's label for the line (PA_CTRL) and the
 vendor's current example code. It also explains an earlier result: the speaker
 test was silent until board start-up was added, because start-up is what drives
 EXIO5 high. The start-up sequence itself is unchanged and stays as verified.
-The amplifier is on from board start-up onwards; the package has no call to
-switch it off yet.
+The amplifier is on from board start-up onwards; `Expander::setSpeakerAmp`
+switches it.
 
 **PWR button.** In the same run the expander's input register (`0x04`) showed
 bit 6 (EXIO6) high while the PWR button was held and low when released: three
@@ -757,8 +757,8 @@ other through the input register, twenty changes each way.
 
 An undriven line reads high. E10 to E15 accepted the same commands and read
 back correctly from the expander's registers, but were not tested through the
-header. The output voltage was not measured. This package's expander driver
-still writes one byte and has no call for these lines yet.
+header. The output voltage was not measured. The driver calls for these lines
+are described in [the board notes](BOARD-WS-C5-35.md#speaker-switch-pwr-button-header-lines-charge-current).
 
 ### Battery charge settings at power-up
 
@@ -777,8 +777,16 @@ the board was fully unpowered and powered again:
 The meanings follow the tables in XPowersLib 0.3.3. The precharge register
 (`0x61`) read `0x05`; its meaning is left out because the library and the raw
 field width disagree. The vendor's examples set 400 mA. At 200 mA a 2000 mAh
-cell takes roughly ten hours or more to charge. Charging a real cell at these
-settings was not measured here.
+cell takes roughly ten hours or more to charge.
+
+**Changing the setting changes the charging [HW-VERIFIED 2026-11-10, a second
+board with a LiPo fitted].** With the cell at about 3.96 V and charging, a
+test switched the setting between 100 mA and 300 mA every eight seconds through
+`Battery::setChargeCurrentMa`. The battery voltage reported by the power chip
+rose by 102 to 104 mV each time the setting went to 300 mA and fell back at
+100 mA, in six rounds out of six over two runs. The charging current follows
+the setting. This is not a measurement of the current in milliamps, and a full
+charge at any setting was not timed.
 
 ### Hide panel memory until the first frame
 
@@ -1128,6 +1136,7 @@ clock on the units tested.
 | Expander header lines E8, E9 as output and input | HW-VERIFIED | Jumper wire test 40 of 40, 20 of 40 with wire removed, one board, 2026-11-10 |
 | Expander header lines E10 to E15 | register readback only | Not tested through the header |
 | AXP2101 power-up charge settings | HW-VERIFIED (read only) | 200 mA, 4.2 V, stop at 125 mA; one board, no battery, 2026-11-10 |
+| Charge-current setting changes real charging | HW-VERIFIED | Battery voltage stepped 102–104 mV between 100 and 300 mA, 6 of 6 rounds, one board with a LiPo, 2026-11-10; current not measured in mA |
 | R-selector camera-side mechanism | SCHEMATIC-CONFIRMED | R55/R56/R58/R59, official schematic, 2026-10-23 |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
 | NeoPixel LED on GPIO27 | **unusable** (HW-VERIFIED) | GPIO27 is I²C SDA; LED writes corrupt the bus, 2026-10-26 |
