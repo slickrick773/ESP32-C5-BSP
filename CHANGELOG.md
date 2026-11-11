@@ -7,20 +7,10 @@ evidence and claim tags.
 
 ## Unreleased
 
-### Documentation
+## [0.6.0] — 2026-11-10
 
-- **Porting checklist.** [docs/PORTING-CHECKLIST.md](docs/PORTING-CHECKLIST.md)
-  gathers what every firmware port to the 3.5-inch board has had to get right
-  (build flags, start-up order, shared buses, touch, GPS, radio, how to verify),
-  each item linked to the finding behind it, with the 2.8-inch differences.
-
-### Fixed
-
-- **EXIO5 on the 3.5-inch board is the speaker amplifier enable, not panel
-  power.** Bench-tested: with it low the speaker is silent and the display
-  keeps running. Comments and documents are corrected, and the pin map gains
-  `EXIO_AMP_EN`. `EXIO_POWER` remains as an alias, so existing code builds
-  unchanged. Start-up behaviour is unchanged.
+New controls for the 3.5-inch board, and a correction to what one expander line
+does. Existing code builds unchanged.
 
 ### Added
 
@@ -31,17 +21,26 @@ evidence and claim tags.
   self-checking example, [extras_35](examples/extras_35/README.md). Checked
   on hardware, including charging on a board with a LiPo; see the example
   for the limits.
-- Pin-map constants for the expander input register (`EXIO_IN_REG`) and the
-  PWR button line (`EXIO_PWR_KEY`, EXIO6, high while pressed), with the
-  bench evidence in the hardware findings. No reader function yet.
+- Pin-map constants `EXIO_AMP_EN`, `EXIO_IN_REG` and `EXIO_PWR_KEY`.
 
-### Documentation (hardware findings)
+### Fixed
 
+- **EXIO5 on the 3.5-inch board is the speaker amplifier enable, not panel
+  power.** Bench-tested: with it low the speaker is silent and the display
+  keeps running. Comments and documents are corrected. `EXIO_POWER` remains
+  as an alias for `EXIO_AMP_EN`. Start-up behaviour is unchanged.
+
+### Documentation
+
+- **Porting checklist.** [docs/PORTING-CHECKLIST.md](docs/PORTING-CHECKLIST.md)
+  gathers what every firmware port to the 3.5-inch board has had to get right
+  (build flags, start-up order, shared buses, touch, GPS, radio, how to verify),
+  each item linked to the finding behind it, with the 2.8-inch differences.
 - **Sixteen expander lines.** E8 to E15 on the pin header are expander lines
   reached with two-byte writes. E8 and E9 were tested as outputs and inputs
-  with a jumper wire. No driver call yet.
+  with a jumper wire.
 - **Battery charge settings at power-up** on the 3.5-inch board: 200 mA,
-  4.2 V. The package does not change them.
+  4.2 V on the board tested.
 
 ### Repository
 

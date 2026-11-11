@@ -62,7 +62,7 @@ circuit from the 3.5-inch, so each row has its own driver and evidence.
 
 Board-specific notes are listed below.
 
-The latest release is `v0.5.1`. See the [changelog](CHANGELOG.md). To report a result
+The latest release is `v0.6.0`. See the [changelog](CHANGELOG.md). To report a result
 from your own board or propose a change, see [CONTRIBUTING](CONTRIBUTING.md).
 
 Porting firmware to the 3.5-inch board? The
