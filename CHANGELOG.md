@@ -7,6 +7,13 @@ evidence and claim tags.
 
 ## Unreleased
 
+### Documentation
+
+- **Porting checklist.** [docs/PORTING-CHECKLIST.md](docs/PORTING-CHECKLIST.md)
+  gathers what every firmware port to the 3.5-inch board has had to get right
+  (build flags, start-up order, shared buses, touch, GPS, radio, how to verify),
+  each item linked to the finding behind it, with the 2.8-inch differences.
+
 ### Repository
 
 - **Registry publishing from a clean checkout.** A workflow publishes each
