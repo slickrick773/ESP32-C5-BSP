@@ -47,6 +47,13 @@ jobs:
         with:
           fetch-depth: 0   # the check script needs the tag object
 
+      # A run started by a release checks the tag out as a plain commit ref.
+      # Fetch the real annotated tag so the check script can inspect it.
+      - name: Fetch the annotated tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
