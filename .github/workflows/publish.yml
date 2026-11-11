@@ -1,0 +1,93 @@
+name: Publish to PlatformIO registry
+
+# Publishes a release to the PlatformIO registry from a clean checkout, so a
+# publish never comes from anyone's working folder. See
+# tools/release/check_package.sh for why that matters.
+#
+# It runs when a GitHub release is published, or by hand. A manual run is a dry
+# run unless "publish" is ticked. The job uses the `platformio-registry`
+# environment, which holds the registry token and can require an approval
+# before the upload step runs.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to package, e.g. v0.5.2'
+        required: true
+      publish:
+        description: 'Actually publish (leave unticked for a dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platformio-publish
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      # Passed through the environment, never pasted into the script text.
+      - id: tag
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "not a release tag: $TAG"; exit 1; }
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the check script needs the tag object
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - name: Build and verify the package from a clean export of the tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: tools/release/check_package.sh "$TAG" dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: package
+    if: github.event_name == 'release' || inputs.publish
+    runs-on: ubuntu-latest
+    environment: platformio-registry
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+          path: dist
+
+      # Uploads the exact file the previous job verified. A version that is
+      # already on the registry is refused by the registry and fails this step.
+      - name: Publish
+        env:
+          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+        run: |
+          test -n "$PLATFORMIO_AUTH_TOKEN" || { echo "PLATFORMIO_AUTH_TOKEN is not set for this environment"; exit 1; }
+          pio pkg publish --owner slickrick773 --no-interactive dist/*.tar.gz

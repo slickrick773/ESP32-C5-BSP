@@ -7,7 +7,13 @@ evidence and claim tags.
 
 ## Unreleased
 
-Nothing yet.
+### Repository
+
+- **Registry publishing from a clean checkout.** A workflow publishes each
+  GitHub release to the PlatformIO registry. It packs a clean export of the
+  release tag, checks the package file-for-file against the tag, scans it, and
+  only then uploads, behind an approval step.
+  `tools/release/check_package.sh` runs the same checks locally.
 
 ## [0.5.1] — 2026-11-10
 
