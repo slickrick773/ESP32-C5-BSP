@@ -28,6 +28,14 @@ evidence and claim tags.
   PWR button line (`EXIO_PWR_KEY`, EXIO6, high while pressed), with the
   bench evidence in the hardware findings. No reader function yet.
 
+### Documentation (hardware findings)
+
+- **Sixteen expander lines.** E8 to E15 on the pin header are expander lines
+  reached with two-byte writes. E8 and E9 were tested as outputs and inputs
+  with a jumper wire. No driver call yet.
+- **Battery charge settings at power-up** on the 3.5-inch board: 200 mA,
+  4.2 V. The package does not change them.
+
 ### Repository
 
 - **Registry publishing from a clean checkout.** A workflow publishes each

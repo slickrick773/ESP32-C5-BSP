@@ -739,6 +739,47 @@ that a long press powers the board off; that was not tested here.
 together (an older comment blamed a touch-chip power rail, which this result
 does not support), and whether the amplifier makes any noise when switched.
 
+### The expander has sixteen lines; E8 and E9 tested on the header
+
+**[HW-VERIFIED 2026-11-10 for E8 and E9, one board].** The expander has sixteen
+lines, not eight. EXIO8 to EXIO15 come out on the pin header, labelled E8 to
+E15. They are reached by sending two data bytes instead of one, low byte
+first: mode register `0x02` (a 1 bit makes the line an output), output register
+`0x03`, and input register `0x04` (read two bytes).
+
+Test: one jumper wire between E8 and E9. The board drove one line and read the
+other through the input register, twenty changes each way.
+
+- **Wire fitted:** 40 of 40 readings matched, three rounds running, in both
+  directions (E8 driving E9, then E9 driving E8).
+- **Wire removed:** 20 of 40. The reading line stayed high whatever the driving
+  line did, so the match with the wire fitted came through the header.
+
+An undriven line reads high. E10 to E15 accepted the same commands and read
+back correctly from the expander's registers, but were not tested through the
+header. The output voltage was not measured. This package's expander driver
+still writes one byte and has no call for these lines yet.
+
+### Battery charge settings at power-up
+
+**[HW-VERIFIED 2026-11-10, one board, no battery fitted].** This package does
+not set the AXP2101's charge settings, so a battery charges at whatever the
+power chip starts with. Read from the chip on one board, and unchanged after
+the board was fully unpowered and powered again:
+
+| Setting | Register | Raw | Meaning |
+|---|---|---|---|
+| Charger | `0x18` | `0x0A` | on |
+| Charge current | `0x62` | `0x08` | 200 mA |
+| Target voltage | `0x64` | `0x03` | 4.2 V |
+| Stop-charging current | `0x63` | `0x15` | 125 mA, enabled |
+
+The meanings follow the tables in XPowersLib 0.3.3. The precharge register
+(`0x61`) read `0x05`; its meaning is left out because the library and the raw
+field width disagree. The vendor's examples set 400 mA. At 200 mA a 2000 mAh
+cell takes roughly ten hours or more to charge. Charging a real cell at these
+settings was not measured here.
+
 ### Hide panel memory until the first frame
 
 **[OBSERVED FAILURE 2026-11-05; cause narrowed 2026-11-05 — see the measured blocks below].**
@@ -1084,6 +1125,9 @@ clock on the units tested.
 | Expander CH32V006 | HW-VERIFIED | Backlight/resets |
 | EXIO5 = speaker amplifier enable (not panel power) | HW-VERIFIED | Tone gated 3 of 3 cycles, display kept redrawing, one board, 2026-11-10 |
 | PWR button on EXIO6 (input register `0x04`) | HW-VERIFIED | 3 presses, 6 changes, one board, 2026-11-10 |
+| Expander header lines E8, E9 as output and input | HW-VERIFIED | Jumper wire test 40 of 40, 20 of 40 with wire removed, one board, 2026-11-10 |
+| Expander header lines E10 to E15 | register readback only | Not tested through the header |
+| AXP2101 power-up charge settings | HW-VERIFIED (read only) | 200 mA, 4.2 V, stop at 125 mA; one board, no battery, 2026-11-10 |
 | R-selector camera-side mechanism | SCHEMATIC-CONFIRMED | R55/R56/R58/R59, official schematic, 2026-10-23 |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
 | NeoPixel LED on GPIO27 | **unusable** (HW-VERIFIED) | GPIO27 is I²C SDA; LED writes corrupt the bus, 2026-10-26 |
