@@ -144,7 +144,7 @@ failed spuriously — the isolation note under *Known rough edges* explains why.
 A display consumer additionally needs, from `examples/hello_board/`:
 `apply_c5_tft_patch.py`, `tft_c5/` (the C5 processor port), `wsc5_user_setup.h`,
 plus `bodmer/TFT_eSPI@^2.5.43` in `lib_deps` and `extra_scripts =
-pre:apply_c5_tft_patch.py`. The BSP's `WsC5_35::begin()` brings the panel power and
+pre:apply_c5_tft_patch.py`. The BSP's `WsC5_35::begin()` brings the
 ST7796 reset up (via the expander) before `tft.init()`. This path is now
 **compile-tested** in the isolated core (see Recorded evidence); it is **not**
 hardware-verified by this check — the panel/touch runtime is unproven here.

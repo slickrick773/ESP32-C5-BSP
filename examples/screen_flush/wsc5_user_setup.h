@@ -24,7 +24,7 @@
 #define TFT_CS   8
 #define TFT_DC   5
 #define TFT_RST  -1   // reset is on the expander (EXIO1)
-// No TFT_BL: the backlight is the expander's PWM (EXIO5), not a GPIO.
+// No TFT_BL: the backlight is the expander's PWM (register 0x05), not a GPIO.
 
 #define LOAD_GLCD
 #define LOAD_FONT2

@@ -41,14 +41,20 @@ constexpr uint8_t  FT6336_ADDR  = 0x38;
 constexpr uint8_t  FT6336_ID    = 0x64;     // FT6336U reports this at reg 0xA3
 
 // ---- I/O expander: CH32V006 at 0x24 on the shared I2C bus --------------------
-// Owns panel power/backlight and both resets; there is no backlight GPIO.
+// Owns the backlight, both resets and the speaker amplifier enable; there is
+// no backlight GPIO.
 constexpr uint8_t  EXIO_ADDR     = 0x24;
 constexpr uint8_t  EXIO_MODE_REG = 0x02;    // direction/mode
 constexpr uint8_t  EXIO_OUT_REG  = 0x03;    // output latch
+constexpr uint8_t  EXIO_IN_REG   = 0x04;    // input levels (read)
 constexpr uint8_t  EXIO_PWM_REG  = 0x05;    // backlight PWM
 constexpr uint8_t  EXIO_TP_RST   = 0;       // EXIO0 -> FT6336 reset
 constexpr uint8_t  EXIO_LCD_RST  = 1;       // EXIO1 -> ST7796 reset
-constexpr uint8_t  EXIO_POWER    = 5;       // vendor BOARD_POWER_EXIO; actual rail function unverified
+constexpr uint8_t  EXIO_PWR_KEY  = 6;       // EXIO6 <- PWR button (input, high while pressed)
+constexpr uint8_t  EXIO_AMP_EN   = 5;       // EXIO5 -> speaker amplifier enable (high = on)
+// Older name for the same line, kept so existing code builds. It is not a power
+// rail: with it low the display keeps running and the speaker is silent.
+constexpr uint8_t  EXIO_POWER    = EXIO_AMP_EN;
 
 // ---- Other devices on the shared bus (addresses, for reference) -------------
 constexpr uint8_t  ES8311_ADDR   = 0x18;    // audio codec (Phase later)

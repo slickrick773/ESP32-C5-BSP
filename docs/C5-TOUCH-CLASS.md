@@ -48,7 +48,7 @@ wiring; across to the Pancake they are peripheral and wiring.
 | Touch | **FT6336** `0x38`, single-byte STOP read, per-read bus re-open | **CST3530** `0x58`, 4-byte-reg repeated-START 9-byte packet + ack, **no** per-read re-open | FT6336 `0x38` |
 | Display SPI pins | MISO 2, CS 8, DC 5 | **MISO 8, CS 10, DC 9** | board-dependent |
 | Touch I²C bus | SDA 27 / SCL 26 | **SDA 0 / SCL 1** | board-dependent |
-| LCD / touch reset / backlight | behind a **CH32V006 I/O expander** (`0x24`) — no `TFT_RST`, no `TFT_BL`, no LEDC | same expander `0x24`, but **no EXIO5 panel rail** (resets only) | **direct GPIO** |
+| LCD / touch reset / backlight | behind a **CH32V006 I/O expander** (`0x24`) — no `TFT_RST`, no `TFT_BL`, no LEDC | same expander `0x24`, different line assignments (amplifier enable on EXIO3, not EXIO5) | **direct GPIO** |
 | Power / battery | **AXP2101 PMU** (raw I²C, or XPowersLib) | CH32V006 expander ADC voltage estimate; continued battery-only operation verified, accuracy/charging/runtime unverified | **MAX17048** fuel gauge |
 | GPS | **LC76G over I²C** on the shared touch bus (`0x50`/`0x54`/`0x58`) | LC76G planned on SDA 0 / SCL 1 — **`0x58` clashes with CST3530 touch**, resolve first | none |
 | Storage | microSD (CS 9) · **32 MB** flash | microSD (**CS 23**) | — |
@@ -59,9 +59,8 @@ wiring; across to the Pancake they are peripheral and wiring.
 ### Writing for the Waveshare when you have Pancake code
 
 1. **Don't drive reset/backlight on GPIO.** Route LCD reset, touch reset and
-   backlight through the `0x24` expander; set `TFT_RST -1`, no `TFT_BL`. Bring
-   the rail up and release both resets together — resetting the touch chip while
-   its rail is off leaves the FT6336 dead.
+   backlight through the `0x24` expander; set `TFT_RST -1`, no `TFT_BL`. Use
+   the start-up order in the board notes; it is the one verified on hardware.
 2. **Don't touch GPIO27 as an LED.** It is SDA. Any NeoPixel/RGB init there
    corrupts the bus and blanks the panel on reset.
 3. **Battery is AXP2101, not MAX17048** — different address, different registers.

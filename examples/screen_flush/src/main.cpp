@@ -37,8 +37,8 @@ void setup() {
     Serial.println();
     Serial.printf("[flush] %s — screen retention flush\n", boardName());
 
-    // Expander FIRST: it powers the rail and releases the ST7796 reset, both of
-    // which the panel needs before tft.init() (same order as hello_board).
+    // Expander FIRST: it releases the ST7796 reset, which
+    // the panel needs before tft.init() (same order as hello_board).
     Serial.printf("[flush] expander %s\n", exio ? "up" : "MISSING");
 
     tft.init();

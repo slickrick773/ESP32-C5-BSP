@@ -13,11 +13,10 @@ backlight off.
 ## Startup and tested configuration
 
 Initialize the board expander and shared I²C bus before starting I2S and
-configuring the codec. Adding expander initialization changed the observed
-result from silence to clean playback; the specific electrical dependency
-has not been isolated. The driver controls codec registers; the example owns
-Arduino ESP_I2S and board startup. No dedicated amplifier-enable control is
-implemented by the driver.
+configuring the codec. Expander initialization turns the speaker amplifier on
+(expander line EXIO5), which is why the test was silent without it. The driver controls codec registers; the example owns
+Arduino ESP_I2S and board startup. The driver does not switch the amplifier; it
+stays on after board startup.
 
 - Shared I²C: SDA 27, SCL 26, codec address `0x18`.
 - I2S: BCLK 23, LRCK 10, MCU DOUT 25; no external MCLK. This example does not

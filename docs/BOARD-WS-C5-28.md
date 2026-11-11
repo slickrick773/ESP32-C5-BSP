@@ -39,7 +39,7 @@ platform refuses 3.14+). Flashed hands-free here with `tools/c5flash`.
 |---|---|---|
 | Display (ST7789) | SPI SCLK 6, MOSI 7, **MISO 8**, **CS 10**, **DC 9**; RST on the expander (−1) | MISO 2→8, CS 8→10, DC 5→9; ST7796→ST7789 |
 | Touch (CST3530) | I²C **SDA 0 / SCL 1**, addr **`0x58`**, INT **GPIO5**, 100 kHz | FT6336 `0x38`→CST3530 `0x58`; bus 27/26→0/1 |
-| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset (EXIO1), touch reset (EXIO0), speaker amp enable (EXIO3), backlight PWM | **no EXIO5 panel rail** on this board |
+| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset (EXIO1), touch reset (EXIO0), speaker amp enable (EXIO3), backlight PWM | EXIO5 is not used on this board |
 | Audio (ES8311) | I²C `0x18`; BCLK **24**, LRCK **25**, MCU DOUT **26**, MCU DIN **27** (recording unverified); **no MCLK**, clock from BCLK; amp enable **EXIO3** | distinct 2.8-inch pinout |
 | SD | CS **23** | 9→23 |
 | GPS (LC76G) | I²C on the SDA 0 / SCL 1 bus through the board's **I2C socket**; the driver is told not to use `0x58` (see GPS below) | same module as 3.5" |

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // hello_board — the minimal proof the BSP brings this board up:
-//   1. the CH32V006 expander powers the panel and releases the ST7796 reset,
+//   1. the CH32V006 expander releases the ST7796 reset,
 //   2. TFT_eSPI (patched for the C5) paints the screen and the board name,
 //   3. the FT6336 touch is read and each touch point is drawn and printed.
 //
@@ -22,8 +22,8 @@ void setup() {
     Serial.println();
     Serial.printf("[hello] %s\n", boardName());
 
-    // Expander FIRST: it powers the rail and releases the ST7796 reset, both of
-    // which the panel needs before tft.init(). Also probes the FT6336.
+    // Expander FIRST: it releases the ST7796 reset, which
+    // the panel needs before tft.init(). Also probes the FT6336.
     Serial.printf("[hello] expander %s, touch %s\n",
                   exio ? "up" : "MISSING",
                   Touch::present() ? "present" : "missing");

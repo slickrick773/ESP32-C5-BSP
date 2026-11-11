@@ -23,7 +23,7 @@ does not carry the C5). Each example's `platformio.ini` pins it.
 |---|---|
 | Display (ST7796) | SPI MOSI 7, SCLK 6, MISO 2, CS 8, DC 5; RST on the expander (`TFT_RST -1`) |
 | Touch (FT6336) | I²C SDA 27 / SCL 26, addr `0x38`, 100 kHz |
-| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset, touch reset, backlight PWM |
+| I/O expander (CH32V006) | `0x24` on the touch bus — LCD reset, touch reset, backlight PWM, speaker amplifier enable (EXIO5), PWR button (EXIO6) |
 | Audio (ES8311) | codec `0x18` on the touch bus → I²S BCK 23, WS 10, DOUT 25 (no MCLK) → NS4150B amp |
 | Battery (AXP2101) | PMU on the touch bus; MX1.25 2-pin 3.7 V LiPo header (cell optional) |
 | SD | CS 9 |
@@ -55,9 +55,10 @@ does not carry the C5). Each example's `platformio.ini` pins it.
   getters are not updated in that mode. Everything else (throttle, lock, reopen,
   wake, `busyUntil` defer, link counters) is the same.
 - **No backlight GPIO / no LEDC.** Backlight PWM, LCD reset and touch reset all
-  live on the `0x24` expander, brought up with the rail and both resets released
-  together (resetting the touch chip while its rail is off leaves the FT6336
-  unresponsive).
+  live on the `0x24` expander. Start-up drives both resets and EXIO5 high
+  together, then pulses each reset; that order is the one verified on hardware.
+  EXIO5 is the speaker amplifier enable, not panel power: see
+  [the finding](HARDWARE-FINDINGS.md#exio5-is-the-speaker-amplifier-enable-exio6-reads-the-pwr-button).
 - **Display push clock** defaults to 80 MHz (a clean /2 of the 160 MHz source).
   The panel is rated 60 MHz, so this is above spec but holds on the units tested;
   the next clean step down is ~53 MHz (/3), since 60 is not a clean divide.
@@ -155,9 +156,8 @@ then stops; it renders no display. On November 10, 2026 the owner judged them
 clean and loud enough, and a laptop-microphone recording measured about 6%
 harmonics and a pitch of 995 to 999 Hz (the recorder is not a calibrated
 reference). Initialize the board expander/shared I²C bus before starting I2S
-and configuring the codec. Adding expander initialization changed the observed
-result from silence to playback; the specific electrical dependency is not
-isolated.
+and configuring the codec. Expander initialization turns the speaker amplifier on
+(EXIO5), which is why the test was silent without it.
 
 With the display running, the
 [touch_audio](../examples/touch_audio/README.md) sample's tone was judged clean

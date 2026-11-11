@@ -37,11 +37,12 @@ bool begin(uint8_t initialBacklight) {
     // reopen/lock discipline.
     Esp32C5::I2cBus::begin(I2C_SDA, I2C_SCL, I2C_HZ);
 
-    // Mark the three signals as outputs, then bring the rail up TOGETHER with
-    // both resets released -- resetting the touch chip while its rail is off
-    // leaves the FT6336 unresponsive.
-    const uint8_t ctrl = (uint8_t)((1U << EXIO_TP_RST) | (1U << EXIO_LCD_RST) | (1U << EXIO_POWER));
-    // Suppress retained PWM before changing output modes or panel power.
+    // Mark the three signals as outputs, then drive all three high TOGETHER
+    // before pulsing the resets. This order is the one verified on hardware.
+    // EXIO5 is the speaker amplifier enable, not a power rail, so the speaker
+    // amplifier is on from here.
+    const uint8_t ctrl = (uint8_t)((1U << EXIO_TP_RST) | (1U << EXIO_LCD_RST) | (1U << EXIO_AMP_EN));
+    // Suppress retained PWM before changing output modes or levels.
     // Otherwise those changes can expose panel RAM before the later PWM write.
     bool ok = exioWrite(EXIO_PWM_REG, 0x00) &&
               exioWrite(EXIO_MODE_REG, 0xFF) &&
@@ -56,7 +57,7 @@ bool begin(uint8_t initialBacklight) {
     s_output = ctrl;
     ok = ok && exioWrite(EXIO_OUT_REG, s_output); delay(50);
 
-    // Power is on; pulse each reset (active-low) with the rail up.
+    // Pulse each reset (active-low).
     ok = ok && exioSet(EXIO_LCD_RST, false); delay(20);
     ok = ok && exioSet(EXIO_LCD_RST, true);  delay(120);
     ok = ok && exioSet(EXIO_TP_RST, false);  delay(20);

@@ -2,7 +2,7 @@
 // Waveshare ESP32-C5-Touch-LCD-2.8 — CH32V006 I/O expander (0x24).
 //
 // The same expander chip as the 3.5", at the same address, but this board
-// wires it differently: there is NO EXIO5 panel-power rail here, so the
+// wires it differently: EXIO5 is not used here, so the
 // expander owns the ST7789 reset (EXIO1), CST3530 touch reset (EXIO0),
 // speaker amplifier enable (EXIO3), and backlight PWM. None of these is a GPIO, so the display
 // cannot come up until the expander has released the resets. begin() does that

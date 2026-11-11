@@ -15,7 +15,7 @@
 // FT6336 at 0x38), a different I2C bus (SDA 0 / SCL 1, not 27/26), and a
 // different SPI pinout (MISO 8 / CS 10 / DC 9 / SD_CS 23). The CH32V006 I/O
 // expander is the same chip at the same 0x24, but with a 2.8"-specific
-// bring-up (no EXIO5 panel rail).
+// bring-up (EXIO5 is not used).
 //
 // The display SPI pins are repeated here (not just in the example's driver
 // config) so board code that is NOT the graphics library — SD on the same bus,
@@ -107,14 +107,14 @@ constexpr uint32_t CST3530_REG_ACK  = 0xD00002AB;    // acknowledge a complete p
 
 // ---- I/O expander: CH32V006 at 0x24 on the shared I2C bus -------------------
 // Same chip and address as the 3.5", but a 2.8"-specific bring-up: this board
-// has NO EXIO5 panel-power rail, so only the two resets are driven.
+// does not use EXIO5, so only the two resets are driven.
 constexpr uint8_t  EXIO_ADDR     = 0x24;
 constexpr uint8_t  EXIO_MODE_REG = 0x02;    // direction/mode
 constexpr uint8_t  EXIO_OUT_REG  = 0x03;    // output latch
 constexpr uint8_t  EXIO_PWM_REG  = 0x05;    // backlight PWM
 constexpr uint8_t  EXIO_TP_RST   = 0;       // EXIO0 -> CST3530 reset
 constexpr uint8_t  EXIO_LCD_RST  = 1;       // EXIO1 -> ST7789 reset
-// (No EXIO_POWER: the 2.8" has no EXIO5 panel rail.)
+// (No EXIO_AMP_EN on EXIO5: this board's amplifier enable is EXIO3.)
 
 // ---- BOOT button -------------------------------------------------------------
 // GPIO28 is the ESP32-C5 boot-mode strapping pin, active low with a pull-up.

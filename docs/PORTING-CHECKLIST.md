@@ -37,11 +37,10 @@ places, listed [at the end](#the-28-inch-board-differs-here).
   backlight. Use the verified sequence: drive EXIO0, EXIO1 and EXIO5 high
   together, then pulse each reset. Do it once: a second display reset after the
   panel is initialised blanks the screen.
-  EXIO5 is the speaker amplifier enable according to the vendor's schematic and
-  current example code; older comments, including in this package, call it
-  panel power. That has not been bench-tested here, and the sequence works
-  either way, so do not build power-saving or muting on it until it is.
-  [Board notes](BOARD-WS-C5-35.md#board-specific-notes),
+  EXIO5 is the speaker amplifier enable, not panel power: driven low, the
+  speaker goes silent and the display keeps running.
+  [Finding](HARDWARE-FINDINGS.md#exio5-is-the-speaker-amplifier-enable-exio6-reads-the-pwr-button),
+  [board notes](BOARD-WS-C5-35.md#board-specific-notes),
   [the sequence in code](../src/board/ws_c5_35/ws_c5_35_expander.cpp)
 - [ ] **Set `TFT_RST` and `TFT_BL` to `-1`.** There is no reset pin and no
   backlight pin. Brightness is a write to the expander, so `ledcWrite()` on a

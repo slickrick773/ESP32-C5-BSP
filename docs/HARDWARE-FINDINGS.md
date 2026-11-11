@@ -534,8 +534,9 @@ the GPS solution uses.
 > driver's comments have them swapped) and **EXIO5 = PA_CTRL** (audio amp, not
 > panel power), with the backlight on a dedicated EXIO PWM. The expander driver
 > is hardware-verified working as written, so the bit assignments are left
-> unchanged; treat those two comment labels as functional, not authoritative,
-> pending a hardware re-test.
+> unchanged; treat the two reset labels as functional, not authoritative,
+> pending a hardware re-test. EXIO5 has since been tested: see
+> [EXIO5 is the speaker amplifier enable](#exio5-is-the-speaker-amplifier-enable-exio6-reads-the-pwr-button).
 
 ### GPS: LC76G over I²C on the shared bus (the crown jewel)
 
@@ -707,6 +708,37 @@ leaves `TFT_BL = -1` **without** routing through the expander gets no dimming at
 all — only the on-screen level bar moves while the panel stays full brightness.
 Live dimming confirmed via the expander PWM path.
 
+### EXIO5 is the speaker amplifier enable; EXIO6 reads the PWR button
+
+**[HW-VERIFIED 2026-11-10, one board, one run].** Earlier comments in this
+package, and the vendor's older example code, called expander line EXIO5 "panel
+power". It is not. A test build played a steady 1 kHz tone and switched EXIO5
+high and low every four seconds, redrawing the whole screen in a new colour
+after each switch:
+
+- **Speaker.** In a laptop-microphone recording the tone fell to the room's
+  background level each time EXIO5 went low and returned each time it went
+  high, three cycles out of three.
+- **Display.** The screen changed colour on every switch, including the redraws
+  made while EXIO5 was low (owner's observation). The panel was powered and
+  accepting new frames with EXIO5 low.
+
+This agrees with the vendor schematic's label for the line (PA_CTRL) and the
+vendor's current example code. It also explains an earlier result: the speaker
+test was silent until board start-up was added, because start-up is what drives
+EXIO5 high. The start-up sequence itself is unchanged and stays as verified.
+The amplifier is on from board start-up onwards; the package has no call to
+switch it off yet.
+
+**PWR button.** In the same run the expander's input register (`0x04`) showed
+bit 6 (EXIO6) high while the PWR button was held and low when released: three
+short presses gave six clean changes with no failed reads. The vendor notes
+that a long press powers the board off; that was not tested here.
+
+**Not established:** the reason start-up needs both resets and EXIO5 raised
+together (an older comment blamed a touch-chip power rail, which this result
+does not support), and whether the amplifier makes any noise when switched.
+
 ### Hide panel memory until the first frame
 
 **[OBSERVED FAILURE 2026-11-05; cause narrowed 2026-11-05 — see the measured blocks below].**
@@ -760,7 +792,10 @@ The schematic labels CH32 PC3 as EXIO_PWM (LCD_BL via Q2/R40), PA7/RESET as
 connected to CHIP_PU, EXIO5 as PA_CTRL and EXIO6 as SYS_OUT, while vendor code
 names EXIO5 BOARD_POWER_EXIO; the board's actual EXIO5/EXIO6 functions and whether
 the CH32 is reset with the ESP are **unresolved.** Do not change expander
-power/reset outputs until these are established.
+power/reset outputs until these are established. *(Update 2026-11-10: EXIO5
+and EXIO6 are now established, see
+[EXIO5 is the speaker amplifier enable](#exio5-is-the-speaker-amplifier-enable-exio6-reads-the-pwr-button).
+Whether the CH32 is reset with the ESP is still open.)*
 
 *Hypotheses.* The three candidates were: **A** illumination only *before* the early
 write; **B** illumination *continues after* the acknowledged write; **C**
@@ -1047,6 +1082,8 @@ clock on the units tested.
 | Display ST7796 @80 MHz | HW-VERIFIED | 2026-10-18 |
 | Battery AXP2101 | HW-VERIFIED | BSP: 89% / 4.15 V / charging / VBUS 5.1 V, 2026-10-23 |
 | Expander CH32V006 | HW-VERIFIED | Backlight/resets |
+| EXIO5 = speaker amplifier enable (not panel power) | HW-VERIFIED | Tone gated 3 of 3 cycles, display kept redrawing, one board, 2026-11-10 |
+| PWR button on EXIO6 (input register `0x04`) | HW-VERIFIED | 3 presses, 6 changes, one board, 2026-11-10 |
 | R-selector camera-side mechanism | SCHEMATIC-CONFIRMED | R55/R56/R58/R59, official schematic, 2026-10-23 |
 | LC76G over UART on the 3.5 | UNVERIFIED | Not reachable as shipped |
 | NeoPixel LED on GPIO27 | **unusable** (HW-VERIFIED) | GPIO27 is I²C SDA; LED writes corrupt the bus, 2026-10-26 |

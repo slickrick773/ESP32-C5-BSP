@@ -57,7 +57,7 @@ static Parsed parsePoint(uint16_t& x, uint16_t& y) {
 bool present() { return s_present; }
 
 bool begin() {
-    // Panel power and the touch reset live on the expander; its begin() is
+    // The touch reset lives on the expander; its begin() is
     // idempotent and also opens the shared bus (via the I2C core).
     Expander::begin();
 

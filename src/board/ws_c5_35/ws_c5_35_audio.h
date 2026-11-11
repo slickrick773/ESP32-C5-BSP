@@ -22,9 +22,10 @@ constexpr uint8_t MIC_PGA_MAX = 10;   // ES8311 reg 0x14 PGA field maximum
 
 // Codec control only: the caller owns I2S and board startup. Initialize the
 // board expander/shared bus before starting I2S, then call begin(). The example
-// uses Expander::begin(0), keeping the display backlight off. Omitting board
-// startup produced silence in testing; the electrical cause is not isolated.
-// No dedicated amplifier-enable control is implemented here.
+// uses Expander::begin(0), keeping the display backlight off. Board startup is
+// what turns the speaker amplifier on (expander line EXIO5, high = on), which
+// is why omitting it produced silence. This driver does not switch the
+// amplifier itself; it stays on after board startup.
 //
 // Clean speaker playback confirmed by the owner on 2026-11-10 using audio_35.
 // Pitch accuracy is unverified. Use one control task.

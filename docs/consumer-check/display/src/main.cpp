@@ -20,8 +20,8 @@ void setup() {
     Serial.println();
     Serial.printf("[consumer] %s\n", boardName());
 
-    // Expander FIRST: it powers the rail and releases the ST7796 reset, both of
-    // which the panel needs before tft.init(). Also probes the FT6336.
+    // Expander FIRST: it releases the ST7796 reset, which
+    // the panel needs before tft.init(). Also probes the FT6336.
     Serial.printf("[consumer] expander %s, touch %s\n",
                   exio ? "up" : "MISSING",
                   Touch::present() ? "present" : "missing");

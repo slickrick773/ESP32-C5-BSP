@@ -23,7 +23,7 @@ on 3.14+.
   complete frame. Cold boot and physical reset passed the user check for the
   documented test image. Open the sample for build instructions and test details.
 - **`hello_board/`** — Phase 1 (Waveshare 3.5"). Brings the board up through the
-  BSP (expander powers the panel + releases the ST7796 reset), paints the
+  BSP (expander releases the ST7796 reset), paints the
   display, prints the board name, and draws a stroke that follows FT6336 touch.
   Carries its own board manifest, variant, partition table, TFT_eSPI user setup
   and the ESP32-C5 processor patch, so it builds without any other project's

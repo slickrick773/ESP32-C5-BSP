@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Waveshare 3.5-inch speaker test: three 500 ms tones with 1500 ms silence.
 // Clean playback confirmed by the owner on 2026-11-10; then playback stops.
-// Initialize the board expander before I2S/codec setup. Adding this step
-// changed the listen result from silence to clean playback; the specific
-// electrical dependency has not been isolated. No display is rendered.
+// Initialize the board expander before I2S/codec setup: it turns the speaker
+// amplifier on (expander line EXIO5). Without it the test was silent.
+// No display is rendered.
 #include <Arduino.h>
 #include <ESP_I2S.h>
 #include <math.h>

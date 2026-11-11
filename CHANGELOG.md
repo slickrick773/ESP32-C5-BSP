@@ -14,6 +14,20 @@ evidence and claim tags.
   (build flags, start-up order, shared buses, touch, GPS, radio, how to verify),
   each item linked to the finding behind it, with the 2.8-inch differences.
 
+### Fixed
+
+- **EXIO5 on the 3.5-inch board is the speaker amplifier enable, not panel
+  power.** Bench-tested: with it low the speaker is silent and the display
+  keeps running. Comments and documents are corrected, and the pin map gains
+  `EXIO_AMP_EN`. `EXIO_POWER` remains as an alias, so existing code builds
+  unchanged. Start-up behaviour is unchanged.
+
+### Added
+
+- Pin-map constants for the expander input register (`EXIO_IN_REG`) and the
+  PWR button line (`EXIO_PWR_KEY`, EXIO6, high while pressed), with the
+  bench evidence in the hardware findings. No reader function yet.
+
 ### Repository
 
 - **Registry publishing from a clean checkout.** A workflow publishes each

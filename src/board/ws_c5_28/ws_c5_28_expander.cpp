@@ -40,7 +40,7 @@ bool begin(uint8_t initialBacklight) {
     // reopen/lock discipline. NOTE: SDA 0 / SCL 1 on this board.
     Esp32C5::I2cBus::begin(I2C_SDA, I2C_SCL, I2C_HZ);
 
-    // 2.8" bring-up: there is no EXIO5 panel rail to raise. Mark the lines as
+    // 2.8" bring-up: EXIO5 is not used on this board. Mark the lines as
     // outputs with both resets asserted high, clear the backlight PWM, then
     // pulse each reset (active-low) with the panel's own timing. Mirrors the
     // umbravox WS_C5_28 branch exactly (LCD 50/120 ms, touch 100/500 ms).

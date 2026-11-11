@@ -65,7 +65,8 @@ Vendor sources at revision `ef03a84788c1157836f1e7fc29f5a24f16cf22ff`:
   tree contains host-side expander drivers, but no identified CH32 firmware
   establishing its reset defaults. The schematic labels EXIO5 as PA_CTRL and
   EXIO6 as SYS_OUT, while the vendor `Board_IO.h` names EXIO5 BOARD_POWER_EXIO.
-  Do not treat that driver name as proof of LCD rail switching. The probe
+  Do not treat that driver name as proof of LCD rail switching. (A later bench
+  test, 2026-11-10, showed EXIO5 is the speaker amplifier enable.) The probe
   avoids this ambiguity by leaving all mode/output registers untouched.
 
 ## Candidate behavior
