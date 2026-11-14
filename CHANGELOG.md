@@ -7,6 +7,15 @@ evidence and claim tags.
 
 ## Unreleased
 
+### Added
+- **`tools/c5doctor`** — for a board that looks dead. `check` asks the chip's ROM,
+  reads back the bootloader, partition table and program, watches the start-up,
+  and names what is wrong (for example a bootloader written at `0x0` instead of
+  `0x2000`). `cure` saves the board's first 64 KB, writes a known-good test image
+  from a checked pack, verifies it and checks again. `pack` makes such a pack
+  from a PlatformIO build. Tried on a 3.5-inch board broken on purpose two ways
+  and cured both times; not yet tried on the 2.8-inch board. 14 host tests.
+
 ## [0.6.0] — 2026-11-10
 
 New controls for the 3.5-inch board, and a correction to what one expander line

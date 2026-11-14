@@ -12,6 +12,9 @@ doesn't re-solve them.
 5 GHz scanning and sniffing is a crowded space. **This package does not compete
 there.** It competes on reliability.
 
+> **Board looks dead?** A dark C5 is very rarely broken. [`tools/c5doctor`](tools/c5doctor)
+> says what is wrong and can write a known-good test image.
+
 ## Status
 
 Built one phase at a time, and **a capability is only called "supported" once it
@@ -230,6 +233,8 @@ examples/   standalone samples (PlatformIO unless noted)
 docs/       hardware findings, per-board notes, GPS wiring, build guide
 tools/      c5flash   ROM-loader flash read/write that chunks around the
                       C5 USB large-transfer stall
+            c5doctor  for a board that looks dead: says what is wrong and
+                      writes a known-good test image (tools/c5doctor/README.md)
 ```
 
 Built as an Arduino library first (the proven code is Arduino/C++). The hardware
