@@ -5,7 +5,9 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
-## Unreleased
+## [0.6.1] — 2026-11-14
+
+A tool for a board that looks dead. The library itself is unchanged from 0.6.0.
 
 ### Added
 - **`tools/c5doctor`** — for a board that looks dead. `check` asks the chip's ROM,
@@ -15,6 +17,10 @@ evidence and claim tags.
   from a checked pack, verifies it and checks again. `pack` makes such a pack
   from a PlatformIO build. Tried on a 3.5-inch and a 2.8-inch board, each broken on purpose two ways and
   cured each time. 14 host tests.
+- **Cure packs on the release page**, one per board, each holding that board's
+  whole-board check. The 2.8-inch pack was written to a board with the doctor
+  and started; the 3.5-inch pack was built the same way and has not been run on
+  a board.
 
 ## [0.6.0] — 2026-11-10
 

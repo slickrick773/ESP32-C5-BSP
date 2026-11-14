@@ -44,6 +44,11 @@ program for one board, with a manifest that is checked before anything is
 written. The test program is this repository's board check: it tries every
 device on the board and prints a PASS/FAIL table.
 
+Ready-made packs are attached to the
+[latest release](https://github.com/slickrick773/ESP32-C5-BSP/releases/latest):
+`ws-c5-35-board-check.zip` for the 3.5-inch board and `ws-c5-28-board-check.zip`
+for the 2.8-inch board. Download the one for your board and leave it zipped.
+
 ```
 python3 tools/c5doctor/c5doctor.py cure ws-c5-28-board-check.zip
 ```
@@ -71,6 +76,10 @@ python3 tools/c5doctor/c5doctor.py pack examples/board_check_28/.pio/build/board
 ```
 
 Any PlatformIO build for the C5 can be packed the same way.
+
+A build carries the folder paths of the computer it was made on. Before sharing
+a pack, build with those mapped away, for example
+`PLATFORMIO_BUILD_FLAGS="-ffile-prefix-map=$HOME=/b" pio run`.
 
 ## If the chip does not answer
 
