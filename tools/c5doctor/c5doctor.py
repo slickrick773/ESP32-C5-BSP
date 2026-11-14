@@ -213,6 +213,9 @@ def examine(listen=True, seconds=8):
         else:
             report.append("start-up:    %s" % ("restarted %d times in %d s" % (restarts, seconds) if restarts >= 3 else "steady"))
     report += ["  " + line for line in check_lines]
+    if any("result: FAIL" in line for line in check_lines):
+        report.append("note:        the board check found a device that did not pass. That is about the board's")
+        report.append("             parts (or something not connected), not about how it was flashed.")
     conclusion = diagnose(True, at_zero, at_bootloader, table_raw, heads, restarts if stored_ok else None)
     return conclusion, report, table
 

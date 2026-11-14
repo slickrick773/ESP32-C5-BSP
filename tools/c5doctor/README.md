@@ -84,16 +84,21 @@ over USB can repair it. The doctor says so; it does not guess.
 
 ## What has been tried on a board
 
-On a Waveshare ESP32-C5-Touch-LCD-3.5, on 2026-11-14, a working board was
-broken on purpose twice and cured each time:
+On 2026-11-14 two working boards were broken on purpose and cured each time:
 
-| Break | `check` said | After `cure` |
-|---|---|---|
-| bootloader at `0x0`, blank at `0x2000` | `bootloader at zero`, 48 restarts in 8 s | `healthy`, board check PASS |
-| partition table blanked | `no table`, 219 restarts in 8 s | `healthy`, board check 9 passed, 0 failed, 1 skipped |
+| Board | Break | `check` said | After `cure` |
+|---|---|---|---|
+| 3.5-inch | bootloader at `0x0`, blank at `0x2000` | `bootloader at zero`, 48 restarts in 8 s | `healthy`, board check PASS |
+| 3.5-inch | partition table blanked | `no table`, 219 restarts in 8 s | `healthy`, board check 9 passed, 0 failed, 1 skipped |
+| 2.8-inch | bootloader at `0x0`, blank at `0x2000` | `bootloader at zero`, 36 restarts in 8 s | `healthy`, board check 8 passed, 1 failed, 1 skipped |
+| 2.8-inch | program blanked | `no app`, 151 restarts in 8 s | `healthy`, board check 8 passed, 1 failed, 1 skipped |
 
-Not yet tried on a board: the 2.8-inch board, `no app`, `restarting`, a board
-that needs download mode by hand, Linux, and a board that really is beyond repair.
+The one failed line on the 2.8-inch board was speaker to microphone, with no
+speaker connected. A board check that fails is about the board's parts, not
+about how it was flashed; the doctor says so.
+
+Not yet tried on a board: `restarting`, a board that needs download mode by
+hand, Linux, and a board that really is beyond repair.
 
 ## Tests
 
