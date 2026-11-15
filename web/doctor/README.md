@@ -25,13 +25,17 @@ attached to a release, or made with `c5doctor.py pack`.
 
 ## What was tried on hardware
 
-On November 15, 2026, on a 2.8-inch board, in Chrome on a Mac: the check agreed
-line for line with the command-line doctor; the cure saved the first 64 KB,
-wrote all four pieces and read each back correctly; after an RST press the
-listen step showed the board check's full table.
+On November 15, 2026, on a 2.8-inch board, in Chrome on a Mac:
 
-Not tried: the 3.5-inch board, a board broken on purpose, a board that keeps
-restarting, download mode entered by hand, Edge, Windows and Linux.
+- On a healthy board the check agreed line for line with the command-line doctor.
+- The board was then broken on purpose (bootloader written at `0x0`, none at
+  `0x2000`; the command-line doctor counted 36 restarts in 8 seconds). From the
+  page, the cure saved the first 64 KB, wrote all four pieces and read each back
+  correctly, and the check afterwards said healthy. After an RST press the
+  listen step showed the board check's full table.
+
+Not tried: the 3.5-inch board, the other ways a board can be broken, the
+"restarting" finding from the listen step, Edge, Windows and Linux.
 
 ## Notes
 
