@@ -335,8 +335,10 @@ With [camera_35](../examples/camera_35/README.md) on November 15, 2026, one
 board received pictures continuously (162 of 163 with valid headers), about seven a
 second including drawing each on the display. The owner saw a live picture.
 With `setMirrorFlip(false, false)` it is upright and not mirrored when the
-board is upright; as loaded by `configure()` it is upside down. The picture is
-rough and has a pink cast, and no colour setting has been tuned.
+board is upright; as loaded by `configure()` it is upside down. `configure()`
+starts the white balance from lower gains than the settings table, which
+otherwise gives a pink picture; with that the owner said the colours look
+right, and judged the picture quality poor.
 
 GPIO 11 and 12 are also the UART0 pins: keep the console on USB while the
 camera is used. Capture relies on one private framework call and was run only

@@ -71,8 +71,17 @@ bool writeRegs(const RegValue* table, size_t count) {
     return true;
 }
 
+// The table's starting colour gains (blue 0x13, red 0x20) gave a pink picture
+// on hardware, and the camera's automatic white balance never moved from
+// them. Started from lower gains it settles by itself. Register 0x13 bit 1 is
+// the automatic white balance; it is off while the gains are written.
+static const RegValue kWhiteBalanceStart[] = {
+    {0x13, 0x05}, {0x01, 0x0F}, {0x02, 0x0F}, {0x13, 0x07},
+};
+
 bool configure() {
-    return writeRegs(kStartupTable, sizeof(kStartupTable) / sizeof(kStartupTable[0]));
+    return writeRegs(kStartupTable, sizeof(kStartupTable) / sizeof(kStartupTable[0])) &&
+           writeRegs(kWhiteBalanceStart, sizeof(kWhiteBalanceStart) / sizeof(kWhiteBalanceStart[0]));
 }
 
 // Register 0x09: 0x03 sends pictures, 0x13 is standby.

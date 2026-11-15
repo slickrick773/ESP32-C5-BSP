@@ -8,8 +8,9 @@ see [c5flash](../../tools/c5flash/README.md). Monitor USB serial at 115200.
 
 The example identifies the camera, loads its start-up settings, then receives
 240x320 RGB565 pictures and draws each one on the display, with a status line
-above it. Serial commands: `s` prints the receive counters, `d` sends the
-last picture as text. `tools/save_frame.py PORT out.png` (needs pyserial) asks
+above it. Serial commands, one per line: `s` prints the receive counters, `d`
+sends the last picture as text, `r 1e` reads a camera register and `w 1e 09`
+writes one (hexadecimal). `tools/save_frame.py PORT out.png` (needs pyserial) asks
 for a picture and saves it as a PNG.
 
 ## Hardware result
@@ -28,9 +29,12 @@ On November 15, 2026, on one camera-fitted board:
   rejected for its length. A second run rejected 1 of 50.
 - The owner saw a live picture on the screen: the right way up with the board
   upright, and not mirrored.
-- **The picture is rough and has a pink cast.** A picture pulled over USB
-  showed the same cast, so it comes from the camera's settings or lens, not
-  from the display. The colour settings have not been tuned.
+- With the settings table alone the picture had a pink cast. The driver now
+  starts the white balance from lower gains; after that the owner said the
+  colours look right. Whether the white balance follows a change of lighting
+  was not tested.
+- **The owner judged the picture quality poor.** No fault was found in the
+  received data.
 
 ## Wiring
 
@@ -69,7 +73,7 @@ RGB565; that one file (`ws_c5_35_camera_regs.h`) keeps its Apache-2.0 licence.
 
 ## Limits
 
-One board, one resolution and format, indoors. Not tested: colour accuracy,
+One board, one resolution and format, indoors. Not tested: colour under other lighting,
 focus, exposure in bright or dim light, the power-down line, saving pictures
 to the card, Wi-Fi or audio running at the same time, long runs, and any
 other core version.

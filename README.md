@@ -38,7 +38,7 @@ every claim's tag.
 | 7 | ES8311 audio: speaker playback, microphone capture and gain, playing and recording at once — [audio_35](examples/audio_35/README.md), [mic_35](examples/mic_35/README.md), [audio_selftest_35](examples/audio_selftest_35/README.md) | ✅ hardware-verified 2026-11-10: owner judged the 1 kHz speaker test clean and loud enough (about 6% harmonics, pitch 995–999 Hz by laptop microphone); microphone level follows sound and one played-back capture was judged clear speech; the self-test passed three of three runs and reported FAIL with the speaker silenced. Microphone noise and frequency response not measured |
 | 8 | Onboard devices: PCF85063 clock, QMI8658 IMU, SHTC3 temperature/humidity, BOOT button — [onboard_35](examples/onboard_35/README.md) | ✅ hardware-verified 2026-11-10 on two boards: clock counting, IMU at rest and in three poses, SHTC3 readings, BOOT presses. The clock has no backup cell: it kept time through a USB unplug with a LiPo fitted and lost it without one. Sensor accuracy not tested |
 | 9 | microSD on the shared SPI bus (tested example; no BSP SD driver) — [sd_35](examples/sd_35/README.md) | ✅ hardware-verified 2026-11-10 with one 29.8 GB card at 4 MHz; a bench build also read and wrote it without error while the display redrew |
-| 10 | BF3901 camera on camera-fitted boards: control, 240x320 RGB565 pictures — [camera_35](examples/camera_35/README.md) | ✅ hardware-run 2026-11-15 on one board: pictures received (162 of 163 with valid headers), about seven a second, drawn on the display; the owner saw a live picture, upright and not mirrored. The picture is rough with a pink cast; colour is not tuned |
+| 10 | BF3901 camera on camera-fitted boards: control, 240x320 RGB565 pictures — [camera_35](examples/camera_35/README.md) | ✅ hardware-run 2026-11-15 on one board: pictures received (162 of 163 with valid headers), about seven a second, drawn on the display; the owner saw a live picture, upright and not mirrored. Colours looked right to the owner after a white-balance fix; the owner judged the picture quality poor |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
 | Sample | [Whole-board check](examples/board_check_35/README.md) — every onboard device in one PASS/FAIL table (3.5-inch) | ✅ ten of ten checks passed, two consecutive runs, 2026-11-10. Since 2026-11-15 the table is also drawn on the screen; the owner read it on a board with no LiPo and no GPS (9 pass, 1 skip) |
@@ -149,8 +149,9 @@ has a definite meaning. Each links to its evidence.
   [HARDWARE-FINDINGS](docs/HARDWARE-FINDINGS.md).
 
 **Not exercised**
-- Camera colour, focus and exposure: the picture has a pink cast and no
-  setting has been tuned. Also the camera's power-down line, and the camera
+- Camera colour under different lighting, focus and exposure: the picture
+  quality was judged poor and only the white-balance start has been changed.
+  Also the camera's power-down line, and the camera
   together with Wi-Fi, audio or the microSD card.
 - 2.8-inch GPS waking after a long idle. The step that would use the touch
   controller's address is skipped; a three-minute run needed no wake.

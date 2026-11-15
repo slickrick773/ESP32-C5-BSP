@@ -40,8 +40,7 @@ def main():
         line = port.readline().decode("ascii", "replace").rstrip()
         if line:
             print(line)
-    port.write(b"s")
-    port.write(b"d")
+    port.write(b"s\nd\n")
     data, size, started = [], None, time.time()
     while time.time() - started < 60:
         line = port.readline().decode("ascii", "replace").strip()

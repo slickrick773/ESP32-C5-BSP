@@ -52,6 +52,7 @@ int main() {
     CHECK(Cam::configure() && g_wireWritesLen > wr1 && g_wireWrites[wr1].reg == 0x09 && g_wireWrites[wr1].value == 0x13,
           "start-up settings begin by idling the camera");
     CHECK(reg[0x12] == 0x04 && reg[0x3A] == 0x05, "start-up settings select RGB565");
+    CHECK(reg[0x01] == 0x0F && reg[0x02] == 0x0F && reg[0x13] == 0x07, "white balance starts from the lower gains, automatic on");
     CHECK(Cam::stream(true) && reg[0x09] == 0x03 && Cam::stream(false) && reg[0x09] == 0x13, "stream on and off");
 
     CHECK(reg[0x1E] == 0x39 && Cam::setMirrorFlip(false, false) && reg[0x1E] == 0x09, "mirror and flip off keeps the other bits");

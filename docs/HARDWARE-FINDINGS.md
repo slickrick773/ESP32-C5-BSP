@@ -816,11 +816,22 @@ the board upright; clearing bits 5 and 4 of register `0x1E` turns it upright,
 and it is not mirrored. Pixels are RGB565, low byte first: the other byte
 order gives colour noise.
 
-**The picture is rough and has a pink cast**, on the display and in a picture
-pulled over USB alike. The start-up settings are Espressif's table with
-Waveshare's three changes for RGB565; nothing has been tuned. Not tested:
-colour, focus, exposure, the power-down line, the camera with Wi-Fi, audio or
-the card, and long runs.
+**Pink cast, and its fix.** As loaded from the settings table (Espressif's,
+with Waveshare's three changes for RGB565) the picture had a pink cast on the
+display and in a picture pulled over USB: means of red 132, green 63, blue 99
+on one scene. The table starts the blue gain (register `0x01`) at `0x13` and
+the red gain (`0x02`) at `0x20`, and with automatic white balance on (register
+`0x13` = `0x07`) the camera never moved either. Started at `0x08` each, both
+rose to `0x0F` and stayed; started at `0x0A` and `0x10`, blue rose to `0x0F`
+and red stayed. `Camera::configure()` now starts both at `0x0F`: the same
+scene read 93, 82, 86 after a fresh boot, and the owner said the colours look
+right. A gain was only ever seen to rise to `0x0F`, never to fall, so whether
+the white balance follows a change of lighting is **[UNVERIFIED]**.
+
+**Picture quality is poor** in the owner's judgement. No fault was found in
+the data: neighbouring pixels on a flat scene differ by about one step and
+there is no even/odd pattern. Not tested: other lighting, focus, exposure, the
+power-down line, the camera with Wi-Fi, audio or the card, and long runs.
 
 ### Hide panel memory until the first frame
 
@@ -1190,7 +1201,7 @@ clock on the units tested.
 | Per-sample float synthesis while streaming I2S | too slow (HW-VERIFIED) | `sinf` per sample took ~24 ms per 256-frame block (16 ms budget) in `touch_audio`; I2S underran and the tone pulsed (~20% level variation vs ~3% precomputed), 2026-11-10 |
 | SHTC3 at 0x70 (3.5-inch) | HW-VERIFIED | BSP `onboard_35` / `WsC5_35::Env`: ID 0x0887, ~28–30 °C / 37 % RH, checksums valid, 2026-11-10; accuracy UNVERIFIED |
 | Camera control at 0x6E (3.5-inch, camera fitted) | HW-VERIFIED | Registers 0xFC/0xFD read 39 01 (BF3901), 2026-11-10; start-up settings and orientation written through `WsC5_35::Camera`, 2026-11-15 |
-| Camera pictures (3.5-inch, camera fitted) | HW-VERIFIED on one board (pictures received and seen); **quality poor: rough, pink cast, untuned** | BSP `camera_35`: 240x320 RGB565 over GPIO 0/1/11/12 through PARLIO RX; 163 received, 162 with valid headers; ~7 a second with drawing; owner: upright, not mirrored, rough, pink cast, 2026-11-15 |
+| Camera pictures (3.5-inch, camera fitted) | HW-VERIFIED on one board (pictures received and seen); **picture quality judged poor by the owner** | BSP `camera_35`: 240x320 RGB565 over GPIO 0/1/11/12 through PARLIO RX; 163 received, 162 with valid headers; ~7 a second with drawing; pink cast fixed by starting the white-balance gains at 0x0F (means 132/63/99 → 93/82/86); owner: upright, not mirrored, colours right, quality poor, 2026-11-15 |
 | 2.8-inch: LC76G GPS sharing the bus with CST3530 touch at 0x58 | HW-VERIFIED | BSP `gps_28`, driver told not to use 0x58: fix 7 sats / HDOP 2.2; ~97 KB in 3 min, 0 fails; taps counted correctly with the module streaming; wake-after-idle path NOT exercised, 2026-11-10 |
 | 2.8-inch: ES8311 microphone and duplex | HW-VERIFIED (level + loopback) | BSP `mic_28`: ~54–69 quiet, 1549 clipped with claps; `audio_selftest_28` PASS 3/3 (mic 777/728/516); no capture listened to, 2026-11-10 |
 | 2.8-inch: clock, IMU, SHTC3 (shared drivers) | HW-VERIFIED | BSP `onboard_28`: clock counting, 1.04 g at rest, ~23 °C / 47 %; RTC backup socket, BOOT press, accuracy UNVERIFIED, 2026-11-10 |

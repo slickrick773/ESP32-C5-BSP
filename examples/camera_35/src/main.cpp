@@ -3,9 +3,10 @@
 // BF3901, load its start-up settings, receive 240x320 RGB565 pictures and
 // draw them on the display.
 //
-// Serial commands (USB, 115200): `d` sends the last picture as base64 between
-// BEGIN/END lines (tools/save_frame.py turns that into a PNG), `s` prints the
-// receive counters.
+// Serial commands (USB, 115200, one per line): `d` sends the last picture as
+// base64 between BEGIN/END lines (tools/save_frame.py turns that into a PNG),
+// `s` prints the receive counters, `r 1e` reads a camera register and
+// `w 1e 09` writes one (hexadecimal).
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #include <board/ws_c5_35/ws_c5_35_board.h>
@@ -78,10 +79,23 @@ void setup() {
 }
 
 void loop() {
+    // One command per line.
+    static char cmd[16]; static size_t len = 0;
     while (Serial.available()) {
-        const int c = Serial.read();
-        if (c == 'd') sendFrame();
-        if (c == 's') printStats();
+        const char c = (char)Serial.read();
+        if (c != '\n' && c != '\r') { if (len < sizeof(cmd) - 1) cmd[len++] = c; continue; }
+        cmd[len] = 0; len = 0;
+        unsigned reg = 0, value = 0;
+        if (cmd[0] == 'd') sendFrame();
+        else if (cmd[0] == 's') printStats();
+        else if (sscanf(cmd, "r %x", &reg) == 1) {
+            uint8_t v = 0;
+            if (Camera::readReg((uint8_t)reg, v)) Serial.printf("[camera_35] reg %02X = %02X\n", reg, v);
+            else Serial.printf("[camera_35] reg %02X read FAILED\n", reg);
+        } else if (sscanf(cmd, "w %x %x", &reg, &value) == 2) {
+            Serial.printf("[camera_35] reg %02X <- %02X %s\n", reg, value,
+                          Camera::writeReg((uint8_t)reg, (uint8_t)value) ? "ok" : "FAILED");
+        }
     }
     if (!ready) { delay(50); return; }
 

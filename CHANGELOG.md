@@ -13,7 +13,8 @@ evidence and claim tags.
   the chip's parallel-input peripheral, with a host test and the `camera_35`
   example. On one board on 2026-11-15 pictures arrived about seven a second
   with valid headers and the owner saw a live picture, upright and not
-  mirrored. The picture is rough with a pink cast; colour is not tuned. The
+  mirrored. Colours looked right to the owner once the white balance was
+  started from lower gains; the owner judged the picture quality poor. The
   settings table file is Apache-2.0.
 - **The board doctor as a web page**, <https://slickrick773.github.io/ESP32-C5-BSP/>:
   check and cure from desktop Chrome or Edge with nothing to install. Source in

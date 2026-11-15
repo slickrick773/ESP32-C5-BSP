@@ -116,8 +116,9 @@ on 3.14+.
   sold with one. Receives 240x320 pictures and draws them on the display; a
   script saves one as a PNG over USB. On November 15, 2026, on one board,
   pictures arrived about seven a second with valid headers and the owner saw a
-  live picture, upright and not mirrored. The picture is rough with a pink
-  cast; colour is not tuned.
+  live picture, upright and not mirrored. Colours looked right
+  to the owner after a white-balance fix; the owner judged the picture
+  quality poor.
 - **[touch_audio](touch_audio/README.md)** — Sample. 3.5-inch scrolling list with TONE
   and MIC controls, combining display, touch, speaker and microphone. The tone
   plays from a background task; on November 10, 2026 the owner heard it clean
