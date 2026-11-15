@@ -7,7 +7,9 @@ import * as D from './doctor.mjs';
 
 const $ = id => document.getElementById(id);
 const pause = ms => new Promise(done => setTimeout(done, ms));
-let port = null, transport = null, loader = null, facts = null, busy = false;
+let port = null, transport = null, loader = null, facts = null, busy = false, remembered = false;
+// Whether a board was ever picked on this page: the browser then lets the page see it without the list.
+try { remembered = localStorage.getItem('c5doctor-picked') === '1'; } catch { /* storage is off: only this visit counts */ }
 
 function say(text) { $('status').textContent = text; }
 function show(id, text) { $(id).textContent = text; $(id).hidden = !text; }
@@ -43,17 +45,57 @@ function conclude(finding, lines, heading) {
   show('advice', D.ADVICE[finding]);
 }
 
+const ESPRESSIF = 0x303A;   // The USB maker number of the chip's own USB port.
+const granted = async () => (await navigator.serial.getPorts()).filter(p => p.getInfo().usbVendorId === ESPRESSIF);
+
+// Reach the chip, trying again for a while. A board that restarts over and over
+// is only on USB for a moment at a time: each time it is there, grab it and ask
+// the chip to stop in its loader. `first` is the port the user just picked, if
+// any; after that, any board this page was allowed to use before will do.
+async function catchChip(first, seconds = 30) {
+  const until = Date.now() + seconds * 1000;
+  let candidate = first, problem = Error('no board appeared');
+  while (Date.now() < until) {
+    if (!candidate) { candidate = (await granted())[0]; if (!candidate) { await pause(50); continue; } }
+    try {
+      port = candidate;
+      transport = new Transport(port);
+      loader = new C5Rom({ transport, baudrate: 115200, romBaudrate: 115200, terminal: { clean() {}, write: log, writeLine: log } });
+      facts = await reach(loader, 2);
+      return;
+    } catch (why) {
+      problem = why;
+      log(String(why?.message || why));
+      await letGo();
+      if (/not an ESP32-C5|locked/.test(why?.message || '')) throw why;
+      candidate = null;
+      await pause(100);
+      say('The board comes and goes. Still trying to catch it…');
+    }
+  }
+  throw problem;
+}
+
 $('connect').onclick = async () => {
   busy = true; controls(); $('log').textContent = ''; show('report', ''); show('finding', ''); show('advice', ''); show('heard', ''); bar(0, 1);
   try {
     await letGo();
-    say('Choose the board in the list the browser shows. It is usually called "USB JTAG/serial debug unit".');
-    port = await navigator.serial.requestPort();
-    transport = new Transport(port);
-    loader = new C5Rom({ transport, baudrate: 115200, romBaudrate: 115200, terminal: { clean() {}, write: log, writeLine: log } });
-    say('Asking the chip…');
+    say('Choose the board in the list the browser shows. It is called "USB JTAG/serial debug unit". If it flickers in and out of the list, click it the moment it shows: once is enough.');
+    let picked = null;
     try {
-      facts = await reach(loader);
+      picked = await navigator.serial.requestPort({ filters: [{ usbVendorId: ESPRESSIF }] });
+    } catch (problem) {
+      if (problem?.name !== 'NotFoundError') throw problem;
+      // Nothing picked. A board picked on an earlier try is remembered, so wait for it.
+      if (!remembered && !(await granted()).length) {
+        say('No board was chosen. If it flickers in and out of the list it is restarting over and over: see "If the board flickers" below.');
+        return;
+      }
+    }
+    if (picked) { remembered = true; try { localStorage.setItem('c5doctor-picked', '1'); } catch { /* storage is off */ } }
+    say(picked ? 'Asking the chip…' : 'Waiting for the board you chose before to show up…');
+    try {
+      await catchChip(picked);
     } catch (problem) {
       log(String(problem?.stack || problem));
       await letGo();
@@ -69,7 +111,7 @@ $('connect').onclick = async () => {
                               : 'Checked. Choose your board below to cure it.');
   } catch (problem) {
     await letGo();
-    say(problem?.name === 'NotFoundError' ? 'No board was chosen.' : `Stopped: ${problem.message}`);
+    say(`Stopped: ${problem.message}`);
     log(String(problem?.stack || problem));
   } finally { busy = false; controls(); }
 };

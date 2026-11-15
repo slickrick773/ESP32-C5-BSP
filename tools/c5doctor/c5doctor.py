@@ -127,10 +127,20 @@ def diagnose(answers, at_zero, at_bootloader, table_raw, app_heads, restarts=Non
 
 # --- talking to the board ---------------------------------------------------
 
+def wait_for_port(seconds=3.0):
+    """A board that restarts over and over is only on USB for a moment at a time.
+    Wait until its port is there, so the next attempt starts the moment it is."""
+    until = time.time() + seconds
+    while c5flash.PORT and not os.path.exists(c5flash.PORT) and time.time() < until:
+        time.sleep(0.02)
+
+
 def chip_facts():
-    """(answers, facts). Tries a reset into the loader first, then a board that was
-    put into download mode by hand."""
-    for before in ("default-reset", "no-reset", "default-reset"):
+    """(answers, facts). Tries a reset into the loader, several ways and several
+    times, then a board that was put into download mode by hand. A board that
+    restarts over and over comes and goes on USB, so one try is not enough."""
+    for before in ("default-reset", "usb-reset", "no-reset", "default-reset", "usb-reset", "no-reset"):
+        wait_for_port()
         ok, out = c5flash.et("flash-id", before=before)
         if ok:
             facts = {}
@@ -335,7 +345,11 @@ def main(args):
         cmd_pack(*rest[1:])
         return 0
     if rest[:1] == ["check"] and len(rest) == 1 or rest[:1] == ["cure"] and len(rest) == 2:
-        ports = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
+        for _ in range(100):                        # Up to 5 s: a board that keeps restarting comes and goes.
+            ports = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
+            if ports or explicit is not None:
+                break
+            time.sleep(0.05)
         if explicit is None and not ports:
             print("finding: no answer\nNo USB serial port appeared at all. " + ADVICE[NO_ANSWER])
             return 2

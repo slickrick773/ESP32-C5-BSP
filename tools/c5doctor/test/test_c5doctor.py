@@ -134,10 +134,19 @@ class Packs(unittest.TestCase):
 class Running(unittest.TestCase):
     def test_no_port_is_said_plainly_and_nothing_is_called(self):
         with mock.patch.object(d.glob, "glob", return_value=[]), mock.patch.object(d.c5flash, "et") as et, \
-             mock.patch("builtins.print") as said:
+             mock.patch.object(d.time, "sleep") as waited, mock.patch("builtins.print") as said:
             self.assertEqual(d.main(["check"]), 2)
         et.assert_not_called()
+        self.assertEqual(waited.call_count, 100)           # It waited for a port that comes and goes.
         self.assertIn("No USB serial port", said.call_args[0][0])
+
+    def test_the_chip_is_tried_several_ways_before_giving_up(self):
+        with mock.patch.object(d.c5flash, "et", return_value=(False, "")) as et, mock.patch.object(d.time, "sleep"), \
+             mock.patch.object(d, "wait_for_port") as waited:
+            self.assertEqual(d.chip_facts(), (False, {}))
+        self.assertEqual([call.kwargs["before"] for call in et.call_args_list],
+                         ["default-reset", "usb-reset", "no-reset", "default-reset", "usb-reset", "no-reset"])
+        self.assertEqual(waited.call_count, 6)
 
     def test_cure_refused_writes_nothing(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -93,7 +93,9 @@ export function reportLines(facts, atBootloader, table, appHeads) {
 export const countRestarts = heard => (heard.match(/ESP-ROM:/g) || []).length;
 
 // The board check's own lines, if that is what is running.
-export const boardCheckLines = heard => heard.split(/\r?\n/).filter(line => line.includes('board_check')).map(line => line.trim());
+// A start-up message can run into the first line, so each line starts at its own tag.
+export const boardCheckLines = heard => heard.split(/\r?\n/).filter(line => line.includes('[board_check'))
+  .map(line => line.slice(line.indexOf('[board_check')).trim());
 
 // A cure plan from the site, checked before anything is trusted: four pieces at
 // the addresses a C5 with this layout uses, each named with its size and hashes.

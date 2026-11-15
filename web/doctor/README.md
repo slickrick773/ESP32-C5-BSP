@@ -34,8 +34,16 @@ On November 15, 2026, on a 2.8-inch board, in Chrome on a Mac:
   correctly, and the check afterwards said healthy. After an RST press the
   listen step showed the board check's full table.
 
+- A board in that state restarts so fast that its USB port comes and goes (on
+  the Mac it was there about 70% of the time; on a user's Windows machine it
+  showed in the browser's list for about half a second at a time). The page
+  keeps trying for 30 seconds and grabs the board each time it reappears. It
+  caught the board after one pick from the list, and, once picked on an earlier
+  try, with the list cancelled and nothing picked.
+
 Not tried: the 3.5-inch board, the other ways a board can be broken, the
-"restarting" finding from the listen step, Edge, Windows and Linux.
+"restarting" finding from the listen step, Edge, Linux, and catching a
+flickering board on Windows.
 
 ## Notes
 

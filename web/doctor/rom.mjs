@@ -64,8 +64,8 @@ export class C5Rom extends ESPLoader {
 }
 
 // Reach the ROM and learn what the chip is. Throws if it is not a C5 that can be written.
-export async function reach(loader) {
-  await loader.detectChip();                       // Never main(): that would upload a RAM helper.
+export async function reach(loader, attempts = 7) {
+  await loader.detectChip('default_reset', attempts);   // Never main(): that would upload a RAM helper.
   if (!loader.chip) throw Error('The chip did not say what it is.');
   if (loader.chip.CHIP_NAME !== 'ESP32-C5') throw Error(`This is an ${loader.chip.CHIP_NAME}, not an ESP32-C5. Nothing was written.`);
   if (loader.secureDownloadMode) throw Error('This chip is locked (secure download mode). The doctor cannot read or write it.');

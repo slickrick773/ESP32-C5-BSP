@@ -23,6 +23,15 @@ evidence and claim tags.
   (bootloader at `0x0`), 2026-11-15. Not tried: the 3.5-inch board, Edge,
   Windows, Linux. 8 host tests.
 
+### Fixed
+- **A board that restarts over and over could not be reached.** Its USB port
+  comes and goes, so the web page's port list showed it for a moment at a time
+  and the command-line doctor could answer "no answer". Both now wait for the
+  port and try several times and several ways. On a 2.8-inch board broken on
+  purpose, 2026-11-15: the web page caught and cured it, and the command-line
+  `check` reached it five times out of five (before the fix it missed on the
+  first try that day). Reported by a user on Windows; not yet confirmed there.
+
 ## [0.6.1] — 2026-11-15
 
 A tool for a board that looks dead, and a board check you can read on the

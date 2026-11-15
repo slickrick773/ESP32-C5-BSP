@@ -77,6 +77,7 @@ test('the report names what is there and what is not', () => {
 test('what was heard: restarts and the board check table', () => {
   const heard = 'ESP-ROM:esp32c5\r\njunk\r\n[board_check_28]  PASS  IMU   1 g\r\n[board_check_28] result: PASS\r\n';
   assert.equal(D.countRestarts(heard + heard + heard), 3);
+  assert.deepEqual(D.boardCheckLines('E (1082) MSPI Timing: no cacheline for PSR[board_check_28] Waveshare\n'), ['[board_check_28] Waveshare']);
   assert.deepEqual(D.boardCheckLines(heard), ['[board_check_28]  PASS  IMU   1 g', '[board_check_28] result: PASS']);
 });
 
