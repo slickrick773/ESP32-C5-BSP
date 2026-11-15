@@ -20,8 +20,9 @@ evidence and claim tags.
   check and cure from desktop Chrome or Edge with nothing to install. Source in
   `web/doctor`. On a 2.8-inch board in Chrome on a Mac it agreed with the
   command-line doctor on a healthy board and cured a board broken on purpose
-  (bootloader at `0x0`), 2026-11-15. Not tried: the 3.5-inch board, Edge,
-  Windows, Linux. 8 host tests.
+  (bootloader at `0x0`), 2026-11-15; a 3.5-inch board was checked and cured
+  from the live and local page the same day. Not tried: Edge, Windows, Linux.
+  11 host tests.
 
 ### Fixed
 - **A board that restarts over and over could not be reached.** Its USB port
@@ -31,6 +32,11 @@ evidence and claim tags.
   purpose, 2026-11-15: the web page caught and cured it, and the command-line
   `check` reached it five times out of five (before the fix it missed on the
   first try that day). Reported by a user on Windows; not yet confirmed there.
+- **The web doctor could not save a board's first 64 KB when one block stalled
+  the chip**, so it refused to cure (it wrote nothing). Seen on a 3.5-inch board
+  with saved settings: the reply to the block at `0x9580` stalls. The page now
+  reads such a block another way. On that board the cure then completed and the
+  backup matched an independent read, 2026-11-15.
 
 ## [0.6.1] — 2026-11-15
 

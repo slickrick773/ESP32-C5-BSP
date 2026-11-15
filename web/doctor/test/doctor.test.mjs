@@ -95,3 +95,35 @@ test('a good plan is accepted and a bad one refused', () => {
     p => { p.parts.pop(); }, p => { p.parts[2].file = 'nvs.bin'; }, p => { p.parts[3].bytes = 511889; }];
   for (const spoil of cases) { const bad = plan(); spoil(bad); assert.throws(() => D.validatePlan(bad)); }
 });
+
+// A pretend flash where reading the block at one address stalls the chip: every
+// read then fails until revive() is called, as measured on a 3.5-inch board.
+function pretendFlash(stallAt) {
+  const flash = Uint8Array.from({ length: 0x400 }, (_, i) => (i * 7 + 3) & 0xFF);
+  const state = { stuck: false, revived: 0 };
+  const readBlock = async at => {
+    if (state.stuck) throw Error('no answer');
+    if (at === stallAt) { state.stuck = true; throw Error('stalled'); }
+    return flash.slice(at, at + 64);
+  };
+  const revive = async () => { state.stuck = false; state.revived++; };
+  return { flash, state, readBlock, revive };
+}
+
+test('reading goes around a block that stalls the chip', async () => {
+  const { flash, state, readBlock, revive } = pretendFlash(0x180);
+  const got = await D.readInBlocks(readBlock, revive, 0x100, 0x200);
+  assert.deepEqual(got, flash.slice(0x100, 0x300));
+  assert.equal(state.revived, 1);
+});
+
+test('reading an odd range, and nothing stalls', async () => {
+  const { flash, state, readBlock, revive } = pretendFlash(-1);
+  assert.deepEqual(await D.readInBlocks(readBlock, revive, 0x47, 0x91), flash.slice(0x47, 0xD8));
+  assert.equal(state.revived, 0);
+});
+
+test('a first block that stalls cannot be read, and says so', async () => {
+  const { readBlock, revive } = pretendFlash(0);
+  assert.equal(await D.readInBlocks(readBlock, revive, 0, 0x100), null);
+});

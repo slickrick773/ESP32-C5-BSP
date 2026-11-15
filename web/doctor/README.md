@@ -41,9 +41,17 @@ On November 15, 2026, on a 2.8-inch board, in Chrome on a Mac:
   caught the board after one pick from the list, and, once picked on an earlier
   try, with the list cancelled and nothing picked.
 
-Not tried: the 3.5-inch board, the other ways a board can be broken, the
-"restarting" finding from the listen step, Edge, Linux, and catching a
-flickering board on Windows.
+- On a 3.5-inch board that had run other firmware, saving the first 64 KB
+  failed at first: the ROM's reply to the 64-byte block at `0x9580` (in the
+  saved-settings area) stalls and the chip then stops answering. The same bytes
+  read fine when the block starts anywhere else (eleven other offsets tried,
+  all worked). The page now reaches the chip again and reads such a block as
+  halves of two blocks either side. With that, the cure completed on that
+  board, and the saved settings area in the backup file matched an independent
+  read with the command-line tool, byte for byte.
+
+Not tried: the other ways a board can be broken, the "restarting" finding from
+the listen step, Edge, Linux, and catching a flickering board on Windows.
 
 ## Notes
 

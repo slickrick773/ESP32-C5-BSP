@@ -13,6 +13,7 @@
 // And one thing is missing from the bundle: reading flash through the ROM
 // (command 0x0E, 64 bytes at a time).
 import { ESPLoader } from './vendor/esptool-js-0.7.0.js';
+import { readInBlocks } from './doctor.mjs';
 
 const SET_FLASH_SIZE = 0x0B, READ_SLOW = 0x0E, READ_BLOCK = 64;
 
@@ -41,25 +42,19 @@ export class C5Rom extends ESPLoader {
     await this.checkCommand('set the flash size', SET_FLASH_SIZE, words(0, bytes, 0x10000, 0x1000, 0x100, 0xFFFF));
   }
 
-  // `length` bytes of flash from `address`, or null if the ROM would not give
-  // them. Always asks for whole 64-byte blocks on a 64-byte boundary.
-  async readFlashSlow(address, length, progress) {
-    const first = address - (address % READ_BLOCK), out = new Uint8Array(length);
-    for (let at = first; at < address + length; at += READ_BLOCK) {
-      let block = null;
-      for (let tries = 0; tries < 3 && !block; tries++) {
-        try {
-          block = await this.checkCommand('read flash', READ_SLOW, words(at, READ_BLOCK), 0, READ_BLOCK);
-        } catch (problem) {
-          if (tries === 2) return null;
-        }
-      }
-      if (!(block instanceof Uint8Array) || block.length < READ_BLOCK) return null;
-      const from = Math.max(at, address), to = Math.min(at + READ_BLOCK, address + length);
-      out.set(block.subarray(from - at, to - at), from - address);
-      if (progress) progress(to - address, length);
-    }
-    return out;
+  // `length` bytes of flash from `address`, or null if the ROM would not give them.
+  readFlashSlow(address, length, progress) {
+    return readInBlocks(at => this.checkCommand('read flash', READ_SLOW, words(at, READ_BLOCK), 0, READ_BLOCK),
+      () => this.revive(), address, length, progress);
+  }
+
+  // Reach the chip again on the same port after it stopped answering.
+  async revive() {
+    try { await this.transport.disconnect(); } catch { /* already closed */ }
+    await this.detectChip('default_reset', 3);
+    if (this.chip.postConnect) await this.chip.postConnect(this);
+    await this.flashSpiAttach(0);
+    if (this.flashBytes) await this.tellFlashSize(this.flashBytes);
   }
 }
 
@@ -73,7 +68,8 @@ export async function reach(loader, attempts = 7) {
   await loader.flashSpiAttach(0);
   const flash = await loader.detectFlashSize();
   const megabytes = /^(\d+)MB$/.exec(flash || '');
-  if (megabytes) await loader.tellFlashSize(Number(megabytes[1]) * 1024 * 1024);
+  loader.flashBytes = megabytes ? Number(megabytes[1]) * 1024 * 1024 : 0;
+  if (loader.flashBytes) await loader.tellFlashSize(loader.flashBytes);
   return { chip: loader.chip.CHIP_NAME, flash: flash || 'size not read', flashBytes: megabytes ? Number(megabytes[1]) * 1024 * 1024 : 0,
     address: await loader.chip.readMac(loader) };
 }
