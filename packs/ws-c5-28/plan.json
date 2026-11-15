@@ -1,0 +1,35 @@
+{
+  "chip": "esp32c5",
+  "board": "ws-c5-28",
+  "program": "board_check_28",
+  "parts": [
+    {
+      "file": "bootloader.bin",
+      "offset": 8192,
+      "bytes": 20752,
+      "sha256": "b62131a8003f237d09d32e5de6f28fad3481f88ec789fedbc32770e4c22595b1",
+      "md5": "a8214724afcc88b17fda223e793e7118"
+    },
+    {
+      "file": "partitions.bin",
+      "offset": 32768,
+      "bytes": 3072,
+      "sha256": "ecb57337c5e6a2640b18971a64e06d95d6ef54a4f80b43575225d37e4a426716",
+      "md5": "4ee881767519156f5c4e71ca6cb4e295"
+    },
+    {
+      "file": "otadata.bin",
+      "offset": 57344,
+      "bytes": 8192,
+      "sha256": "7d2c7ac4888bfd75cd5f56e8d61f69595121183afc81556c876732fd3782c62f",
+      "md5": "84d04c9d6cc8ef35bf825d51a5277699"
+    },
+    {
+      "file": "firmware.bin",
+      "offset": 65536,
+      "bytes": 511888,
+      "sha256": "3f045c9460f17e935d489197f0005874102b7d61ee28c7967e6e01ba5a31aeab",
+      "md5": "da7fa74418cd8665ff68839f1704e410"
+    }
+  ]
+}

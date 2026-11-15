@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ESP32-C5 board doctor</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--line:#d5d9e0;--text:#1c2026;--soft:#555e6b;--go:#1f6f43;--stop:#a3261d;--btn:#24406e;--btntext:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#101318;--card:#181c23;--line:#333a46;--text:#e8ebf0;--soft:#a9b1bf;--go:#5fd08f;--stop:#ff8a80;--btn:#3b63a8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.55 system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:34px;margin:0 0 8px}
+h2{font-size:21px;margin:0 0 8px}
+p,li{color:var(--soft)}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin:20px 0}
+button,select{font:inherit;padding:12px 16px;border-radius:8px;border:1px solid var(--line)}
+button{background:var(--btn);color:var(--btntext);cursor:pointer;margin:8px 8px 0 0}
+button:disabled{opacity:.45;cursor:not-allowed}
+select{width:100%;background:var(--card);color:var(--text)}
+label{display:block;margin:14px 0;color:var(--text)}
+input[type=checkbox]{width:18px;height:18px;vertical-align:middle;margin-right:8px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0}
+#status{font-weight:600;color:var(--text)}
+#finding{font-weight:700;font-size:20px;margin:12px 0 4px}
+#finding.good{color:var(--go)}
+#finding.bad{color:var(--stop)}
+#advice{color:var(--text)}
+progress{width:100%;height:12px}
+.warn{color:var(--stop);font-weight:600}
+a{color:inherit}
+</style>
+</head>
+<body>
+<main>
+<h1>ESP32-C5 board doctor</h1>
+<p>For a Waveshare ESP32-C5-Touch-LCD board with a dark screen that seems dead. A dark C5 is very rarely broken: usually the chip still answers over USB and only what is stored on it is wrong. This page asks the chip, says what is wrong in plain words, and can put a known-good test image on it. Nothing to install. Use desktop Chrome or Edge.</p>
+
+<section>
+<h2>1. Connect and check</h2>
+<p>Plug the board into the computer with a USB cable that carries data. Checking changes nothing on the board.</p>
+<button id="connect">Connect and check</button>
+<p id="status" role="status" aria-live="polite">Ready.</p>
+<progress id="progress" value="0" max="100"></progress>
+<pre id="report" hidden></pre>
+<p id="finding" hidden></p>
+<p id="advice" hidden></p>
+</section>
+
+<section>
+<h2>2. Cure</h2>
+<p>The cure writes this project's board check: a small test program that tries every part of the board and shows a PASS/FAIL table on the screen.</p>
+<select id="board">
+<option value="">Which board do you have?</option>
+<option value="ws-c5-35">Waveshare ESP32-C5-Touch-LCD-3.5 (3.5-inch screen)</option>
+<option value="ws-c5-28">Waveshare ESP32-C5-Touch-LCD-2.8 (2.8-inch screen)</option>
+</select>
+<p>The chip cannot tell the doctor which board it is soldered to. The wrong choice leaves the screen dark; nothing is harmed, and the right choice fixes it.</p>
+<p class="warn">The cure replaces the firmware on the board.</p>
+<label><input type="checkbox" id="agree">I chose my board, and I understand the firmware on it will be replaced by the test program.</label>
+<button id="cure" disabled>Save the first 64 KB, then cure</button>
+<button id="listen" disabled>Listen to the board</button>
+<p>Before writing, the first 64 KB of the board (bootloader, partition table, start-up choice) is saved to your downloads folder. After writing, every piece is read back and compared.</p>
+<pre id="heard" hidden></pre>
+</section>
+
+<section>
+<h2>If the chip does not answer</h2>
+<ol>
+<li>Try another USB cable, and a port on the computer itself, not a hub. Many cables carry power only.</li>
+<li>Close anything else that is using the board's serial port.</li>
+<li>Put the board in download mode by hand: <b>hold BOOT, tap RST, release BOOT</b>. Then connect again.</li>
+</ol>
+<p>If the chip never answers in download mode, no software can fix it.</p>
+<details><summary>Connection log</summary><pre id="log"></pre></details>
+</section>
+
+<p>From the <a href="https://github.com/slickrick773/ESP32-C5-BSP">ESP32-C5-BSP</a>. The same doctor as a command-line tool, with what it was tried on: <a href="https://github.com/slickrick773/ESP32-C5-BSP/tree/main/tools/c5doctor">tools/c5doctor</a>. MIT licence. This page talks only to your board; what it reads stays in your browser.</p>
+</main>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>
