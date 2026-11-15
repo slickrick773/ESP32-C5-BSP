@@ -60,7 +60,8 @@ on 3.14+.
   tone while an on-screen counter kept running.
 - **[board_check_28](board_check_28/README.md)** and
   **[board_check_35](board_check_35/README.md)** — whole-board check: every
-  onboard device in one run, printed as a PASS/FAIL table. Useful as the first
+  onboard device in one run, printed as a PASS/FAIL table and drawn on the
+  screen. Useful as the first
   thing to flash on a new or suspect board.
 - **`gps_i2c/`** — Phase 3. LC76G GNSS over I²C on the shared bus: a one-shot bus
   scan (confirms `0x50` is present), then link health, then fix + satellite

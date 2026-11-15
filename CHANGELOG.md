@@ -5,9 +5,10 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
-## [0.6.1] — 2026-11-14
+## [0.6.1] — 2026-11-15
 
-A tool for a board that looks dead. The library itself is unchanged from 0.6.0.
+A tool for a board that looks dead, and a board check you can read on the
+screen. The library itself is unchanged from 0.6.0.
 
 ### Added
 - **`tools/c5doctor`** — for a board that looks dead. `check` asks the chip's ROM,
@@ -18,9 +19,14 @@ A tool for a board that looks dead. The library itself is unchanged from 0.6.0.
   from a PlatformIO build. Tried on a 3.5-inch and a 2.8-inch board, each broken on purpose two ways and
   cured each time. 14 host tests.
 - **Cure packs on the release page**, one per board, each holding that board's
-  whole-board check. The 2.8-inch pack was written to a board with the doctor
-  and started; the 3.5-inch pack was built the same way and has not been run on
-  a board.
+  whole-board check. Each was written to its board with the doctor and started,
+  2026-11-15.
+
+### Changed
+- **The whole-board check draws its table on the screen** when the checks are
+  done and turns the backlight on, so a board with no computer watching shows
+  that it runs. It used to leave the screen dark. The owner read the table on
+  both boards, 2026-11-15. The ten serial lines are unchanged.
 
 ## [0.6.0] — 2026-11-10
 

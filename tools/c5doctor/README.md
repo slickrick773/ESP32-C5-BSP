@@ -60,7 +60,9 @@ python3 tools/c5doctor/c5doctor.py cure ws-c5-28-board-check.zip
   as a `.bin` file next to the pack.
 
 Then it writes, verifies every byte, restarts the board, and runs the check
-again. If the test program is the board check, its table is shown.
+again. If the test program is the board check, its table is shown, and the
+board draws the same table on its own screen and turns the backlight on, so
+you can see it is alive.
 
 **Use the pack for your board.** The chip cannot tell the doctor which board it
 is soldered to. A pack for another board is written just the same and can leave

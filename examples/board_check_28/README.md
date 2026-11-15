@@ -7,7 +7,9 @@ flashing, see [c5flash](../../tools/c5flash/README.md). Monitor USB serial at
 One run after reset exercises every onboard device the BSP drives and prints
 a table. Each line is `PASS`, `FAIL`, or `SKIP` where a check does not apply
 (no card fitted, no GPS wired). Keep the board still and reasonably quiet for
-the six seconds it takes. Nothing is drawn and the backlight stays off.
+the six seconds it takes. The screen stays dark while the checks run; when
+they are done the same table is drawn on it, without the detail column, and
+the backlight comes on.
 
 ## Hardware result
 
@@ -48,7 +50,8 @@ shows the monitor responds, not that a battery is present.
 | microSD | Mount, write, read back, delete; SKIP if no card mounts |
 | GPS module | Whether an LC76G answers at `0x50`; SKIP if none |
 
-The display is not checked: it cannot be read back.
+The display has no PASS or FAIL line because it cannot be read back: look at
+it. On November 15, 2026 the owner read the table on the screen of a 2.8-inch board (8 pass, 1 fail with no speaker plugged in, 1 skip).
 
 ## Limits
 

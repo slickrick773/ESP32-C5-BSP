@@ -2,7 +2,8 @@
 // Whole-board check for the Waveshare ESP32-C5-Touch-LCD boards. Runs once
 // after reset, exercises every onboard device the BSP drives, and prints one
 // table: PASS, FAIL, or SKIP where the check does not apply (no card fitted,
-// no GPS wired). Nothing is drawn; the backlight stays off.
+// no GPS wired). When the checks are done the same table is drawn on the
+// screen, so a board with no computer watching still shows that it runs.
 //
 // The same source builds for both boards: board_check_35 defines
 // BOARD_CHECK_35 and board_check_28 defines BOARD_CHECK_28.
@@ -28,8 +29,16 @@
 #include <board/ws_c5_28/ws_c5_28_rtc.h>
 #include <board/ws_c5_28/ws_c5_28_imu.h>
 #include <board/ws_c5_28/ws_c5_28_env.h>
+#include <Arduino_GFX_Library.h>
+#include "ws_c5_28_display.h"   // the panel's start-up sequence, as in hello_board_28
 namespace B = WsC5_28;
 #define TAG "[board_check_28]"
+// The display path hello_board_28 uses: Arduino's SPI class, ST7789, landscape.
+static Arduino_DataBus* bus = new Arduino_HWSPI(B::LCD_DC, B::LCD_CS, B::LCD_SCLK, B::LCD_MOSI, B::LCD_MISO, &SPI);
+static Arduino_GFX* screen = new Arduino_ST7789(bus, B::LCD_RST, B::ROTATION, true, B::PANEL_W, B::PANEL_H,
+                                                0, 0, 0, 0, ws28Init, sizeof ws28Init);
+static constexpr int kTextSize = 2, kLineHeight = 19;
+static bool screenBegin() { return screen->begin(40000000); }
 #else
 #include <board/ws_c5_35/ws_c5_35_board.h>
 #include <board/ws_c5_35/ws_c5_35_audio.h>
@@ -37,16 +46,35 @@ namespace B = WsC5_28;
 #include <board/ws_c5_35/ws_c5_35_rtc.h>
 #include <board/ws_c5_35/ws_c5_35_imu.h>
 #include <board/ws_c5_35/ws_c5_35_env.h>
+#include <TFT_eSPI.h>
 namespace B = WsC5_35;
 #define TAG "[board_check_35]"
+// The display path hello_board uses: TFT_eSPI with the C5 processor files, ST7796, landscape.
+static TFT_eSPI tft;
+static TFT_eSPI* screen = &tft;
+static constexpr int kTextSize = 3, kLineHeight = 26;
+static bool screenBegin() {
+    tft.init();
+    tft.setRotation(1);
+    tft.invertDisplay(B::PANEL_NEEDS_INVERSION);
+    return true;
+}
 #endif
 
 enum class Result { Pass, Fail, Skip };
 static int passed = 0, failed = 0, skipped = 0;
 
+// What was reported, kept so the table can be drawn once the checks are over.
+struct Row { const char* what; Result r; };
+static Row rows[12];
+static int rowCount = 0;
+
+static const char* wordFor(Result r) { return r == Result::Pass ? "PASS" : r == Result::Fail ? "FAIL" : "SKIP"; }
+
 static void report(const char* what, Result r, const char* detail) {
-    const char* word = r == Result::Pass ? "PASS" : r == Result::Fail ? "FAIL" : "SKIP";
+    const char* word = wordFor(r);
     if (r == Result::Pass) ++passed; else if (r == Result::Fail) ++failed; else ++skipped;
+    if (rowCount < 12) rows[rowCount++] = {what, r};
     Serial.printf(TAG "  %-4s  %-22s %s\n", word, what, detail);
 }
 
@@ -134,6 +162,33 @@ static void checkSd() {
     report("microSD", ok && removed ? Result::Pass : Result::Fail, detail);
 }
 
+// Draw the table. Done last, after the microSD check has let go of the bus the
+// panel shares with the card. Colours are RGB565.
+static bool showOnScreen() {
+    if (!screenBegin()) return false;
+    screen->fillScreen(0x0000);
+    screen->setTextSize(kTextSize);
+    int y = 4;
+    screen->setTextColor(0xFFFF);
+    screen->setCursor(4, y);
+    screen->print("ESP32-C5-BSP board check");
+    for (int i = 0; i < rowCount; ++i) {
+        y += kLineHeight;
+        screen->setCursor(4, y);
+        screen->setTextColor(rows[i].r == Result::Pass ? 0x07E0 : rows[i].r == Result::Fail ? 0xF800 : 0x8410);
+        screen->print(wordFor(rows[i].r));
+        screen->setTextColor(0xFFFF);
+        screen->print(' ');
+        screen->print(rows[i].what);
+    }
+    y += kLineHeight;
+    screen->setCursor(4, y);
+    screen->setTextColor(failed ? 0xF800 : 0x07E0);
+    screen->printf("%d pass, %d fail, %d skip", passed, failed, skipped);
+    B::Expander::backlight(255);
+    return true;
+}
+
 void setup() {
     Serial.begin(115200);
     delay(1500);
@@ -217,9 +272,11 @@ void setup() {
     }
     report("GPS module", gps ? Result::Pass : Result::Skip, gps ? "LC76G answers at 0x50" : "none wired");
 
-    Serial.println(TAG "  ----  display                not checked: it cannot be read back");
     Serial.printf(TAG " %d passed, %d failed, %d skipped\n", passed, failed, skipped);
     Serial.printf(TAG " result: %s\n", failed ? "FAIL" : "PASS");
+    // The display cannot be read back, so it is not a PASS or FAIL line: look at it.
+    Serial.println(showOnScreen() ? TAG "  ----  display                table drawn, backlight on: look at the screen"
+                                  : TAG "  ----  display                did not start");
 }
 
 void loop() { delay(1000); }
