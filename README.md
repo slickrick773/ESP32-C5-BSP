@@ -40,7 +40,7 @@ every claim's tag.
 | 9 | microSD on the shared SPI bus (tested example; no BSP SD driver) — [sd_35](examples/sd_35/README.md) | ✅ hardware-verified 2026-11-10 with one 29.8 GB card at 4 MHz; a bench build also read and wrote it without error while the display redrew |
 | Sample | [Touch and scrolling sample](examples/touch_redraw/README.md) — scrolling list, row selection, Toggle and Count (3.5-inch) | ✅ hardware-tested; cold boot and physical reset confirmed for the documented images |
 | Sample | [Touch and audio](examples/touch_audio/README.md) — list, TONE and MIC controls (3.5-inch) | ✅ hardware-tested 2026-11-10: owner heard a clean tone while scrolling the list, the list kept moving, and MIC followed a clap; long-run use not tested |
-| Sample | [Whole-board check](examples/board_check_35/README.md) — every onboard device in one PASS/FAIL table (3.5-inch) | ✅ ten of ten checks passed, two consecutive runs, 2026-11-10 |
+| Sample | [Whole-board check](examples/board_check_35/README.md) — every onboard device in one PASS/FAIL table (3.5-inch) | ✅ ten of ten checks passed, two consecutive runs, 2026-11-10. Since 2026-11-15 the table is also drawn on the screen; the owner read it on a board with no LiPo and no GPS (9 pass, 1 skip) |
 | Sample | [Speaker switch, PWR button, header lines, charge current](examples/extras_35/README.md) — self-checking test (3.5-inch) | ✅ hardware-tested 2026-11-10, one board: charge-current setting read back, header lines E8 and E9 passed with a jumper wire, speaker silenced and restored (laptop-microphone recording), PWR press read. On a second board with a LiPo, battery voltage stepped with the charge setting, six rounds of six. Charge current not measured in mA; header voltage and E10–E15 not measured |
 
 Sample rows are demonstrations built on those phases and add no driver of
@@ -63,7 +63,7 @@ circuit from the 3.5-inch, so each row has its own driver and evidence.
 | Clock, IMU, temperature/humidity sensor | [onboard_28](examples/onboard_28/README.md) | ✅ hardware-verified 2026-11-10: clock counting, 1.04 g at rest, about 23 °C and 47 %. The RTC battery socket, a BOOT press and sensor accuracy not tested |
 | microSD | [sd_28](examples/sd_28/README.md) | ✅ hardware-verified 2026-11-10 with one 29.6 GB card at 4 MHz, display idle |
 | Display, touch and audio together | [touch_audio_28](examples/touch_audio_28/README.md) | ✅ hardware-verified 2026-11-10: owner heard a clean tone while an on-screen counter kept running, and the microphone reading followed a clap |
-| Whole-board check | [board_check_28](examples/board_check_28/README.md) | ✅ ten of ten checks passed, four consecutive runs, 2026-11-10 |
+| Whole-board check | [board_check_28](examples/board_check_28/README.md) | ✅ ten of ten checks passed, four consecutive runs, 2026-11-10. Since 2026-11-15 the table is also drawn on the screen; the owner read it on a board with no speaker and no GPS (8 pass, 1 fail, 1 skip) |
 
 Board-specific notes are listed below.
 
@@ -223,7 +223,7 @@ examples/   standalone samples (PlatformIO unless noted)
             gps_28                 LC76G GPS over I²C with touch alongside (2.8")
             sd_28                  microSD mount + write/read-back (2.8")
             touch_audio_28         display, touch, tone and mic together (2.8", Arduino_GFX)
-            board_check_35/_28     every onboard device, one PASS/FAIL table
+            board_check_35/_28     every onboard device, one PASS/FAIL table, also drawn on the screen
             gps_i2c                LC76G GPS over I²C (fix + sat count)
             battery_28             battery ADC/estimated voltage + battery-only screen test
             ble_heap_probe         BLE advertiser memory-pressure diagnostic (Arduino CLI)
