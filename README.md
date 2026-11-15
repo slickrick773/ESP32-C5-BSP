@@ -12,8 +12,10 @@ doesn't re-solve them.
 5 GHz scanning and sniffing is a crowded space. **This package does not compete
 there.** It competes on reliability.
 
-> **Board looks dead?** A dark C5 is very rarely broken. [`tools/c5doctor`](tools/c5doctor)
-> says what is wrong and can write a known-good test image.
+> **Board looks dead?** A dark C5 is very rarely broken. The
+> [board doctor](https://slickrick773.github.io/ESP32-C5-BSP/) says what is wrong
+> and can write a known-good test image, from Chrome or Edge with nothing to
+> install. The same tool for the command line: [`tools/c5doctor`](tools/c5doctor).
 
 ## Status
 
@@ -235,6 +237,7 @@ tools/      c5flash   ROM-loader flash read/write that chunks around the
                       C5 USB large-transfer stall
             c5doctor  for a board that looks dead: says what is wrong and
                       writes a known-good test image (tools/c5doctor/README.md)
+web/       doctor    the board doctor as a web page (web/doctor/README.md)
 ```
 
 Built as an Arduino library first (the proven code is Arduino/C++). The hardware

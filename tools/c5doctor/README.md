@@ -4,6 +4,12 @@ For an ESP32-C5 board that looks dead: a dark screen, nothing on the display, a
 flashing tool that failed part-way. The doctor finds out what is wrong, says so
 in plain words, and can put a known-good test image on the board.
 
+**No Python?** The same doctor runs as a web page in desktop Chrome or Edge,
+with nothing to install: <https://slickrick773.github.io/ESP32-C5-BSP/>. Tried
+on a 2.8-inch board in Chrome on a Mac, 2026-11-15, including a board broken on
+purpose; not yet tried on the 3.5-inch board, Edge, Windows or Linux. Its source
+is in [web/doctor](../../web/doctor/README.md).
+
 **A board like this is very rarely broken.** The chip has a small loader built
 into it (the ROM) that cannot be erased. If that loader still answers over USB,
 whatever is wrong is in the flash memory, and flash can be rewritten.

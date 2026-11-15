@@ -5,6 +5,16 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
+## Unreleased
+
+### Added
+- **The board doctor as a web page**, <https://slickrick773.github.io/ESP32-C5-BSP/>:
+  check and cure from desktop Chrome or Edge with nothing to install. Source in
+  `web/doctor`. On a 2.8-inch board in Chrome on a Mac it agreed with the
+  command-line doctor on a healthy board and cured a board broken on purpose
+  (bootloader at `0x0`), 2026-11-15. Not tried: the 3.5-inch board, Edge,
+  Windows, Linux. 8 host tests.
+
 ## [0.6.1] — 2026-11-15
 
 A tool for a board that looks dead, and a board check you can read on the
