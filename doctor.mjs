@@ -116,3 +116,33 @@ export function validatePlan(plan) {
   if (sorted[0].offset < BOOTLOADER_AT) bad('a piece is aimed below the bootloader');
   return plan;
 }
+
+// Read `length` bytes of flash from `address` in 64-byte blocks, or null if it
+// cannot be done. `readBlock(at)` gives the 64 bytes at `at` or throws.
+//
+// On the C5 the ROM's reply to one particular block can stall and the chip then
+// stops answering (measured on a 3.5-inch board: the block at 0x9580, in the
+// saved-settings area; the same bytes read fine when the block starts anywhere
+// else). So a block that fails is read again as the halves of two blocks that
+// start 32 bytes either side, after `revive()` has reached the chip again.
+export async function readInBlocks(readBlock, revive, address, length, progress) {
+  const BLOCK = 64, out = new Uint8Array(length);
+  const first = address - (address % BLOCK);
+  const tryBlock = async at => { try { const b = await readBlock(at); return b instanceof Uint8Array && b.length >= BLOCK ? b : null; } catch { return null; } };
+  for (let at = first; at < address + length; at += BLOCK) {
+    let block = await tryBlock(at);
+    for (const shift of [32, 16, 8]) {
+      if (block) break;
+      if (at < shift) return null;                 // The very first block cannot be read any other way.
+      await revive();
+      const before = await tryBlock(at - shift);
+      const after = before && await tryBlock(at - shift + BLOCK);
+      if (before && after) { block = new Uint8Array(BLOCK); block.set(before.subarray(shift)); block.set(after.subarray(0, shift), BLOCK - shift); }
+    }
+    if (!block) return null;
+    const from = Math.max(at, address), to = Math.min(at + BLOCK, address + length);
+    out.set(block.subarray(from - at, to - at), from - address);
+    if (progress) progress(to - address, length);
+  }
+  return out;
+}
