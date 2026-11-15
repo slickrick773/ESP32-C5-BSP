@@ -308,5 +308,37 @@ assignments is in the
 ## Camera
 
 Boards fitted with the camera answer at `0x6E`. Its identity registers
-`0xFC`/`0xFD` read `39 01`, matching a BF3901. The BSP does not drive the
-camera. A bus scan on such a board reads `18 24 34 38 51 6B 6E 70`.
+`0xFC`/`0xFD` read `39 01`, matching a BF3901. A bus scan on such a board
+reads `18 24 34 38 51 6B 6E 70`.
+
+`WsC5_35::Camera` (`ws_c5_35_camera.h`) drives it:
+
+- `begin()` checks the identity; `readReg()`, `writeReg()` and `writeRegs()`
+  reach its registers.
+- `configure()` loads the start-up settings for 240x320 RGB565 on two data
+  lines, `setMirrorFlip()` sets the orientation, `stream()` starts and stops
+  it.
+- `captureBegin()`, `captureFrame()` and `captureEnd()` receive whole pictures
+  through the chip's parallel-input peripheral. `captureFrame()` returns
+  153,600 bytes, two per pixel, low byte first.
+
+| Signal | Reaches | Known from |
+|---|---|---|
+| Data 0, data 1 | GPIO 0, GPIO 1 | vendor schematic; pictures received |
+| Pixel clock | GPIO 11 | vendor schematic; pictures received |
+| Frame signal | GPIO 12 | vendor schematic; pictures received |
+| Camera clock | 24 MHz oscillator on the board | vendor schematic |
+| Reset | resistor and capacitor only | vendor schematic |
+| Power-down | expander EXIO7, pulled low | vendor schematic; not driven |
+
+With [camera_35](../examples/camera_35/README.md) on November 15, 2026, one
+board received pictures continuously (162 of 163 with valid headers), about seven a
+second including drawing each on the display. The owner saw a live picture.
+With `setMirrorFlip(false, false)` it is upright and not mirrored when the
+board is upright; as loaded by `configure()` it is upside down. The picture is
+rough and has a pink cast, and no colour setting has been tuned.
+
+GPIO 11 and 12 are also the UART0 pins: keep the console on USB while the
+camera is used. Capture relies on one private framework call and was run only
+with the pinned core 3.3.12. The settings table file keeps its Apache-2.0
+licence.

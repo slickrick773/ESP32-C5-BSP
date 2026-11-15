@@ -788,6 +788,40 @@ rose by 102 to 104 mV each time the setting went to 300 mA and fell back at
 the setting. This is not a measurement of the current in milliamps, and a full
 charge at any setting was not timed.
 
+### Camera: two data lines into the parallel-input peripheral
+
+**[HW-VERIFIED 2026-11-15, one camera-fitted 3.5-inch board; picture quality
+poor].** The BF3901 sends pictures on two data lines (GPIO 0 and 1) with its
+own clock (GPIO 11) and a frame signal that is low during a picture (GPIO 12).
+Those four pins, the 24 MHz oscillator that clocks the camera, the
+resistor-capacitor reset and the power-down line on expander EXIO7 are
+**[SCHEMATIC-CONFIRMED]** from the vendor schematic; the line-sync signal and
+the other six data lines are not routed to the chip. The four signal pins are
+also confirmed by use: pictures arrive on them.
+
+The ESP32-C5 has no camera peripheral. Its parallel-input peripheral (PARLIO
+RX) receives the stream: external clock, two data lines, the frame signal as
+the valid line, active low, most significant bits first. A picture is 155,524
+bytes, more than the peripheral can count in one transaction, so the rising
+edge of the frame signal is caught with a pin interrupt that calls
+`parlio_rx_unit_trigger_fake_eof`, a private call in the framework. Espressif's
+camera code does the same. Run with Arduino core 3.3.12 (ESP-IDF 5.5.5).
+
+Measured with `camera_35`: identity `39 01`; each picture starts
+`FF FF FF 00`, each line `FF FF FF 40`; 163 pictures received, 162 with
+every header valid (a second run: 49 of 50); 106 ms to receive one and 32 ms to draw it.
+The driver reports 155,584 bytes received for a 155,524-byte picture. The owner
+saw a live picture on the display. As loaded, the picture is upside down with
+the board upright; clearing bits 5 and 4 of register `0x1E` turns it upright,
+and it is not mirrored. Pixels are RGB565, low byte first: the other byte
+order gives colour noise.
+
+**The picture is rough and has a pink cast**, on the display and in a picture
+pulled over USB alike. The start-up settings are Espressif's table with
+Waveshare's three changes for RGB565; nothing has been tuned. Not tested:
+colour, focus, exposure, the power-down line, the camera with Wi-Fi, audio or
+the card, and long runs.
+
 ### Hide panel memory until the first frame
 
 **[OBSERVED FAILURE 2026-11-05; cause narrowed 2026-11-05 — see the measured blocks below].**
@@ -1155,7 +1189,8 @@ clock on the units tested.
 | Speaker level and pitch (3.5-inch) | HW-VERIFIED (owner listen + laptop-mic measurement) | 440 Hz at peak 12000 / volume 0xE0 clipped (3rd and 5th harmonics above the fundamental); volume 0xE0 ≈ +16 dB digital gain (0xC0 ~6× quieter, inferred); clean 440 Hz judged "very low"; default now 1 kHz at peak 4500: owner "clean, loud enough", ~6% harmonics, pitch 995–999 Hz, 2026-11-10 |
 | Per-sample float synthesis while streaming I2S | too slow (HW-VERIFIED) | `sinf` per sample took ~24 ms per 256-frame block (16 ms budget) in `touch_audio`; I2S underran and the tone pulsed (~20% level variation vs ~3% precomputed), 2026-11-10 |
 | SHTC3 at 0x70 (3.5-inch) | HW-VERIFIED | BSP `onboard_35` / `WsC5_35::Env`: ID 0x0887, ~28–30 °C / 37 % RH, checksums valid, 2026-11-10; accuracy UNVERIFIED |
-| Camera control at 0x6E (3.5-inch, camera fitted) | identity HW-VERIFIED; not driven by the BSP | Registers 0xFC/0xFD read 39 01 (BF3901), 2026-11-10 |
+| Camera control at 0x6E (3.5-inch, camera fitted) | HW-VERIFIED | Registers 0xFC/0xFD read 39 01 (BF3901), 2026-11-10; start-up settings and orientation written through `WsC5_35::Camera`, 2026-11-15 |
+| Camera pictures (3.5-inch, camera fitted) | HW-VERIFIED on one board (pictures received and seen); **quality poor: rough, pink cast, untuned** | BSP `camera_35`: 240x320 RGB565 over GPIO 0/1/11/12 through PARLIO RX; 163 received, 162 with valid headers; ~7 a second with drawing; owner: upright, not mirrored, rough, pink cast, 2026-11-15 |
 | 2.8-inch: LC76G GPS sharing the bus with CST3530 touch at 0x58 | HW-VERIFIED | BSP `gps_28`, driver told not to use 0x58: fix 7 sats / HDOP 2.2; ~97 KB in 3 min, 0 fails; taps counted correctly with the module streaming; wake-after-idle path NOT exercised, 2026-11-10 |
 | 2.8-inch: ES8311 microphone and duplex | HW-VERIFIED (level + loopback) | BSP `mic_28`: ~54–69 quiet, 1549 clipped with claps; `audio_selftest_28` PASS 3/3 (mic 777/728/516); no capture listened to, 2026-11-10 |
 | 2.8-inch: clock, IMU, SHTC3 (shared drivers) | HW-VERIFIED | BSP `onboard_28`: clock counting, 1.04 g at rest, ~23 °C / 47 %; RTC backup socket, BOOT press, accuracy UNVERIFIED, 2026-11-10 |

@@ -63,6 +63,15 @@ constexpr uint8_t  ES8311_ADDR   = 0x18;    // audio codec (Phase later)
 constexpr uint8_t  RTC_ADDR      = 0x51;    // real-time clock (see ws_c5_35_rtc.h)
 constexpr uint8_t  IMU_ADDR      = 0x6B;    // 6-axis IMU (see ws_c5_35_imu.h)
 
+// ---- Camera (camera-fitted boards only): BF3901, two-bit serial output ------
+// Control is on the shared I2C bus. The data pins are from the vendor
+// schematic and example code; see ws_c5_35_camera.h for what was run.
+constexpr uint8_t  CAM_ADDR      = 0x6E;
+constexpr int      CAM_D0        = 0;
+constexpr int      CAM_D1        = 1;
+constexpr int      CAM_PCLK      = 11;      // also the header's U0TXD net
+constexpr int      CAM_VSYNC     = 12;      // also the header's U0RXD net
+
 // ---- microSD: on the display SPI bus ---------------------------------------
 constexpr int      SD_CS         = 9;
 

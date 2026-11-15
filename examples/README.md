@@ -112,6 +112,12 @@ on 3.14+.
   the SHTC3 read about 28 °C and 37 %, and BOOT presses were reported. The
   clock has no backup cell: it kept time through a USB unplug on a board with
   a LiPo and lost it on a board without one.
+- **[camera_35](camera_35/README.md)** — Phase 10. 3.5-inch camera, for boards
+  sold with one. Receives 240x320 pictures and draws them on the display; a
+  script saves one as a PNG over USB. On November 15, 2026, on one board,
+  pictures arrived about seven a second with valid headers and the owner saw a
+  live picture, upright and not mirrored. The picture is rough with a pink
+  cast; colour is not tuned.
 - **[touch_audio](touch_audio/README.md)** — Sample. 3.5-inch scrolling list with TONE
   and MIC controls, combining display, touch, speaker and microphone. The tone
   plays from a background task; on November 10, 2026 the owner heard it clean

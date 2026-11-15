@@ -73,7 +73,9 @@ rejection of invalid BCD, out-of-range and short reads, range checks before a
 set, the written register values, and that the clock is restarted after a
 failed write. `test_imu_35` checks identity rejection, the configuration
 registers, scaling to g and degrees per second, short reads and shutdown. Both
-check that a lock failure performs no bus read. `test_env_35` checks the
+check that a lock failure performs no bus read. `test_camera_35` checks identity rejection, register access, the start-up
+settings, orientation bits, picture decoding with bad headers, and that a
+lock failure performs no bus traffic. `test_env_35` checks the
 SHTC3 identity and checksum handling, the temperature and humidity
 conversion, and that failed reads leave the caller's values unchanged. They run against a mocked
 register map and say nothing about the real parts' behaviour.
