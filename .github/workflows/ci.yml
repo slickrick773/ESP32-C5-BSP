@@ -14,6 +14,7 @@ on:
       - 'test/**'
       - 'tools/c5flash/**'
       - 'tools/c5doctor/**'
+      - 'web/**'
       - 'docs/consumer-check/**'
       - 'library.properties'
       - 'library.json'
@@ -25,6 +26,7 @@ on:
       - 'test/**'
       - 'tools/c5flash/**'
       - 'tools/c5doctor/**'
+      - 'web/**'
       - 'docs/consumer-check/**'
       - 'library.properties'
       - 'library.json'
@@ -104,6 +106,8 @@ jobs:
         run: python3 tools/c5flash/test/test_c5flash.py
       - name: Run c5doctor tests
         run: python3 tools/c5doctor/test/test_c5doctor.py
+      - name: Run web doctor tests
+        run: node --test web/doctor/test/doctor.test.mjs
 
   clean-consumers:
     runs-on: ubuntu-latest
