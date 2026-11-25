@@ -11,7 +11,10 @@ export const SAVE_SIZE = 0x10000;
 const GENERIC_NAME = 'arduino-lib-builder';   // What every Arduino build calls itself: it tells nothing.
 
 export const NO_ANSWER = 'no_answer', NO_BOOTLOADER = 'no_bootloader', BOOTLOADER_AT_ZERO = 'bootloader_at_zero',
-  NO_TABLE = 'no_table', NO_APP = 'no_app', RESTARTING = 'restarting', HEALTHY = 'healthy';
+  NO_TABLE = 'no_table', NO_APP = 'no_app', RESTARTING = 'restarting', OFF_USB = 'off_usb', HEALTHY = 'healthy';
+// A program that is fine keeps its USB port. Below this share of the time, the
+// board counts as dropping off USB (the Python doctor uses the same number).
+export const ON_USB_AT_LEAST = 0.6;
 
 export const ADVICE = {
   [NO_ANSWER]: 'The chip did not answer. Try: a different USB cable (many carry power only), a port on the ' +
@@ -28,6 +31,9 @@ export const ADVICE = {
     'The cure below fixes this.',
   [RESTARTING]: 'Everything stored looks right, but the board keeps restarting. The program on it is ' +
     'crashing at start-up. The cure below replaces it with a known-good test image.',
+  [OFF_USB]: 'Everything stored looks right, but once its program starts the board keeps dropping off USB: ' +
+    'the program switches USB off, or restarts before USB is up. This is the board that shows in a port list ' +
+    'for a moment and vanishes. The cure below replaces the program with a known-good test image.',
   [HEALTHY]: 'The chip answers, and a bootloader, a partition table and a program are all in place. This ' +
     'board is not bricked.',
 };
@@ -62,8 +68,9 @@ export function describeApp(raw) {
 
 // One conclusion from what was read. `appHeads` is the first bytes of each
 // program partition, in table order. `restarts` is how many times the board was
-// seen to restart while listened to, or null if it was not listened to.
-export function diagnose(answers, atZero, atBootloader, tableRaw, appHeads, restarts = null) {
+// seen to restart while listened to, and `onUsb` the share of the time its port
+// was there; each null if not measured.
+export function diagnose(answers, atZero, atBootloader, tableRaw, appHeads, restarts = null, onUsb = null) {
   if (!answers) return NO_ANSWER;
   if (!atBootloader || atBootloader[0] !== IMAGE_MAGIC)
     return atZero && atZero[0] === IMAGE_MAGIC ? BOOTLOADER_AT_ZERO : NO_BOOTLOADER;
@@ -71,6 +78,7 @@ export function diagnose(answers, atZero, atBootloader, tableRaw, appHeads, rest
   if (!table || !appsIn(table).length) return NO_TABLE;
   if (!appHeads.some(head => describeApp(head) !== null)) return NO_APP;
   if (restarts !== null && restarts >= 3) return RESTARTING;
+  if (onUsb !== null && onUsb < ON_USB_AT_LEAST) return OFF_USB;
   return HEALTHY;
 }
 

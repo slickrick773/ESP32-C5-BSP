@@ -8,6 +8,7 @@ import * as D from './doctor.mjs';
 const $ = id => document.getElementById(id);
 const pause = ms => new Promise(done => setTimeout(done, ms));
 let port = null, transport = null, loader = null, facts = null, busy = false, remembered = false;
+let missed = 0;   // Tries that found the board gone again: a board that keeps dropping off USB.
 // Whether a board was ever picked on this page: the browser then lets the page see it without the list.
 try { remembered = localStorage.getItem('c5doctor-picked') === '1'; } catch { /* storage is off: only this visit counts */ }
 
@@ -35,7 +36,11 @@ async function examine() {
   const tableRaw = await loader.readFlashSlow(D.TABLE_AT, D.TABLE_SIZE, bar);
   const table = D.parseTable(tableRaw), heads = [];
   for (const part of D.appsIn(table)) heads.push(await loader.readFlashSlow(part.offset, 0x100));
-  return { finding: D.diagnose(true, atZero, atBootloader, tableRaw, heads), lines: D.reportLines(facts, atBootloader, table, heads) };
+  // This page does not watch the board start. A board that slipped away from it
+  // twice or more before it was caught counts as dropping off USB.
+  const lines = D.reportLines(facts, atBootloader, table, heads);
+  if (missed >= 2) lines.push(`start-up:    came and went on USB ${missed} times before it was caught`);
+  return { finding: D.diagnose(true, atZero, atBootloader, tableRaw, heads, null, missed >= 2 ? 0 : null), lines };
 }
 
 function conclude(finding, lines, heading) {
@@ -55,6 +60,7 @@ const granted = async () => (await navigator.serial.getPorts()).filter(p => p.ge
 async function catchChip(first, seconds = 30) {
   const until = Date.now() + seconds * 1000;
   let candidate = first, problem = Error('no board appeared');
+  missed = 0;
   while (Date.now() < until) {
     if (!candidate) { candidate = (await granted())[0]; if (!candidate) { await pause(50); continue; } }
     try {
@@ -65,6 +71,7 @@ async function catchChip(first, seconds = 30) {
       return;
     } catch (why) {
       problem = why;
+      missed++;
       log(String(why?.message || why));
       await letGo();
       if (/not an ESP32-C5|locked/.test(why?.message || '')) throw why;
@@ -157,6 +164,7 @@ $('cure').onclick = async () => {
     });
     bar(1, 1);
     say('Written and read back correctly. Checking again…');
+    missed = 0;   // How the board behaved before the cure says nothing about the program now on it.
     const { finding, lines } = await examine();
     conclude(finding, lines, 'Finding after the cure');
     await letGo();

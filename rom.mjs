@@ -10,12 +10,31 @@
 //   - one more word (reserved, zero) on the flash attach command;
 //   - the flash chip's size has to be told to the ROM (command 0x0B) before a
 //     large region is written, or the write is refused.
-// And one thing is missing from the bundle: reading flash through the ROM
-// (command 0x0E, 64 bytes at a time).
+// And two things are missing from the bundle: reading flash through the ROM
+// (command 0x0E, 64 bytes at a time), and stopping the chip's low-power
+// watchdogs once connected (see stopWatchdogs).
 import { ESPLoader } from './vendor/esptool-js-0.7.0.js';
 import { readInBlocks } from './doctor.mjs';
 
 const SET_FLASH_SIZE = 0x0B, READ_SLOW = 0x0E, READ_BLOCK = 64;
+
+// The low-power watchdog block, as Python esptool has it for the C6 and C5.
+const LP_WDT = 0x600B1C00, WDT_CONFIG0 = LP_WDT + 0x00, WDT_PROTECT = LP_WDT + 0x18,
+  SWD_CONFIG = LP_WDT + 0x1C, SWD_PROTECT = LP_WDT + 0x20, WDT_KEY = 0x50D83AA1, SWD_AUTO_FEED = 1 << 18;
+
+// A reset over the chip's own USB port does not reset these watchdogs. A board
+// caught while its bootloader runs has one armed, and in the loader it fires
+// about 8 s later and starts the program (measured on a 2.8-inch board,
+// 2026-11-25): a cure that waited for the user then read nothing. Python
+// esptool does the same on every connection over this port.
+export async function stopWatchdogs(loader) {
+  await loader.writeReg(WDT_PROTECT, WDT_KEY);
+  await loader.writeReg(WDT_CONFIG0, 0);
+  await loader.writeReg(WDT_PROTECT, 0);
+  await loader.writeReg(SWD_PROTECT, WDT_KEY);
+  await loader.writeReg(SWD_CONFIG, ((await loader.readReg(SWD_CONFIG)) | SWD_AUTO_FEED) >>> 0);
+  await loader.writeReg(SWD_PROTECT, 0);
+}
 
 function words(...values) {
   const out = new Uint8Array(values.length * 4), view = new DataView(out.buffer);
@@ -53,6 +72,7 @@ export class C5Rom extends ESPLoader {
     try { await this.transport.disconnect(); } catch { /* already closed */ }
     await this.detectChip('default_reset', 3);
     if (this.chip.postConnect) await this.chip.postConnect(this);
+    await stopWatchdogs(this);
     await this.flashSpiAttach(0);
     if (this.flashBytes) await this.tellFlashSize(this.flashBytes);
   }
@@ -65,6 +85,7 @@ export async function reach(loader, attempts = 7) {
   if (loader.chip.CHIP_NAME !== 'ESP32-C5') throw Error(`This is an ${loader.chip.CHIP_NAME}, not an ESP32-C5. Nothing was written.`);
   if (loader.secureDownloadMode) throw Error('This chip is locked (secure download mode). The doctor cannot read or write it.');
   if (loader.chip.postConnect) await loader.chip.postConnect(loader);
+  await stopWatchdogs(loader);
   await loader.flashSpiAttach(0);
   const flash = await loader.detectFlashSize();
   const megabytes = /^(\d+)MB$/.exec(flash || '');
