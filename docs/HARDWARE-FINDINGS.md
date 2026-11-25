@@ -490,12 +490,14 @@ expensive finding in the fleet. On the 3.5 as shipped:
   arriving at any header GPIO.
 
 **Conclusion: on this board you cannot get GPS (or any UART peripheral) in over
-the J3 header by wiring alone.** Do not spend another night reseating wires — it
+the J3 header's TX/RX pins by wiring alone.** Do not spend another night reseating wires — it
 is a board routing limitation, not a wiring or firmware fault.
 
 Which pins *do* reach the chip on the header: **SDA (27) and SCL (26)** are
 connected (the shared I²C bus), and **3V3 / GND** are real. That is the opening
-the GPS solution uses.
+the GPS solution uses. The header's **28** position was not in that probe; a
+user report says a UART GPS works there, receive-only (see
+[GPS over UART on GPIO28](#gps-over-uart-on-gpio28-receive-only--user-reported)).
 
 > **R-selector mechanism — [SCHEMATIC-CONFIRMED] 2026-10-23.** The official
 > Waveshare schematic (see Sources) confirms what the fleet had only inferred
@@ -596,6 +598,29 @@ as shipped** (header UART finding above). On C5 ports where the UART *is* wired:
   generously, or the ~11.5 KB/s stream overruns the default 256-byte buffer and
   nothing parses. Symptom: **rx byte counter climbs while sat count stays 0** —
   data is arriving; it is a buffer/parse problem, not wiring.
+
+### GPS over UART on GPIO28, receive-only — [USER-REPORTED]
+
+Found by JimGat for [CYM](https://github.com/JimGat/CYM) (see its
+[3.5-inch board notes](https://github.com/JimGat/CYM/blob/main/docs/hardware/waveshare-c5-touch-lcd-35.md)),
+not reproduced here. For a GPS that only speaks UART, this is the route that
+needs no I²C and no rework:
+
+- Wire **GPS TX to the header's `28` position (GPIO28)** and share **GND**.
+  Leave the GPS RX unconnected: the C5 only listens.
+- Open a UART (CYM uses UART1) with **RX on GPIO28, TX disabled**, at the
+  module's baud. CYM's tested module was an **ATGM336H at 9600**; JimGat
+  reports a GPS lock and repeated clean reboots on his board (SKU 35419). No
+  raw NMEA log was published with the report.
+- **GPIO28 is also the BOOT button and strapping pin.** Turn off any
+  firmware BOOT-button handling, or GPS traffic reads as button presses, and
+  don't press BOOT while the GPS is transmitting.
+- Untested here: whether a GPS already transmitting at power-on or reset
+  changes the boot mode, and how often. Check this on your own board before
+  relying on it.
+
+Pick between the two: the LC76G on I²C (above) costs no pins and is verified
+here; GPIO28 suits a UART-only module and gives up the BOOT button in firmware.
 
 ### Shared I²C bus discipline
 

@@ -86,6 +86,11 @@ It is possible, with two things to keep in mind on this board:
   auto-download — see [HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md) → *Never assign a
   UART to GPIO13/14*.
 
+One such route has been reported working: GPS TX into the header's **GPIO28**
+(the BOOT strapping pin), receive-only. JimGat found it for CYM; it is not
+reproduced here. Details and cautions are in
+[HARDWARE-FINDINGS.md](HARDWARE-FINDINGS.md#gps-over-uart-on-gpio28-receive-only--user-reported).
+
 For this board the I²C path avoids both of these, which is why it is the default
 here. The UART path is documented for completeness and is a reasonable choice if
 your build already needs a UART GPS and you can spare a strapping pin for it.
