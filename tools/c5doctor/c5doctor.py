@@ -29,7 +29,7 @@ What it cannot do: if the ROM never answers (no USB port appears, or the chip
 does not reply even in download mode), nothing sent over USB can fix the board.
 The doctor says so instead of guessing.
 """
-import glob, hashlib, json, os, struct, sys, time, zipfile
+import hashlib, json, os, struct, sys, time, zipfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "c5flash"))
 import c5flash
@@ -131,15 +131,54 @@ def wait_for_port(seconds=3.0):
     """A board that restarts over and over is only on USB for a moment at a time.
     Wait until its port is there, so the next attempt starts the moment it is."""
     until = time.time() + seconds
-    while c5flash.PORT and not os.path.exists(c5flash.PORT) and time.time() < until:
+    while c5flash.PORT and not c5flash.port_present(c5flash.PORT) and time.time() < until:
         time.sleep(0.02)
 
 
+def catch_into_loader(seconds=15.0):
+    """Some boards are on USB for only a moment at a time: a program that keeps
+    restarting, or one that switches USB off as it starts. Each esptool try takes
+    longer to start than such a moment lasts (a user's board on Windows showed
+    for about 0.3 s). So wait for the port here, open it as soon as it appears and
+    send the USB reset into the chip's loader at once; the loader then keeps USB
+    steady. True if the reset was sent. Needs pyserial; False without it."""
+    try:
+        import serial
+    except ImportError:
+        return False
+    until = time.time() + seconds
+    while time.time() < until:
+        if not c5flash.port_present(c5flash.PORT):
+            time.sleep(0.002)
+            continue
+        link = serial.Serial()
+        link.port, link.baudrate, link.timeout = c5flash.PORT, 115200, 0.05
+        link.dtr = link.rts = False                  # Opening must not itself reset the chip.
+        try:
+            link.open()
+            # The USB-Serial-JTAG reset into the loader, as esptool sends it, with
+            # short steps so it lands before the program on the board starts.
+            link.dtr, link.rts = False, False; time.sleep(0.01)
+            link.dtr, link.rts = True, False;  time.sleep(0.01)
+            link.rts, link.dtr = True, False;  time.sleep(0.01)
+            link.dtr, link.rts = False, False
+            link.close()
+            return True
+        except (OSError, serial.SerialException):    # Gone again before it could be opened.
+            time.sleep(0.002)
+    return False
+
+
 def chip_facts():
-    """(answers, facts). Tries a reset into the loader, several ways and several
-    times, then a board that was put into download mode by hand. A board that
-    restarts over and over comes and goes on USB, so one try is not enough."""
-    for before in ("default-reset", "usb-reset", "no-reset", "default-reset", "usb-reset", "no-reset"):
+    """(answers, facts). First catches a board that is on USB only for a moment
+    (see catch_into_loader), then tries a reset into the loader, several ways and
+    several times, then a board that was put into download mode by hand. A board
+    that restarts over and over comes and goes on USB, so one try is not enough."""
+    tries = ("default-reset", "usb-reset", "no-reset", "default-reset", "usb-reset", "no-reset")
+    if catch_into_loader():
+        time.sleep(0.5)                              # The loader comes back on USB.
+        tries = ("no-reset",) + tries
+    for before in tries:
         wait_for_port()
         ok, out = c5flash.et("flash-id", before=before)
         if ok:
@@ -346,7 +385,7 @@ def main(args):
         return 0
     if rest[:1] == ["check"] and len(rest) == 1 or rest[:1] == ["cure"] and len(rest) == 2:
         for _ in range(100):                        # Up to 5 s: a board that keeps restarting comes and goes.
-            ports = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
+            ports = c5flash.candidate_ports()
             if ports or explicit is not None:
                 break
             time.sleep(0.05)

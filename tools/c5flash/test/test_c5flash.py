@@ -79,7 +79,14 @@ class TestRead(unittest.TestCase):
 
 
 class TestPort(unittest.TestCase):
+    # These tests cover the device-name fallback (no pyserial); TestEspressifPorts
+    # covers finding the port by USB vendor.
+    def setUp(self):
+        self.no_pyserial = mock.patch.object(c5flash, "_espressif_ports", return_value=None)
+        self.no_pyserial.start()
+
     def tearDown(self):
+        self.no_pyserial.stop()
         c5flash.PORT = None
 
     def test_explicit_port_wins(self):
@@ -124,6 +131,43 @@ class TestPort(unittest.TestCase):
         for cmd in calls:
             self.assertIn("/dev/cu.usbmodemAAA", cmd)
             self.assertNotIn("/dev/cu.usbmodemBBB", cmd)
+
+
+def fake_comports(*ports):
+    return [types.SimpleNamespace(device=device, vid=vid) for device, vid in ports]
+
+
+class TestEspressifPorts(unittest.TestCase):
+    """With pyserial the port is found by USB vendor, which is what works on Windows."""
+    def comports(self, *ports):
+        return mock.patch("serial.tools.list_ports.comports", return_value=fake_comports(*ports))
+
+    def setUp(self):
+        try:
+            import serial.tools.list_ports  # noqa: F401
+        except ImportError:
+            self.skipTest("this Python has no pyserial")
+
+    def test_only_espressif_ports_count(self):
+        with self.comports(("COM1", None), ("COM4", 0x303A), ("COM7", 0x10C4)):
+            self.assertEqual(c5flash.candidate_ports(), ["COM4"])
+
+    def test_windows_com_port_is_picked(self):
+        with self.comports(("COM4", 0x303A)):
+            self.assertEqual(c5flash.resolve_port(None), "COM4")
+
+    def test_two_boards_still_need_a_choice(self):
+        with self.comports(("COM4", 0x303A), ("COM9", 0x303A)):
+            with self.assertRaises(SystemExit) as cm:
+                c5flash.resolve_port(None)
+        self.assertIn("--port", str(cm.exception))
+
+    def test_a_com_port_counts_as_present_while_listed(self):
+        # COM4 is not a file, so presence must come from the port list.
+        with self.comports(("COM4", 0x303A)):
+            self.assertTrue(c5flash.port_present("COM4"))
+        with self.comports():
+            self.assertFalse(c5flash.port_present("COM4"))
 
 
 class TestWrite(unittest.TestCase):

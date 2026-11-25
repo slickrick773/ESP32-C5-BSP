@@ -133,7 +133,7 @@ class Packs(unittest.TestCase):
 
 class Running(unittest.TestCase):
     def test_no_port_is_said_plainly_and_nothing_is_called(self):
-        with mock.patch.object(d.glob, "glob", return_value=[]), mock.patch.object(d.c5flash, "et") as et, \
+        with mock.patch.object(d.c5flash, "candidate_ports", return_value=[]), mock.patch.object(d.c5flash, "et") as et, \
              mock.patch.object(d.time, "sleep") as waited, mock.patch("builtins.print") as said:
             self.assertEqual(d.main(["check"]), 2)
         et.assert_not_called()
@@ -142,11 +142,43 @@ class Running(unittest.TestCase):
 
     def test_the_chip_is_tried_several_ways_before_giving_up(self):
         with mock.patch.object(d.c5flash, "et", return_value=(False, "")) as et, mock.patch.object(d.time, "sleep"), \
-             mock.patch.object(d, "wait_for_port") as waited:
+             mock.patch.object(d, "wait_for_port") as waited, mock.patch.object(d, "catch_into_loader", return_value=False):
             self.assertEqual(d.chip_facts(), (False, {}))
         self.assertEqual([call.kwargs["before"] for call in et.call_args_list],
                          ["default-reset", "usb-reset", "no-reset", "default-reset", "usb-reset", "no-reset"])
         self.assertEqual(waited.call_count, 6)
+
+    def test_a_caught_board_is_asked_first_without_another_reset(self):
+        # Once caught, the chip is in its loader: a reset now would only lose time.
+        with mock.patch.object(d.c5flash, "et", return_value=(True, "Chip type: ESP32-C5\nBASE MAC: 10:bd:a3:df:34:d4")) as et, \
+             mock.patch.object(d.time, "sleep"), mock.patch.object(d, "wait_for_port"), \
+             mock.patch.object(d, "catch_into_loader", return_value=True):
+            answers, facts = d.chip_facts()
+        self.assertTrue(answers)
+        self.assertEqual(et.call_args_list[0].kwargs["before"], "no-reset")
+        self.assertEqual(facts["address"], "10:bd:a3:df:34:d4")
+
+    def test_the_catch_sends_the_loader_reset_the_moment_the_port_appears(self):
+        try:
+            import serial  # noqa: F401
+        except ImportError:
+            self.skipTest("this Python has no pyserial")
+        seen = []
+        class Link:
+            def __init__(self): self.port = None
+            def __setattr__(self, name, value):
+                if name in ("dtr", "rts") and getattr(self, "is_open", False):
+                    seen.append((name, value))
+                object.__setattr__(self, name, value)
+            def open(self): object.__setattr__(self, "is_open", True)
+            def close(self): object.__setattr__(self, "is_open", False)
+        present = iter([False, False, True])
+        with mock.patch.object(d.c5flash, "PORT", "COM4"), \
+             mock.patch.object(d.c5flash, "port_present", side_effect=lambda port: next(present)), \
+             mock.patch("serial.Serial", Link), mock.patch.object(d.time, "sleep"):
+            self.assertTrue(d.catch_into_loader(seconds=5))
+        self.assertEqual(seen, [("dtr", False), ("rts", False), ("dtr", True), ("rts", False),
+                                ("rts", True), ("dtr", False), ("dtr", False), ("rts", False)])
 
     def test_cure_refused_writes_nothing(self):
         with tempfile.TemporaryDirectory() as folder:

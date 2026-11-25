@@ -16,8 +16,10 @@ whatever is wrong is in the flash memory, and flash can be rewritten.
 
 ## What you need
 
-- A computer with Python 3 (macOS or Linux).
-- esptool 5.x: `pip install esptool`.
+- A computer with Python 3: macOS or Linux, or Windows (host-tested only, not yet tried on a Windows machine).
+- esptool 5.x: `pip install esptool`. That also installs pyserial, which the
+  doctor uses to find the board's port by its USB maker (on Windows a COM
+  port such as `COM4`) and to catch a board that is on USB only for a moment.
 - A USB cable that carries data. Many cables carry power only; if no port
   appears, try another cable first.
 - This repository (the doctor uses [`../c5flash`](../c5flash) to talk to the board).
@@ -29,7 +31,11 @@ python3 tools/c5doctor/c5doctor.py check
 ```
 
 `check` writes nothing. The board restarts while it is examined. With more than
-one board plugged in, add `--port /dev/...` before `check`.
+one board plugged in, add `--port /dev/...` (on Windows `--port COM4`) before
+`check`.
+
+On Windows, type `python` instead of `python3` and use backslashes:
+`python tools\c5doctor\c5doctor.py check`.
 
 What you should see is a short report and one finding:
 
@@ -89,11 +95,23 @@ A build carries the folder paths of the computer it was made on. Before sharing
 a pack, build with those mapped away, for example
 `PLATFORMIO_BUILD_FLAGS="-ffile-prefix-map=$HOME=/b" pio run`.
 
+## If the board is on USB only for a moment
+
+Some boards show up for less than a second and vanish again, over and over: a
+program that keeps restarting, or one that switches USB off as it starts. A web
+page or a flashing tool cannot be pointed at a port that quick. Run `check` or
+`cure` with the board plugged in and leave it: for up to 15 seconds the doctor
+waits for the port, and the moment it appears sends the reset that holds the
+chip in its loader, where USB stays steady. If nothing happens in that time,
+tap RST once while it waits.
+
 ## If the chip does not answer
 
 1. Try another USB cable, and a port on the computer itself, not a hub.
 2. Put the board in download mode by hand: **hold BOOT, tap RST, release BOOT**.
-   Run `check` again.
+   Run `check` again. On one 2.8-inch board (2026-11-25) holding BOOT at
+   start-up, at power-on or with RST, left no USB device at all, on two ports
+   of a Mac; on that board use the catch above instead.
 3. If it answers now, run `cure`.
 
 If the chip never answers, even in download mode with a good cable, nothing sent
@@ -114,7 +132,17 @@ The one failed line on the 2.8-inch board was speaker to microphone, with no
 speaker connected. A board check that fails is about the board's parts, not
 about how it was flashed; the doctor says so.
 
-Not yet tried on a board: `restarting`, a board that needs download mode by
+On 2026-11-25 a 2.8-inch board was given a program that switches USB off as
+it starts and restarts every 1 to 4 s, copying a user's board: its port showed
+for about 0.85 s at a time, 21 to 32% of the time. The user's showed for about
+0.3 s on Windows, which this Mac could not make that short. Three rounds of
+breaking and `cure` with nothing pressed: each time the doctor reached the chip,
+saved the first 64 KB, wrote and verified, and the board check ran (8 passed,
+1 failed, 1 skipped: no speaker). On this break `check` wrongly says `healthy`,
+because the program is fine as stored and the doctor cannot yet tell that it
+turns USB off.
+
+Not yet tried on a board: `restarting`, Windows, a board that needs download mode by
 hand, Linux, and a board that really is beyond repair.
 
 ## Tests

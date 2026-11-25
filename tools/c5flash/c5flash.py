@@ -12,8 +12,10 @@ Strategy: keep one esptool process per operation but keep each operation small
 offset), retry only the failing piece, then verify.
 
 Needs esptool 5.x (pip install esptool, or set C5FLASH_ESPTOOL to its path).
-Port: auto-detected when exactly one /dev/cu.usbmodem* (macOS) or /dev/ttyACM*
-(Linux) is present; with none or several, pass --port. The port is resolved ONCE
+Port: auto-detected when exactly one is present: with pyserial, any port whose
+USB vendor is Espressif (macOS, Linux and Windows COM ports); without it,
+/dev/cu.usbmodem* (macOS) or /dev/ttyACM* (Linux). With none or several, pass
+--port. The port is resolved ONCE
 per invocation and reused for every chunk and retry.
 
 Usage:
@@ -53,6 +55,37 @@ FLASH_SIZE = os.environ.get("C5FLASH_SIZE", "keep")
 PORT = None
 
 
+ESPRESSIF_USB_VENDOR = 0x303A   # the C5's own USB-Serial-JTAG port reports this
+
+
+def _espressif_ports():
+    """Ports whose USB vendor is Espressif, sorted, on any system (Windows COM
+    ports included). None if this Python has no pyserial."""
+    try:
+        from serial.tools import list_ports
+    except ImportError:
+        return None
+    return sorted(p.device for p in list_ports.comports() if p.vid == ESPRESSIF_USB_VENDOR)
+
+
+def candidate_ports():
+    """Ports that may be the board. With pyserial: every Espressif USB port, which
+    is what works on Windows. Without it: the macOS and Linux device names."""
+    found = _espressif_ports()
+    if found is not None:
+        return found
+    return sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
+
+
+def port_present(port):
+    """Is this port on the system right now? A file on macOS and Linux; on
+    Windows a COM port is not a file, so ask pyserial."""
+    if os.path.exists(port):
+        return True
+    found = _espressif_ports()
+    return bool(found) and port in found
+
+
 def resolve_port(explicit=None):
     """Pick the serial port for this invocation. An explicit --port always wins.
     Auto mode requires EXACTLY ONE candidate: zero or several is an error (never a
@@ -61,7 +94,7 @@ def resolve_port(explicit=None):
         if not explicit.strip():
             sys.exit("--port needs a non-empty value")
         return explicit
-    cands = sorted(glob.glob("/dev/cu.usbmodem*") + glob.glob("/dev/ttyACM*"))
+    cands = candidate_ports()
     if not cands:
         sys.exit("no USB serial port found — is the board connected? (or pass --port)")
     if len(cands) > 1:

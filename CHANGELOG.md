@@ -25,6 +25,20 @@ evidence and claim tags.
   11 host tests.
 
 ### Fixed
+- **The command-line doctor and c5flash now find the board on Windows.** They
+  looked only for macOS and Linux port names, so on Windows they found no
+  port. With pyserial (which `pip install esptool` brings) they now find the
+  board's port by its USB maker, a COM port included. Host-tested; not yet
+  tried on a Windows machine.
+- **A board on USB for under a second at a time can now be cured from the
+  command line.** Each try started a new esptool, which took longer to start
+  than the port was there. The doctor now waits for the port and sends the
+  reset into the chip's loader the moment it appears, which keeps USB steady.
+  On a 2.8-inch board given a program that turns USB off as it starts and
+  restarts every 1 to 4 s (port present about 0.85 s at a time), on a Mac,
+  2026-11-25: three rounds of breaking and curing, all cured with nothing
+  pressed. A user's board in this state showed for about 0.3 s on Windows;
+  that has not been tried.
 - **A board that restarts over and over could not be reached.** Its USB port
   comes and goes, so the web page's port list showed it for a moment at a time
   and the command-line doctor could answer "no answer". Both now wait for the
