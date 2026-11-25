@@ -71,6 +71,7 @@ a{color:inherit}
 <li>Press <b>Connect and check</b> and click the board the moment it shows in the list. One click is enough: the browser remembers it.</li>
 <li>If you missed it, close the list and press <b>Connect and check</b> again. Once the board has been clicked one time, the page waits for it and catches it by itself, even with the list empty.</li>
 </ol>
+<p>If it is gone too fast to click at all, use the command-line doctor instead (<a href="https://github.com/slickrick773/ESP32-C5-BSP/tree/main/tools/c5doctor">tools/c5doctor</a>): it needs no click, and catches the board the moment it appears.</p>
 </section>
 
 <section>
@@ -78,7 +79,7 @@ a{color:inherit}
 <ol>
 <li>Try another USB cable, and a port on the computer itself, not a hub. Many cables carry power only.</li>
 <li>Close anything else that is using the board's serial port.</li>
-<li>Put the board in download mode by hand: <b>hold BOOT, tap RST, release BOOT</b>. Then connect again.</li>
+<li>Put the board in download mode by hand: <b>hold BOOT, tap RST, release BOOT</b>. Then connect again. On one 2.8-inch board this left no USB port at all; if that happens, use the command-line doctor instead.</li>
 </ol>
 <p>If the chip never answers in download mode, no software can fix it.</p>
 <details><summary>Connection log</summary><pre id="log"></pre></details>

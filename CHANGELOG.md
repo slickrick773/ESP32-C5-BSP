@@ -25,6 +25,17 @@ evidence and claim tags.
   11 host tests.
 
 ### Fixed
+- **The web page's cure could stop with "the first 64 KB could not be read"**
+  on a board caught while its bootloader ran: a watchdog left armed there
+  moved the chip out of its loader about 8 s later. The page now turns the
+  chip's low-power watchdogs off once connected, as Python esptool does. On
+  a 2.8-inch board in Chrome on a Mac, 2026-11-25: cured after a 15 s wait,
+  every piece read back correctly.
+- **A board that keeps dropping off USB was called `healthy`.** Both doctors
+  now say `off usb`: the command-line doctor from how much of the time the
+  port was there while it listened (14% on a board broken on purpose, steady
+  on a good one), the page from how often the board slipped away before it
+  was caught.
 - **The command-line doctor and c5flash now find the board on Windows.** They
   looked only for macOS and Linux port names, so on Windows they found no
   port. With pyserial (which `pip install esptool` brings) they now find the

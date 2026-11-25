@@ -47,6 +47,7 @@ What you should see is a short report and one finding:
 | `no table` | The partition table is missing or damaged. | yes |
 | `no app` | No program where the partition table points. | yes |
 | `restarting` | Everything stored looks right but the program crashes at start-up, over and over. | yes |
+| `off usb` | Everything stored looks right but once the program starts the board keeps dropping off USB (on USB under 60% of the time it is listened to). The board that shows in a port list for a moment and vanishes. | yes |
 | `no answer` | The chip did not answer at all. See below. | no |
 
 ## 2. Put a known-good image on it
@@ -138,9 +139,8 @@ for about 0.85 s at a time, 21 to 32% of the time. The user's showed for about
 0.3 s on Windows, which this Mac could not make that short. Three rounds of
 breaking and `cure` with nothing pressed: each time the doctor reached the chip,
 saved the first 64 KB, wrote and verified, and the board check ran (8 passed,
-1 failed, 1 skipped: no speaker). On this break `check` wrongly says `healthy`,
-because the program is fine as stored and the doctor cannot yet tell that it
-turns USB off.
+1 failed, 1 skipped: no speaker). On this break `check` now says `off usb` (on USB 14% of the time once
+started); a healthy board on the board check says `healthy`, start-up steady.
 
 Not yet tried on a board: `restarting`, Windows, a board that needs download mode by
 hand, Linux, and a board that really is beyond repair.

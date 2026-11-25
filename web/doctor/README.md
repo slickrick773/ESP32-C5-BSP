@@ -50,8 +50,31 @@ On November 15, 2026, on a 2.8-inch board, in Chrome on a Mac:
   board, and the saved settings area in the backup file matched an independent
   read with the command-line tool, byte for byte.
 
+On November 25, 2026, on the same 2.8-inch board, in Chrome on a Mac, broken
+on purpose with a program that switches USB off as it starts and restarts
+every 1 to 4 s (port there about 0.85 s at a time, 14 to 32% of the time):
+
+- Clicking in time was hard. The first two tries were caught and the check
+  read, but the cure stopped: the first 64 KB could not be read. The chip had
+  left its loader before the cure began. A reset over the chip's own USB port
+  does not reset its low-power watchdogs; a board caught while its bootloader
+  runs keeps one armed, and in the loader it fires about 8 s later and starts
+  the program. Python esptool turns them off on every connection over this
+  port; esptool-js 0.7.0 does not for the C5. The page now does it the way
+  Python esptool does.
+- With that, the page caught the board by itself (2 misses), said `off usb`,
+  and after waiting 15 s the cure saved the first 64 KB, wrote all four pieces
+  and read each back correctly. A command-line check afterwards: `healthy`,
+  start-up steady, board check running.
+- `off usb` is new: everything stored looks right but the board keeps dropping
+  off USB. The page does not watch the board start, so it uses how many times
+  the board slipped away before it was caught (two or more). A board caught at
+  the first try can still be called healthy.
+
 Not tried: the other ways a board can be broken, the "restarting" finding from
-the listen step, Edge, Linux, and catching a flickering board on Windows.
+the listen step, Edge, Linux, and catching a flickering board on Windows. On Windows a
+user's board in the off-USB state showed for about 0.3 s, too quick to click;
+the command-line doctor is the route there.
 
 ## Notes
 

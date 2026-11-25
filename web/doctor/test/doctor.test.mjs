@@ -58,10 +58,13 @@ test('each finding, as the Python doctor concludes it', () => {
   assert.equal(D.diagnose(true, BLANK, null, table(), [program()]), D.NO_BOOTLOADER);
   assert.equal(D.diagnose(true, BLANK, BOOT, table(), [program()], 5), D.RESTARTING);
   assert.equal(D.diagnose(true, BLANK, BOOT, table(), [program()], 1), D.HEALTHY);
+  assert.equal(D.diagnose(true, BLANK, BOOT, table(), [program()], 0, 0.14), D.OFF_USB);
+  assert.equal(D.diagnose(true, BLANK, BOOT, table(), [program()], 0, 1), D.HEALTHY);
+  assert.equal(D.diagnose(true, BLANK, BOOT, table(), [program()], 9, 0.14), D.RESTARTING);
 });
 
 test('every finding has advice', () => {
-  for (const finding of [D.NO_ANSWER, D.NO_BOOTLOADER, D.BOOTLOADER_AT_ZERO, D.NO_TABLE, D.NO_APP, D.RESTARTING, D.HEALTHY])
+  for (const finding of [D.NO_ANSWER, D.NO_BOOTLOADER, D.BOOTLOADER_AT_ZERO, D.NO_TABLE, D.NO_APP, D.RESTARTING, D.OFF_USB, D.HEALTHY])
     assert.ok(D.ADVICE[finding]);
 });
 

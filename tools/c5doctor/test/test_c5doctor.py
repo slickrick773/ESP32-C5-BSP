@@ -70,8 +70,37 @@ class Concluding(unittest.TestCase):
         self.assertEqual(d.diagnose(*good, restarts=1), d.HEALTHY)        # One restart is the doctor's own.
         self.assertEqual(d.diagnose(*good, restarts=None), d.HEALTHY)
 
+    def test_a_board_that_drops_off_usb_is_not_called_healthy(self):
+        good = (True, BLANK, BOOT, table(), [program()])
+        self.assertEqual(d.diagnose(*good, restarts=0, on_usb=0.25), d.OFF_USB)
+        self.assertEqual(d.diagnose(*good, restarts=0, on_usb=1.0), d.HEALTHY)
+        self.assertEqual(d.diagnose(*good, restarts=0, on_usb=None), d.HEALTHY)   # Not measured.
+        self.assertEqual(d.diagnose(*good, restarts=9, on_usb=0.25), d.RESTARTING)  # Restarts seen say more.
+
+    def test_the_share_on_usb_is_measured_after_start_up(self):
+        # Fake clock: the port is gone for the first 2 s (the doctor's own reset),
+        # then there 1 s out of every 4.
+        clock = [0.0]
+        class Link:
+            def __init__(self, *a, **k):
+                if not present(clock[0]): raise OSError("gone")
+            def read(self, n):
+                clock[0] += 0.1
+                if not present(clock[0]): raise OSError("gone")
+                return b""
+            def close(self): pass
+        present = lambda t: t >= 2.0 and (t - 2.0) % 4.0 < 1.0
+        def sleep(s): clock[0] += s
+        with mock.patch.object(d.time, "time", lambda: clock[0]), mock.patch.object(d.time, "sleep", sleep), \
+             mock.patch.object(d.c5flash, "port_present", lambda port: present(clock[0])), \
+             mock.patch.dict(sys.modules, {"serial": mock.Mock(Serial=Link, SerialException=OSError)}):
+            restarts, lines, on_usb = d.listen_for_restarts("COM4", seconds=18)
+        self.assertEqual(restarts, 0)
+        self.assertAlmostEqual(on_usb, 0.25, delta=0.06)
+
     def test_every_finding_has_advice(self):
-        for finding in (d.NO_ANSWER, d.NO_BOOTLOADER, d.BOOTLOADER_AT_ZERO, d.NO_TABLE, d.NO_APP, d.RESTARTING, d.HEALTHY):
+        for finding in (d.NO_ANSWER, d.NO_BOOTLOADER, d.BOOTLOADER_AT_ZERO, d.NO_TABLE, d.NO_APP, d.RESTARTING,
+                        d.OFF_USB, d.HEALTHY):
             self.assertTrue(d.ADVICE[finding])
 
 

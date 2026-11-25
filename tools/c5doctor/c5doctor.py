@@ -44,8 +44,12 @@ SAVE_SIZE = 0x10000
 GENERIC_NAME = "arduino-lib-builder"   # What every Arduino build calls itself: it tells nothing.
 
 # What `diagnose` can conclude, worst first.
-NO_ANSWER, NO_BOOTLOADER, BOOTLOADER_AT_ZERO, NO_TABLE, NO_APP, RESTARTING, HEALTHY = (
-    "no_answer", "no_bootloader", "bootloader_at_zero", "no_table", "no_app", "restarting", "healthy")
+NO_ANSWER, NO_BOOTLOADER, BOOTLOADER_AT_ZERO, NO_TABLE, NO_APP, RESTARTING, OFF_USB, HEALTHY = (
+    "no_answer", "no_bootloader", "bootloader_at_zero", "no_table", "no_app", "restarting", "off_usb", "healthy")
+# A program that is fine keeps its USB port. Below this share of the time listened
+# to (after the first seconds of start-up), the board counts as dropping off USB.
+ON_USB_AT_LEAST = 0.6
+SETTLE_S = 2.0
 
 ADVICE = {
     NO_ANSWER: "The chip did not answer. Try: a different USB cable (many carry power only), a port on the "
@@ -62,6 +66,9 @@ ADVICE = {
             "`cure` fixes this.",
     RESTARTING: "Everything stored looks right, but the board keeps restarting. The program on it is "
                 "crashing at start-up. `cure` replaces it with a known-good test image.",
+    OFF_USB: "Everything stored looks right, but once its program starts the board keeps dropping off USB: "
+             "the program switches USB off, or restarts before USB is up. This is the board that shows in a "
+             "port list for a moment and vanishes. `cure` replaces the program with a known-good test image.",
     HEALTHY: "The chip answers, and a bootloader, a partition table and a program are all in place. This "
              "board is not bricked.",
 }
@@ -107,10 +114,11 @@ def describe_app(raw):
     return said
 
 
-def diagnose(answers, at_zero, at_bootloader, table_raw, app_heads, restarts=None):
+def diagnose(answers, at_zero, at_bootloader, table_raw, app_heads, restarts=None, on_usb=None):
     """One conclusion from what was read. `app_heads` is the first bytes of each
     program partition, in table order. `restarts` is how many times the board was
-    seen to restart while listened to, or None if it was not listened to."""
+    seen to restart while listened to, and `on_usb` the share of that time its port
+    was there; each None if it was not listened to."""
     if not answers:
         return NO_ANSWER
     if not at_bootloader or at_bootloader[0] != IMAGE_MAGIC:
@@ -122,6 +130,8 @@ def diagnose(answers, at_zero, at_bootloader, table_raw, app_heads, restarts=Non
         return NO_APP
     if restarts is not None and restarts >= 3:
         return RESTARTING
+    if on_usb is not None and on_usb < ON_USB_AT_LEAST:
+        return OFF_USB
     return HEALTHY
 
 
@@ -193,16 +203,28 @@ def chip_facts():
 
 
 def listen_for_restarts(port, seconds=8):
-    """How many times the board announces a restart while listened to, and the lines
-    of a board check if one is running. (None, []) if this Python has no pyserial."""
+    """(restarts, lines, on_usb): how many times the board announces a restart while
+    listened to, the lines of a board check if one is running, and the share of the
+    time (after the first SETTLE_S of start-up) that its port was there. A program
+    that switches USB off says nothing, so the share is what gives it away.
+    (None, [], None) if this Python has no pyserial."""
     try:
         import serial
     except ImportError:
-        return None, []
+        return None, [], None
     restarts, lines, pending = 0, [], b""
-    until = time.time() + seconds
+    start = time.time()
+    until = start + seconds
+    there = counted = 0.0
+    last = start
     link = None
     while time.time() < until:
+        now = time.time()
+        if now - start >= SETTLE_S:                  # Time since the last look, put down to what is seen now.
+            present = c5flash.port_present(port)
+            counted += now - max(last, start + SETTLE_S)
+            there += (now - max(last, start + SETTLE_S)) if present else 0.0
+        last = now
         try:
             if link is None:
                 link = serial.Serial(port, 115200, timeout=0.2)
@@ -220,7 +242,7 @@ def listen_for_restarts(port, seconds=8):
                 lines.append(text)
     if link is not None:
         link.close()
-    return restarts, lines
+    return restarts, lines, (there / counted if counted else None)
 
 
 def examine(listen=True, seconds=8):
@@ -252,20 +274,25 @@ def examine(listen=True, seconds=8):
             if said["name"] == GENERIC_NAME:
                 name = "an Arduino program (it does not name itself)"
             report.append("program:     '%s' (0x%x): %s%s" % (part["label"], part["offset"], name, ", built " + said["built"] if said["built"] else ""))
-    restarts, check_lines = None, []
+    restarts, check_lines, on_usb = None, [], None
     stored_ok = diagnose(True, at_zero, at_bootloader, table_raw, heads) == HEALTHY
     c5flash.et("chip-id", after="watchdog-reset")       # Let the board start what it has.
     if listen:
-        restarts, check_lines = listen_for_restarts(c5flash.PORT, seconds)
+        restarts, check_lines, on_usb = listen_for_restarts(c5flash.PORT, seconds)
         if restarts is None:
             report.append("start-up:    not watched (this Python has no pyserial)")
+        elif restarts >= 3:
+            report.append("start-up:    restarted %d times in %d s" % (restarts, seconds))
+        elif on_usb is not None and on_usb < ON_USB_AT_LEAST:
+            report.append("start-up:    on USB only %d%% of the time once started" % round(100 * on_usb))
         else:
-            report.append("start-up:    %s" % ("restarted %d times in %d s" % (restarts, seconds) if restarts >= 3 else "steady"))
+            report.append("start-up:    steady")
     report += ["  " + line for line in check_lines]
     if any("result: FAIL" in line for line in check_lines):
         report.append("note:        the board check found a device that did not pass. That is about the board's")
         report.append("             parts (or something not connected), not about how it was flashed.")
-    conclusion = diagnose(True, at_zero, at_bootloader, table_raw, heads, restarts if stored_ok else None)
+    conclusion = diagnose(True, at_zero, at_bootloader, table_raw, heads, restarts if stored_ok else None,
+                          on_usb if stored_ok else None)
     return conclusion, report, table
 
 
