@@ -5,7 +5,12 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
-## Unreleased
+## [0.7.0] — 2026-11-27
+
+The camera on the 3.5-inch board, the board doctor as a web page, a GPS driver
+that stays quiet with no receiver, and fixes for boards that restart over and
+over or drop off USB. Existing code builds unchanged. Windows is not yet
+tested for any of the doctor fixes.
 
 ### Added
 - **Camera on camera-fitted 3.5-inch boards**: `WsC5_35::Camera` identifies
