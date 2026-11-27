@@ -43,8 +43,9 @@ evidence and claim tags.
   next probe with no reset. With a receiver attached, three resets each gave
   NMEA on the first read cycle, 110 ms after the driver started, with no
   failed cycle. Touch reads with no finger down did not fail or slow either
-  way. Not measured: power-on from cold with a receiver, a finger on the
-  screen, the 2.8-inch board.
+  way. The owner reported a quick fix after power-on from cold with a
+  receiver, and touch working with a finger down (not timed or logged). Not
+  tested: the 2.8-inch board.
 - **The web page's cure could stop with "the first 64 KB could not be read"**
   on a board caught while its bootloader ran: a watchdog left armed there
   moved the chip out of its loader about 8 s later. The page now turns the

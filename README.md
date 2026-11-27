@@ -119,6 +119,8 @@ board lands on the other.
 GPS on this board runs over I²C — the LC76G on the shared bus — which needs no
 extra GPIO and leaves the BOOT button free. The I²C and UART options, and the
 trade-offs between them, are in [docs/GPS.md](docs/GPS.md).
+With no receiver plugged in, the driver checks for one every 10 s and otherwise
+stays off the bus ([details](docs/GPS.md#with-no-receiver-attached)).
 
 ## Known limitations
 

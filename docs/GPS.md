@@ -91,10 +91,11 @@ for 62 s from reset, no receiver):
 A receiver plugged in after 31 minutes of running was picked up by the next
 probe with no reset and read with no failed cycle. With a receiver attached,
 three resets each gave NMEA on the first read cycle, 110 ms after the driver
-started. Not measured: power-on from cold with a receiver attached (a receiver
-still starting up may miss the first probe and be picked up 10 s later), a
-finger on the screen, and the 2.8-inch board. The decision itself is
-host-tested (`test_gps_presence`).
+started. On 2026-11-27 the owner powered a 3.5-inch board on from cold with a
+receiver attached and reported a quick fix, and reported touch working with a
+finger on the screen; neither was timed or logged. A receiver still starting up
+may miss the first probe and be picked up 10 s later. Not tested: the 2.8-inch
+board. The decision itself is host-tested (`test_gps_presence`).
 
 ### Wiring (external module)
 
