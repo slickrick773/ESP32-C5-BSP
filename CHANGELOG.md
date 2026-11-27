@@ -5,6 +5,15 @@ as hardware-verified once it has been run on a real board; dates are observation
 dates. See [docs/HARDWARE-FINDINGS.md](docs/HARDWARE-FINDINGS.md) for the full
 evidence and claim tags.
 
+## [Unreleased]
+
+### Verified
+- **The quiet GPS driver on a 2.8-inch board** (2026-11-27): with no receiver,
+  no I2C error lines in 66 s and one probe every 10 s; a receiver connected
+  while running was picked up with no reset; after a power-on from cold with a
+  receiver attached it was found on the first probe. No failed read cycles or
+  touch reads. [Details](docs/GPS.md#with-no-receiver-attached).
+
 ## [0.7.0] — 2026-11-27
 
 The camera on the 3.5-inch board, the board doctor as a web page, a GPS driver

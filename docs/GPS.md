@@ -94,8 +94,16 @@ three resets each gave NMEA on the first read cycle, 110 ms after the driver
 started. On 2026-11-27 the owner powered a 3.5-inch board on from cold with a
 receiver attached and reported a quick fix, and reported touch working with a
 finger on the screen; neither was timed or logged. A receiver still starting up
-may miss the first probe and be picked up 10 s later. Not tested: the 2.8-inch
-board. The decision itself is host-tested (`test_gps_presence`).
+may miss the first probe and be picked up 10 s later. The decision itself is
+host-tested (`test_gps_presence`).
+
+On one 2.8-inch board on 2026-11-27 (the same bench sketch, started with
+`Gps::begin(false)`): with no receiver, 66 s of console had no I2C error lines,
+one probe every 10 s taking about 0.26 ms, and a longest gap between loop
+passes of 12 ms. A receiver connected while the board ran was picked up by the
+next probe with no reset. After a power-on from cold with a receiver attached
+it was found on the first probe. No read cycle failed and no touch read failed
+in any run. Not timed on that board: how soon NMEA arrives after power-on.
 
 ### Wiring (external module)
 
