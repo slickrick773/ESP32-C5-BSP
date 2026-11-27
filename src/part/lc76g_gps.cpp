@@ -9,10 +9,15 @@
 //   2. read 4 bytes from 0x54                       -> length (LE)
 //   3. write {reg 0xAA512000, len N} (LE) to 0x50   -> "send N"
 //   4. read N bytes from 0x54                       -> NMEA text
+//
+// None of that runs until a receiver has answered an address-only probe; see
+// lc76g_presence.h for why and for the rules.
 #include "lc76g_gps.h"
 #include "../chip/esp32c5_i2c_bus.h"
 #include <Arduino.h>
 #include <Wire.h>
+#include <stdlib.h>
+#include <string.h>
 
 namespace C5Parts {
 namespace Gps {
@@ -28,6 +33,8 @@ static const uint32_t STEP_MS   = 3;     // inter-step settle (demo uses 10)
 
 static bool s_useWakeAddr = true;   // false: never address 0x58 (see begin())
 static uint32_t s_cycles = 0, s_bytes = 0, s_fails = 0, s_recov = 0, s_wakes = 0;
+static uint32_t s_probes = 0;
+static PresenceGate s_gate;
 
 // ---- low-level I2C (unchanged protocol) ------------------------------------
 static inline void put32le(uint8_t* b, uint32_t v) {
@@ -44,6 +51,17 @@ static size_t readBytes(uint8_t* buf, size_t n) {
 }
 static uint8_t dummy(uint8_t addr) {   // 1-byte write; 0 = ACKed
     Wire.beginTransmission(addr); Wire.write((uint8_t)0); return Wire.endTransmission();
+}
+// Address-only probe: start, address, stop, no data byte. The Arduino core
+// logs a write nobody acknowledges as an error but not a probe, so this is the
+// only bus traffic made while no receiver has answered. Caller holds the lock.
+static bool answers(uint8_t addr) {
+    Wire.beginTransmission(addr); return Wire.endTransmission() == 0;
+}
+// Is a receiver there? Any of its addresses counts, matching what the read
+// cycle's recovery accepts; 0x58 only where the module owns it (see begin()).
+static bool probe() {
+    return answers(CR_ADDR) || answers(RD_ADDR) || (s_useWakeAddr && answers(WR_ADDR));
 }
 
 // ---- minimal NMEA parsing (GGA for fix/sats/pos/hdop, GSV for in-view) ------
@@ -181,13 +199,22 @@ void begin(bool useWakeAddress) {
 // where the NMEA lands.
 static void service(ByteSink sink, uint32_t now, uint32_t busyUntilMs) {
     static uint32_t s_lastAt = 0, s_empty = 0;
-    if (s_lastAt && now - s_lastAt < PERIOD_MS) return;
+    const PresenceGate::Step step = s_gate.due(now);
+    if (step == PresenceGate::Step::Idle) return;   // no receiver; next probe not due
+    if (step == PresenceGate::Step::Poll && s_lastAt && now - s_lastAt < PERIOD_MS) return;
     if (busyUntilMs && (int32_t)(busyUntilMs - now) > 0) return;   // defer while touched
 
     // GPS owns the bus for the whole multi-frame cycle; wait briefly for it.
     // Touch trylocks non-blocking and skips a frame while we hold it.
     Bus::Guard g(100);
     if (!g) return;
+
+    // Until a receiver has answered, one quiet probe is the whole step. When
+    // it answers, carry on into the first read cycle in this same step.
+    if (step == PresenceGate::Step::Probe) {
+        s_probes++;
+        if (!s_gate.probed(now, probe())) return;
+    }
 
     s_sink = sink;
     s_lastAt = now ? now : 1;
@@ -213,6 +240,8 @@ float    hdop()             { return s_hdop; }
 uint32_t bytesRead()        { return s_bytes; }
 uint32_t cycles()           { return s_cycles; }
 uint32_t fails()            { return s_fails; }
+Presence presence()         { return s_gate.state(); }
+uint32_t probes()           { return s_probes; }
 
 }  // namespace Gps
 }  // namespace C5Parts

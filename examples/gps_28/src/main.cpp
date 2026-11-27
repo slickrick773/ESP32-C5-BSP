@@ -56,7 +56,10 @@ void loop() {
 
     if (now - lastPrint >= 1000) {
         lastPrint = now;
-        if (Gps::bytesRead() == 0 && Gps::cycles() > 2)
+        if (Gps::presence() != Gps::Presence::Present)
+            Serial.printf("[gps_28] no receiver on the bus (checked %lu times) -- check wiring / I2C mode\n",
+                          (unsigned long)Gps::probes());
+        else if (Gps::bytesRead() == 0 && Gps::cycles() > 2)
             Serial.printf("[gps_28] no NMEA yet (cycles %lu, fails %lu) -- check wiring / I2C mode\n",
                           (unsigned long)Gps::cycles(), (unsigned long)Gps::fails());
         else if (!Gps::hasFix())

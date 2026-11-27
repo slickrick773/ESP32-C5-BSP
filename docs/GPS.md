@@ -58,6 +58,44 @@ The reference transport is `Gps::tick(sink, now, busy)` — it takes the bus loc
 yields when another owner holds it, and parses NMEA out to the sink. Reusing it
 gives you the shared-bus behaviour for free.
 
+### With no receiver attached
+
+The receiver plugs into a header, so a board may run without one. The driver
+finds out with an address-only probe (start, address, stop, no data byte) on
+its first step after boot. If nothing answers it stays off the bus apart from
+one such probe every 10 s, so a receiver plugged in later is picked up without
+a reset. The Arduino core logs an unanswered data write as an error but not an
+unanswered probe, so a board with no receiver has a quiet console.
+
+`Gps::presence()` tells a product which case it is in:
+
+| Value | Meaning |
+|-------|---------|
+| `Presence::Unknown` | `tick()` has not run yet |
+| `Presence::Absent`  | nothing answered the last probe; `cycles()` and `fails()` stay 0 |
+| `Presence::Present` | a receiver has answered since boot; read cycles run as usual |
+
+`Present` is kept until the next boot. A receiver unplugged while running is
+polled as before and shows up as rising `fails()`, with the core's error lines.
+
+Measured on one 3.5-inch board on 2026-11-26 (bench sketch, console captured
+for 62 s from reset, no receiver):
+
+| | Before | After |
+|---|---|---|
+| I2C error lines | 360 | 0 |
+| Time in the GPS step | about 31 ms, twice a second | under 0.5 ms, every 10 s |
+| Longest gap between loop passes | 37 ms | 13 ms |
+| Touch reads that failed or were skipped (no finger down) | 0 | 0 |
+
+A receiver plugged in after 31 minutes of running was picked up by the next
+probe with no reset and read with no failed cycle. With a receiver attached,
+three resets each gave NMEA on the first read cycle, 110 ms after the driver
+started. Not measured: power-on from cold with a receiver attached (a receiver
+still starting up may miss the first probe and be picked up 10 s later), a
+finger on the screen, and the 2.8-inch board. The decision itself is
+host-tested (`test_gps_presence`).
+
 ### Wiring (external module)
 
 If your unit's onboard LC76G is not populated and you are adding an I²C GNSS

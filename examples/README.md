@@ -65,7 +65,7 @@ on 3.14+.
   thing to flash on a new or suspect board.
 - **`gps_i2c/`** — Phase 3. LC76G GNSS over I²C on the shared bus: a one-shot bus
   scan (confirms `0x50` is present), then link health, then fix + satellite
-  count. Display-less (no TFT_eSPI). Wire the LC76G to SDA 27 / SCL 26 / 3V3 /
+  count. With no receiver it says so once a second and stays off the bus. Display-less (no TFT_eSPI). Wire the LC76G to SDA 27 / SCL 26 / 3V3 /
   GND — see [docs/BOARD-WS-C5-35.md](../docs/BOARD-WS-C5-35.md).
 - **`single_core/`** — Phase 5. Shows the C5 is unicore and that the BSP's
   `createPinnedTask()` lands a task on the only core. Serial only.

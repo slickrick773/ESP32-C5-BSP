@@ -17,6 +17,17 @@ bash test/host/run.sh      # builds + runs; exits non-zero on any failure
 | `test_clients` | `ws_c5_35_battery.cpp` `refresh()`, `ws_c5_35_expander.cpp` `backlight()` | On a failed lock, `refresh()` reads no PMU registers and does not reopen the bus, and `backlight()` writes nothing; both act when the lock is held. |
 | `test_touch` | `ws_c5_35_touch.cpp` `ftRead()`/`parsePoint()`/`read()` | A short (truncated) I²C packet yields **no** coordinate (`read()` returns `false`, outputs untouched); a complete packet parses the correct point. |
 
+`test_gps_presence` checks the LC76G presence decision
+(`src/part/lc76g_presence.h`): the first probe decides, an absent receiver is
+probed again every 10 s and not sooner, a receiver that answers later is picked
+up, a receiver that has answered is never marked absent, and the millisecond
+clock may wrap. It then runs the real driver against the mocked bus: with
+nothing answering, a minute of ticks makes seven probes, writes no data byte,
+attempts no read and counts no cycle or fail; once the bus answers, read cycles
+start within one interval and run every 500 ms as before, including after the
+bus stops answering. It does not prove what the Arduino core logs, or how a
+real receiver answers a probe; those need a board.
+
 These catch the exact pre-fix defects: before this change `refresh()`/`backlight()`
 touched the bus with no lock, `ftRead()` zero-filled a short read and returned a
 phantom point near `(0,0)`, and `recover()` returned `true` even when SDA stayed

@@ -25,6 +25,26 @@ evidence and claim tags.
   11 host tests.
 
 ### Fixed
+- **A board with no GPS receiver filled the console with I2C errors.** The
+  LC76G driver ran its full read cycle twice a second whether or not a
+  receiver was plugged in, and the Arduino core logs each unanswered one-byte
+  write: three error lines every 500 ms. The driver now checks for a receiver
+  with an address-only probe, which the core does not log, on its first step
+  after boot and then every 10 s, and runs read cycles only once one has
+  answered. `Gps::presence()` reports Unknown, Absent or Present, and
+  `Gps::probes()` counts the checks; `cycles()` and `fails()` stay 0 while
+  absent. A receiver that has answered is polled exactly as before, including
+  when it later stops answering. No logging is turned down. The decision is in
+  `src/part/lc76g_presence.h` with a host test (`test_gps_presence`).
+  Measured on one 3.5-inch board on 2026-11-26 with a bench sketch: with no
+  receiver, 62 s from reset printed 360 I2C error lines before and none after,
+  and the GPS step fell from about 31 ms twice a second to under 0.5 ms every
+  10 s. A receiver plugged in after 31 minutes of running was picked up by the
+  next probe with no reset. With a receiver attached, three resets each gave
+  NMEA on the first read cycle, 110 ms after the driver started, with no
+  failed cycle. Touch reads with no finger down did not fail or slow either
+  way. Not measured: power-on from cold with a receiver, a finger on the
+  screen, the 2.8-inch board.
 - **The web page's cure could stop with "the first 64 KB could not be read"**
   on a board caught while its bootloader ran: a watchdog left armed there
   moved the chip out of its loader about 8 s later. The page now turns the

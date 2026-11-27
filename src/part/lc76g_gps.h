@@ -14,9 +14,15 @@
 // tick() self-throttles (~2 Hz), re-opens the bus once per cycle, keeps a short
 // inter-step settle, and restores Wire's timeout after each read so the long
 // GPS timeout never lingers on the touch reads. All verified on hardware.
+//
+// The receiver plugs into a header, so it may not be there. Until one has
+// answered, tick() makes only a quiet address-only probe, at once after boot
+// and then every 10 s, and presence() says which case this is. See
+// lc76g_presence.h.
 #pragma once
 
 #include <stdint.h>
+#include "lc76g_presence.h"
 
 namespace C5Parts {
 namespace Gps {
@@ -36,6 +42,11 @@ void begin(bool useWakeAddress = true);
 // handles the module's wake. `now` is millis(). Pass a non-zero `busyUntil`
 // (e.g. the UI's lastTouch + a grace) to defer the cycle while the screen is
 // being touched; 0 never defers.
+//
+// While no receiver has answered, the step is one address-only probe instead
+// (the first on the first call, then one every PresenceGate::RECHECK_MS), under
+// the same lock and the same `busyUntil` defer. A receiver that answers is read
+// in that same step.
 void tick(uint32_t now, uint32_t busyUntilMs = 0);
 
 // Same service step, but hand each NMEA byte to `sink(c, now)` instead of the
@@ -56,10 +67,20 @@ double   latitude();          // decimal degrees (valid only when hasFix())
 double   longitude();         // decimal degrees
 float    hdop();              // horizontal dilution of precision
 
+// --- Presence -----------------------------------------------------------------
+// Unknown before the first tick(), Absent while nothing answers the probe,
+// Present once a receiver has answered. Present is kept until the next boot: a
+// receiver that later stops answering shows as fails(), not as Absent.
+Presence presence();
+
 // --- Link counters (for debugging the I2C link) ------------------------------
+// cycles() and fails() count read cycles, which run only once a receiver has
+// answered: both stay 0 while presence() is Absent, so "no receiver" and "a
+// receiver that is failing" read differently.
 uint32_t bytesRead();         // total NMEA bytes pulled
 uint32_t cycles();            // read cycles run
 uint32_t fails();             // bus-fail cycles
+uint32_t probes();            // presence probes made (stops once Present)
 
 }  // namespace Gps
 }  // namespace C5Parts

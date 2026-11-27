@@ -45,7 +45,12 @@ void loop() {
     const uint32_t now = millis();
     if (now - last >= 1000) {
         last = now;
-        if (Gps::bytesRead() == 0 && Gps::cycles() > 2) {
+        if (Gps::presence() != Gps::Presence::Present) {
+            // Nothing has answered at the LC76G's addresses. The driver stays
+            // quiet and looks again every 10 s, so plugging one in is enough.
+            Serial.printf("[gps] no receiver on the bus (checked %lu times) -- check wiring / I2C mode\n",
+                          (unsigned long)Gps::probes());
+        } else if (Gps::bytesRead() == 0 && Gps::cycles() > 2) {
             Serial.printf("[gps] no NMEA yet (cycles %lu, fails %lu) -- check wiring / I2C mode\n",
                           (unsigned long)Gps::cycles(), (unsigned long)Gps::fails());
         } else if (!Gps::hasFix()) {
